@@ -1,19 +1,18 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppHeader } from '@/components/chrome/app-header';
 import { Colors, Spacing, Type } from '@/constants/theme';
 
 /**
  * Slice-1 placeholder for tab screens whose real content lands in later build slices
- * (Library feed, Reader/detail, Notebook, semantic search). Establishes the title
- * treatment and confirms the chrome/safe-area wiring.
+ * (Library feed, Reader/detail, Notebook, semantic search). Uses the shared app
+ * header (gold mark + tab name) so every tab shares the same chrome.
  */
 export function ScreenPlaceholder({ title, note }: { title: string; note: string }) {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
-      </View>
+      <AppHeader title={title} />
       <View style={styles.body}>
         <Text style={styles.note}>{note}</Text>
       </View>
@@ -25,15 +24,6 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  header: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.md,
-  },
-  title: {
-    ...Type.display,
-    color: Colors.ink,
   },
   body: {
     flex: 1,
