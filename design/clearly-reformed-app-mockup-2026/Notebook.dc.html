@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Flecha';src:url('assets/fonts/FlechaM-Regular.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Flecha';src:url('assets/fonts/FlechaM-Bold.otf') format('opentype');font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:'FlechaText';src:url('assets/fonts/FlechaS-Regular.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
+*{box-sizing:border-box}
+html,body{margin:0}
+*::-webkit-scrollbar{width:0;height:0;display:none}
+*{scrollbar-width:none}
+@keyframes fabIn{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;background:#E6E1D4;padding:36px 20px;font-family:'IBM Plex Sans',sans-serif">
+<div data-screen-label="Notebook" style="position:relative;width:390px;height:844px;background:#F1EBDD;border-radius:42px;overflow:hidden;box-shadow:0 40px 80px -24px rgba(40,34,22,.45),0 0 0 1px rgba(40,34,22,.06);display:flex;flex-direction:column">
+
+  <!-- status bar -->
+  <div style="flex:none;height:48px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 8px;color:#221C13">
+    <span style="font-weight:600;font-size:15px;letter-spacing:.01em">9:41</span>
+    <div style="display:flex;align-items:center;gap:7px">
+      <svg width="18" height="11" viewBox="0 0 18 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="5" y="4.5" width="3" height="6.5" rx="1"/><rect x="10" y="2" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="16" height="11" viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 4.2C4.8 1 11.2 1 15 4.2"/><path d="M3.4 6.6C5.9 4.5 10.1 4.5 12.6 6.6"/><path d="M5.8 9C7.1 8 8.9 8 10.2 9"/><circle cx="8" cy="10.6" r="0.5" fill="currentColor"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity="0.4"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="1.6" height="4" rx="0.8" fill="currentColor" opacity="0.5"/></svg>
+    </div>
+  </div>
+
+  <!-- scroll area -->
+  <div class="scroller" style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden">
+
+    <!-- title -->
+    <div style="padding:6px 18px 4px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <h1 style="font-family:'Flecha',serif;font-weight:700;font-size:30px;line-height:1;color:#221C13;margin:6px 0 0">Notebook</h1>
+          <div style="display:flex;align-items:center;gap:9px;margin:11px 0 0;font-size:11.5px;letter-spacing:.04em;color:#9A8F7C;white-space:nowrap">
+            <span><span style="color:#5C5343;font-weight:600">48</span> highlights</span>
+            <span style="color:#CFC6B2">·</span>
+            <span><span style="color:#5C5343;font-weight:600">12</span> clips</span>
+            <span style="color:#CFC6B2">·</span>
+            <span><span style="color:#5C5343;font-weight:600">9</span> notes</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:9px;flex:none;margin-top:4px">
+          <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#FBF7EC;border:1px solid #E4DCC9">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5C5343" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- sticky filter chips -->
+    <div style="position:sticky;top:0;z-index:5;background:#F1EBDD;padding:20px 0 12px;margin-top:8px">
+      <div style="display:flex;gap:9px;overflow-x:auto;padding:0 18px">
+        <sc-for list="{{ chips }}" as="chip" hint-placeholder-count="4">
+          <div onClick="{{ chip.onClick }}" style="flex:none;padding:8px 15px;border-radius:999px;background:{{ chip.bg }};color:{{ chip.fg }};border:1px solid {{ chip.bd }};font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap">{{ chip.label }}</div>
+        </sc-for>
+      </div>
+      <div style="height:1px;background:linear-gradient(90deg,transparent,#E4DCC9 12%,#E4DCC9 88%,transparent);margin-top:12px"></div>
+    </div>
+
+    <!-- feed -->
+    <div style="padding:2px 18px 0;display:flex;flex-direction:column;gap:14px">
+
+      <!-- 1. article highlight -->
+      <sc-if value="{{ showHighlights }}" hint-placeholder-val="{{ true }}">
+      <article style="background:#FFFFFF;border:1px solid #E7DFCC;border-radius:18px;padding:16px 17px 15px;box-shadow:0 10px 24px -20px rgba(46,58,51,.5)">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span style="width:13px;height:13px;flex:none;background:#A8761A;-webkit-mask:url('assets/icons/booklet.svg') center/contain no-repeat;mask:url('assets/icons/booklet.svg') center/contain no-repeat"></span>
+          <span style="font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#A8761A">Highlight</span>
+          <span style="flex:1"></span>
+          <span style="font-size:11px;color:#A89E8A">2h ago</span>
+        </div>
+        <p style="font-family:'Flecha',serif;font-weight:400;font-size:18px;line-height:1.42;color:#2A2419;margin:13px 0 0">“<span style="background:rgba(200,148,31,.22);box-shadow:0 1px 0 rgba(188,135,26,.55);padding:0 .04em">We do not pray because the outcome is uncertain. We pray because God has made our asking part of how the certain outcome comes to pass.</span>”</p>
+        <div style="display:flex;align-items:flex-start;gap:9px;background:#FBF6EA;border:1px solid #EDE3CC;border-radius:11px;padding:9px 11px;margin:14px 0 0">
+          <span style="width:13px;height:13px;flex:none;margin-top:1px;background:#9A8F7C;-webkit-mask:url('assets/icons/notebook.svg') center/contain no-repeat;mask:url('assets/icons/notebook.svg') center/contain no-repeat"></span>
+          <p style="font-family:'FlechaText',serif;font-size:13.5px;line-height:1.45;color:#6E6453;margin:0">Pair with WSC Q.98 for the men's study — the means are ordained with the end.</p>
+        </div>
+        <div style="height:1px;background:#ECE4D2;margin:14px 0 12px"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="assets/img/pray-hero.jpg" alt="" style="width:38px;height:38px;border-radius:8px;object-fit:cover;flex:none">
+          <div style="min-width:0;flex:1">
+            <div style="font-family:'Flecha',serif;font-weight:700;font-size:13px;line-height:1.2;color:#221C13;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">If God Is Sovereign, Then Why Should I Pray?</div>
+            <div style="font-size:11px;color:#9A8F7C;margin-top:2px">Article · Kevin DeYoung</div>
+          </div>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#BC871A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </div>
+      </article>
+      </sc-if>
+
+      <!-- 2. podcast clip -->
+      <sc-if value="{{ showClips }}" hint-placeholder-val="{{ true }}">
+      <article style="background:#FFFFFF;border:1px solid #E7DFCC;border-radius:18px;padding:16px 17px 15px;box-shadow:0 10px 24px -20px rgba(46,58,51,.5)">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span style="width:13px;height:13px;flex:none;background:#A8761A;-webkit-mask:url('assets/icons/mic.svg') center/contain no-repeat;mask:url('assets/icons/mic.svg') center/contain no-repeat"></span>
+          <span style="font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#A8761A">Clip · Podcast</span>
+          <span style="flex:1"></span>
+          <span style="font-size:11px;color:#A89E8A">Yesterday</span>
+        </div>
+
+        <!-- player chip -->
+        <div style="display:flex;align-items:center;gap:11px;background:#2E3A33;border-radius:13px;padding:11px 13px;margin:13px 0 0">
+          <div onClick="{{ togglePlay }}" style="width:38px;height:38px;border-radius:50%;background:#C8941F;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer">
+            <svg width="13" height="15" viewBox="0 0 16 18"><path d="M2 1l12.5 8L2 17z" fill="#241F16"/></svg>
+          </div>
+          <div style="flex:1;display:flex;align-items:center;gap:2.5px;height:26px">
+            <sc-for list="{{ wave }}" as="h" hint-placeholder-count="30">
+              <span style="flex:1;border-radius:2px;height:{{ h.hgt }};background:{{ h.col }}"></span>
+            </sc-for>
+          </div>
+          <span style="flex:none;font-size:11px;font-weight:600;letter-spacing:.02em;color:#E7D7B0;font-variant-numeric:tabular-nums">24:10–25:02</span>
+        </div>
+
+        <p style="font-family:'FlechaText',serif;font-size:15px;line-height:1.5;color:#3A3327;margin:13px 0 0">“The books that shaped me weren't the ones I agreed with most — they were the ones that made me read my Bible again with fresh eyes.”</p>
+        <div style="height:1px;background:#ECE4D2;margin:14px 0 12px"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="assets/img/special-guest.jpg" alt="" style="width:38px;height:38px;border-radius:8px;object-fit:cover;flex:none">
+          <div style="min-width:0;flex:1">
+            <div style="font-family:'Flecha',serif;font-weight:700;font-size:13px;line-height:1.2;color:#221C13;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">The Most Special Guest Ever</div>
+            <div style="font-size:11px;color:#9A8F7C;margin-top:2px">Life and Books and Everything</div>
+          </div>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#BC871A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </div>
+      </article>
+      </sc-if>
+
+      <!-- 3. note -->
+      <sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}">
+      <article style="background:#FBF6EA;border:1px solid #EADFC6;border-radius:18px;padding:16px 17px 15px;box-shadow:0 10px 24px -20px rgba(120,96,30,.4)">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span style="width:13px;height:13px;flex:none;background:#8A6A12;-webkit-mask:url('assets/icons/notebook.svg') center/contain no-repeat;mask:url('assets/icons/notebook.svg') center/contain no-repeat"></span>
+          <span style="font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8A6A12">Note</span>
+          <span style="flex:1"></span>
+          <span style="font-size:11px;color:#B0A079">Yesterday</span>
+        </div>
+        <h3 style="font-family:'Flecha',serif;font-weight:700;font-size:17px;line-height:1.2;color:#221C13;margin:12px 0 0">Two kingdoms, rightly distinguished</h3>
+        <p style="font-family:'FlechaText',serif;font-size:14.5px;line-height:1.52;color:#5F5642;margin:8px 0 0">The state bears the sword; the church bears the keys. Confusing the two has wrecked both — the question for Sunday isn't which party to back but what the church is actually <span style="font-style:italic">for</span>.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:14px">
+          <span style="font-size:11px;font-weight:500;color:#6E6453;background:#F1E7D0;border:1px solid #E6D9BB;padding:4px 10px;border-radius:999px">#ecclesiology</span>
+          <span style="font-size:11px;font-weight:500;color:#6E6453;background:#F1E7D0;border:1px solid #E6D9BB;padding:4px 10px;border-radius:999px">#two-kingdoms</span>
+        </div>
+      </article>
+      </sc-if>
+
+      <!-- 4. video clip -->
+      <sc-if value="{{ showClips }}" hint-placeholder-val="{{ true }}">
+      <article style="background:#FFFFFF;border:1px solid #E7DFCC;border-radius:18px;padding:16px 17px 15px;box-shadow:0 10px 24px -20px rgba(46,58,51,.5)">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span style="width:13px;height:13px;flex:none;background:#A8761A;-webkit-mask:url('assets/icons/videos.svg') center/contain no-repeat;mask:url('assets/icons/videos.svg') center/contain no-repeat"></span>
+          <span style="font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#A8761A">Clip · Video</span>
+          <span style="flex:1"></span>
+          <span style="font-size:11px;color:#A89E8A">Mon</span>
+        </div>
+        <div style="display:flex;gap:13px;margin-top:13px">
+          <div style="position:relative;flex:none">
+            <img src="assets/img/chivalry.jpg" alt="" style="width:104px;height:74px;border-radius:11px;object-fit:cover;display:block">
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><div style="width:32px;height:32px;border-radius:50%;background:rgba(26,32,28,.5);border:1.3px solid rgba(255,255,255,.82);display:flex;align-items:center;justify-content:center"><svg width="10" height="12" viewBox="0 0 16 18"><path d="M2 1l12.5 8L2 17z" fill="#fff"/></svg></div></div>
+            <div style="position:absolute;bottom:6px;right:6px;background:rgba(26,32,28,.82);color:#F1EBDD;font-size:10px;font-weight:600;padding:2px 6px;border-radius:999px;font-variant-numeric:tabular-nums">6:30–7:18</div>
+          </div>
+          <p style="font-family:'FlechaText',serif;font-size:14px;line-height:1.46;color:#3A3327;margin:0;flex:1;min-width:0">“Chivalry was never about armor. It was about a strong man choosing to bind his strength to the good of the weak.”</p>
+        </div>
+        <div style="height:1px;background:#ECE4D2;margin:14px 0 12px"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="assets/img/chivalry.jpg" alt="" style="width:38px;height:38px;border-radius:8px;object-fit:cover;flex:none">
+          <div style="min-width:0;flex:1">
+            <div style="font-family:'Flecha',serif;font-weight:700;font-size:13px;line-height:1.2;color:#221C13;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">In Search of Chivalry</div>
+            <div style="font-size:11px;color:#9A8F7C;margin-top:2px">Video · Kevin DeYoung</div>
+          </div>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#BC871A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </div>
+      </article>
+      </sc-if>
+
+      <!-- 5. article highlight -->
+      <sc-if value="{{ showHighlights }}" hint-placeholder-val="{{ true }}">
+      <article style="background:#FFFFFF;border:1px solid #E7DFCC;border-radius:18px;padding:16px 17px 15px;box-shadow:0 10px 24px -20px rgba(46,58,51,.5)">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span style="width:13px;height:13px;flex:none;background:#A8761A;-webkit-mask:url('assets/icons/booklet.svg') center/contain no-repeat;mask:url('assets/icons/booklet.svg') center/contain no-repeat"></span>
+          <span style="font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#A8761A">Highlight</span>
+          <span style="flex:1"></span>
+          <span style="font-size:11px;color:#A89E8A">Sun</span>
+        </div>
+        <p style="font-family:'Flecha',serif;font-weight:400;font-size:18px;line-height:1.42;color:#2A2419;margin:13px 0 0">“<span style="background:rgba(200,148,31,.22);box-shadow:0 1px 0 rgba(188,135,26,.55);padding:0 .04em">Scripture is the only infallible rule — not the only voice in the room, but the only one that gets the last word.</span>”</p>
+        <div style="height:1px;background:#ECE4D2;margin:14px 0 12px"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="assets/img/sola.jpg" alt="" style="width:38px;height:38px;border-radius:8px;object-fit:cover;flex:none">
+          <div style="min-width:0;flex:1">
+            <div style="font-family:'Flecha',serif;font-weight:700;font-size:13px;line-height:1.2;color:#221C13;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Is Sola Scriptura Biblical?</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+              <span style="font-size:11px;color:#9A8F7C">Article</span>
+              <span style="font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#2E3A33;background:#E4E7DD;padding:1px 5px;border-radius:4px">Booklet</span>
+            </div>
+          </div>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#BC871A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </div>
+      </article>
+      </sc-if>
+
+      <!-- 6. note linked to content -->
+      <sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}">
+      <article style="background:#FBF6EA;border:1px solid #EADFC6;border-radius:18px;padding:16px 17px 15px;box-shadow:0 10px 24px -20px rgba(120,96,30,.4)">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span style="width:13px;height:13px;flex:none;background:#8A6A12;-webkit-mask:url('assets/icons/notebook.svg') center/contain no-repeat;mask:url('assets/icons/notebook.svg') center/contain no-repeat"></span>
+          <span style="font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8A6A12">Note</span>
+          <span style="flex:1"></span>
+          <span style="font-size:11px;color:#B0A079">Jun 14</span>
+        </div>
+        <p style="font-family:'FlechaText',serif;font-size:14.5px;line-height:1.52;color:#5F5642;margin:12px 0 0">Good summary of the Roman vs. Reformed split — authority is the hinge of every other disagreement. Reread before the Tuesday class.</p>
+        <a style="display:flex;align-items:center;gap:9px;background:#FFFFFF;border:1px solid #E7DFCC;border-radius:11px;padding:9px 10px;margin:14px 0 0;text-decoration:none;cursor:pointer">
+          <img src="assets/img/differences.jpg" alt="" style="width:34px;height:34px;border-radius:7px;object-fit:cover;flex:none">
+          <div style="min-width:0;flex:1">
+            <div style="font-family:'Flecha',serif;font-weight:700;font-size:12.5px;line-height:1.2;color:#221C13;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">8 Key Differences Between Catholics &amp; Protestants</div>
+            <div style="font-size:10.5px;color:#9A8F7C;margin-top:2px">Linked article</div>
+          </div>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A8761A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 0 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        </a>
+      </article>
+      </sc-if>
+
+    </div>
+
+    <div style="height:120px"></div>
+  </div>
+
+  <!-- add scrim -->
+  <sc-if value="{{ addOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeAdd }}" style="position:absolute;inset:0;z-index:40;background:rgba(34,28,19,.34);backdrop-filter:blur(1.5px)"></div>
+  </sc-if>
+
+  <!-- add menu -->
+  <sc-if value="{{ addOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;right:18px;bottom:218px;z-index:42;display:flex;flex-direction:column;align-items:flex-end;gap:11px;animation:fabIn .18s ease both">
+    <div onClick="{{ closeAdd }}" style="display:flex;align-items:center;gap:11px;cursor:pointer">
+      <span style="font-family:'Flecha',serif;font-weight:700;font-size:14px;color:#F4EFE2;background:rgba(34,28,19,.6);padding:6px 12px;border-radius:9px">Blank note</span>
+      <div style="width:46px;height:46px;border-radius:50%;background:#FBF7EC;border:1px solid #E4DCC9;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 8px 18px -8px rgba(40,34,22,.5)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5C5343" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      </div>
+    </div>
+    <div onClick="{{ closeAdd }}" style="display:flex;align-items:center;gap:11px;cursor:pointer">
+      <span style="font-family:'Flecha',serif;font-weight:700;font-size:14px;color:#F4EFE2;background:rgba(34,28,19,.6);padding:6px 12px;border-radius:9px">Save from a link</span>
+      <div style="width:46px;height:46px;border-radius:50%;background:#FBF7EC;border:1px solid #E4DCC9;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 8px 18px -8px rgba(40,34,22,.5)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5C5343" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 0 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- FAB -->
+  <div onClick="{{ toggleAdd }}" style="position:absolute;right:18px;bottom:150px;z-index:43;width:56px;height:56px;border-radius:50%;background:#C8941F;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 14px 26px -8px rgba(150,108,16,.7),0 0 0 1px rgba(120,86,12,.25)">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#241F16" stroke-width="2.2" stroke-linecap="round" style="transform:{{ fabRot }};transition:transform .2s ease"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </div>
+
+  <!-- bottom chrome -->
+  <div style="flex:none;position:relative;z-index:44">
+    <!-- mini player -->
+    <div style="margin:0 10px;background:#2E3A33;border-radius:16px 16px 0 0;padding:9px 12px 10px;position:relative;cursor:pointer;overflow:hidden">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:rgba(241,235,221,.16);border-radius:16px 16px 0 0;overflow:hidden"><div style="height:100%;background:#C8941F;width:{{ progressPct }}"></div></div>
+      <div style="display:flex;align-items:center;gap:11px">
+        <img src="assets/img/special-guest.jpg" alt="" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex:none">
+        <div style="min-width:0;flex:1">
+          <div style="font-family:'Flecha',serif;font-weight:700;font-size:13.5px;color:#F4EFE2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">The Most Special Guest Ever</div>
+          <div style="font-size:11px;color:#A9B3A6;margin-top:1px"><span>{{ curTime }}</span> · Life and Books and Everything</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <div onClick="{{ back15 }}" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:#D8DAD0;cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9l5 4"/><path d="M6 9h8a5 5 0 0 1 0 10H9"/></svg></div>
+          <div onClick="{{ togglePlay }}" style="width:40px;height:40px;border-radius:50%;background:#C8941F;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer">
+            <sc-if value="{{ playing }}" hint-placeholder-val="{{ false }}"><svg width="14" height="15" viewBox="0 0 14 15" fill="#241F16"><rect x="1" y="0" width="4" height="15" rx="1"/><rect x="9" y="0" width="4" height="15" rx="1"/></svg></sc-if>
+            <sc-if value="{{ paused }}" hint-placeholder-val="{{ true }}"><svg width="14" height="16" viewBox="0 0 16 18"><path d="M2 1l12.5 8L2 17z" fill="#241F16"/></svg></sc-if>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- tab bar -->
+    <div style="background:#FBF7EC;border-top:1px solid #E4DCC9;display:flex;padding:9px 8px 26px">
+      <div onClick="{{ tabHome }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:{{ cHome }}">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M3 11l9-7 9 7"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+        <span style="font-size:10px;font-weight:500;letter-spacing:.01em">Home</span>
+      </div>
+      <div onClick="{{ tabLibrary }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:{{ cLibrary }}">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.4"/></svg>
+        <span style="font-size:10px;font-weight:500;letter-spacing:.01em">Library</span>
+      </div>
+      <div onClick="{{ tabSearch }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:{{ cSearch }}">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+        <span style="font-size:10px;font-weight:500;letter-spacing:.01em">Search</span>
+      </div>
+      <div onClick="{{ tabNotebook }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:{{ cNotebook }}">
+        <span style="width:22px;height:22px;background:currentColor;-webkit-mask:url('assets/icons/notebook.svg') center/contain no-repeat;mask:url('assets/icons/notebook.svg') center/contain no-repeat"></span>
+        <span style="font-size:10px;font-weight:500;letter-spacing:.01em">Notebook</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { playing: false, pos: 1334, activeTab: 'Notebook', filter: 'All', addOpen: false };
+  total = 3471;
+
+  componentDidMount() {
+    this._t = setInterval(() => {
+      if (this.state.playing) this.setState(s => ({ pos: Math.min(this.total, s.pos + 1) }));
+    }, 1000);
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+  fmt(s) { s = Math.floor(s); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+
+  renderVals() {
+    const active = '#BC871A', idle = '#9A8F7C', t = this.state.activeTab;
+    const tab = (n) => () => this.setState({ activeTab: n });
+    const sel = this.state.filter;
+    const types = ['All', 'Highlights', 'Clips', 'Notes'];
+    const chips = types.map(label => ({
+      label,
+      bg: label === sel ? '#2E3A33' : '#FBF7EC',
+      fg: label === sel ? '#F1EBDD' : '#5C5343',
+      bd: label === sel ? '#2E3A33' : '#E4DCC9',
+      onClick: () => this.setState({ filter: label }),
+    }));
+
+    // decorative waveform for the podcast clip
+    const heights = [6,10,15,11,18,22,16,9,13,20,24,17,12,8,14,19,23,15,10,7,12,18,21,14,9,11,16,20,13,8];
+    const playedTo = 11;
+    const wave = heights.map((v, i) => ({
+      hgt: v + 'px',
+      col: i <= playedTo ? '#C8941F' : 'rgba(241,235,221,.32)',
+    }));
+
+    const f = this.state.filter;
+    return {
+      chips,
+      wave,
+      showHighlights: f === 'All' || f === 'Highlights',
+      showClips: f === 'All' || f === 'Clips',
+      showNotes: f === 'All' || f === 'Notes',
+      addOpen: this.state.addOpen,
+      toggleAdd: () => this.setState(s => ({ addOpen: !s.addOpen })),
+      closeAdd: () => this.setState({ addOpen: false }),
+      fabRot: this.state.addOpen ? 'rotate(45deg)' : 'rotate(0deg)',
+      playing: this.state.playing, paused: !this.state.playing,
+      togglePlay: () => this.setState(s => ({ playing: !s.playing })),
+      back15: () => this.setState(s => ({ pos: Math.max(0, s.pos - 15) })),
+      curTime: this.fmt(this.state.pos),
+      progressPct: (this.state.pos / this.total * 100).toFixed(2) + '%',
+      tabHome: tab('Home'), tabLibrary: tab('Library'), tabSearch: tab('Search'), tabNotebook: tab('Notebook'),
+      cHome: t === 'Home' ? active : idle, cLibrary: t === 'Library' ? active : idle,
+      cSearch: t === 'Search' ? active : idle, cNotebook: t === 'Notebook' ? active : idle,
+    };
+  }
+}
+</script>
+</body>
+</html>

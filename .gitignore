@@ -1,1 +1,9 @@
 clearly-reformed-ios-OLD
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Claude Design: multi-MB standalone browser bundles (low-value, regenerable).
+# We keep the raw .dc.html exports, assets/, and screenshots.
+design/**/standalone-html/

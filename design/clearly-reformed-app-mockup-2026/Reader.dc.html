@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Flecha';src:url('assets/fonts/FlechaM-Regular.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Flecha';src:url('assets/fonts/FlechaM-Bold.otf') format('opentype');font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:'FlechaText';src:url('assets/fonts/FlechaS-Regular.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
+*{box-sizing:border-box}
+html,body{margin:0}
+*::-webkit-scrollbar{width:0;height:0;display:none}
+*{scrollbar-width:none}
+</style>
+</helmet>
+
+<div style="min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;background:#E6E1D4;padding:36px 20px;font-family:'IBM Plex Sans',sans-serif">
+<div style="position:relative;width:390px;height:844px;border-radius:42px;overflow:hidden;box-shadow:0 40px 80px -24px rgba(40,34,22,.45),0 0 0 1px rgba(40,34,22,.06);display:flex;flex-direction:column;background:{{ screenBg }}">
+
+  <!-- reading scroll area -->
+  <div onScroll="{{ onScroll }}" onClick="{{ toggleChrome }}" style="position:absolute;inset:0;overflow-y:auto;background:{{ readBg }};color:{{ readFg }};font-family:{{ fontFam }};font-size:{{ fontSz }};line-height:{{ lineH }};-webkit-font-smoothing:antialiased">
+    <div style="padding:{{ padStr }}">
+      <!-- article header -->
+      <div style="font-size:.61em;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#BC871A;font-family:'IBM Plex Sans',sans-serif">Article · Q&amp;A</div>
+      <h1 style="font-family:'Flecha',serif;font-weight:700;font-size:1.78em;line-height:1.12;margin:.5em 0 0;letter-spacing:.004em">If God Is Sovereign, Then Why Should I Pray?</h1>
+      <div style="font-family:'IBM Plex Sans',sans-serif;font-size:.62em;letter-spacing:.05em;color:{{ readSub }};margin-top:1.1em;text-transform:uppercase;font-weight:500">Kevin DeYoung &nbsp;·&nbsp; Jun 18, 2026 &nbsp;·&nbsp; 8 min read</div>
+      <div style="height:1px;background:{{ readHair }};margin:1.4em 0 1.5em"></div>
+
+      <!-- body -->
+      <p style="margin:0 0 1.1em"><span style="float:left;font-family:'Flecha',serif;font-weight:700;font-size:3.3em;line-height:.78;padding:.05em .12em 0 0;color:#BC871A">O</span>f all the objections to prayer, the one that presses hardest on thoughtful Christians is not whether God can hear us, but whether our asking changes anything at all. If God has already ordained whatsoever comes to pass, what room is left for petition?</p>
+
+      <p style="margin:0 0 1.1em">Scripture never asks us to choose between God's sovereignty and the meaningfulness of prayer. It holds the two together without apology. The same Lord who declares the end from the beginning also commands his people to ask, to seek, and to knock.</p>
+
+      <h2 style="font-family:'Flecha',serif;font-weight:700;font-size:1.18em;line-height:1.2;margin:1.6em 0 .6em">Two truths, held together</h2>
+
+      <p style="margin:0 0 1.1em">Prayer is not the lever by which we move God to our will. <span style="background:rgba(200,148,31,.22);box-shadow:0 1px 0 rgba(188,135,26,.55);padding:0 .04em">It is the means God has appointed by which he accomplishes his will through the asking of his people.</span> The end and the means are ordained together, and neither one cancels the other.</p>
+
+      <blockquote style="margin:1.5em 0;padding:.1em 0 .1em 1em;border-left:3px solid #BC871A;font-family:'Flecha',serif;font-style:normal;font-size:1.24em;line-height:1.34">We do not pray because the outcome is uncertain. We pray because God has made our asking part of how the certain outcome comes to pass.</blockquote>
+
+      <p style="margin:0 0 1.1em">This is why the most sovereignty-minded saints have so often been the most prayerful. The doctrine that some imagine must surely kill prayer has, in the lives of those who actually believed it, done the opposite — it has fueled it.</p>
+
+      <p style="margin:0 0 1.1em">So pray. Not as those who must inform God, nor as those who must wear him down, but as children speaking to a Father who delights to give good gifts, and who has woven your small voice into the unshakable purpose of his will.</p>
+
+      <div style="height:60px"></div>
+    </div>
+  </div>
+
+  <!-- top bar -->
+  <div style="position:absolute;top:0;left:0;right:0;z-index:20;background:{{ barBg }};backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid {{ barHair }};transform:{{ topY }};opacity:{{ chromeOpa }};transition:transform .28s ease,opacity .22s ease">
+    <div style="height:46px"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 14px 11px">
+      <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ barFg }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></div>
+      <div style="font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:.04em;color:{{ barSub }}">Articles</div>
+      <div style="display:flex;align-items:center;gap:2px;color:{{ barFg }}">
+        <div onClick="{{ openSheet }}" style="width:40px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'Flecha',serif;font-weight:700;font-size:19px;line-height:1">Aa</div>
+        <div style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v17l-6-4-6 4z"/></svg></div>
+        <div style="width:36px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- bottom bar -->
+  <div style="position:absolute;left:0;right:0;bottom:0;z-index:20;background:{{ barBg }};backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid {{ barHair }};transform:{{ botY }};opacity:{{ chromeOpa }};transition:transform .28s ease,opacity .22s ease">
+    <div style="padding:13px 22px 6px">
+      <div style="height:3px;border-radius:2px;background:{{ trackBg }};overflow:hidden"><div style="height:100%;background:#C8941F;border-radius:2px;width:{{ progressPct }}"></div></div>
+    </div>
+    <sc-if value="{{ isScroll }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:3px 22px 30px;font-family:'IBM Plex Sans',sans-serif;font-size:11.5px;color:{{ barSub }};font-variant-numeric:tabular-nums">
+        <span>{{ progressLabel }}</span>
+        <span>{{ timeLeft }}</span>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isPaged }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:1px 14px 26px;color:{{ barFg }}">
+        <div onClick="{{ prevPage }}" style="width:40px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></div>
+        <span style="font-family:'IBM Plex Sans',sans-serif;font-size:11.5px;letter-spacing:.04em;color:{{ barSub }}">Page {{ page }} of {{ pageTotal }}</span>
+        <div onClick="{{ nextPage }}" style="width:40px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></div>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- settings scrim -->
+  <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;z-index:30;background:rgba(20,18,12,.34);opacity:{{ scrimOpa }};pointer-events:{{ scrimPe }};transition:opacity .26s ease"></div>
+
+  <!-- settings sheet -->
+  <div style="position:absolute;left:0;right:0;bottom:0;z-index:40;background:{{ uBg }};border-radius:24px 24px 0 0;box-shadow:0 -18px 40px -16px rgba(20,18,12,.4);transform:{{ sheetY }};transition:transform .32s cubic-bezier(.4,0,.2,1);padding:10px 20px 30px">
+    <div style="width:38px;height:5px;border-radius:3px;background:{{ uHair }};margin:0 auto 6px"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0 14px">
+      <span style="font-family:'Flecha',serif;font-weight:700;font-size:19px;color:{{ uFg }}">Text</span>
+      <div onClick="{{ closeSheet }}" style="width:30px;height:30px;border-radius:50%;background:{{ uTrack }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ uSub }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+    </div>
+
+    <!-- theme -->
+    <div style="font-size:10.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:{{ uSub }};margin-bottom:11px">Background</div>
+    <div style="display:flex;gap:14px;margin-bottom:20px">
+      <sc-for list="{{ themeOpts }}" as="t" hint-placeholder-count="4">
+        <div onClick="{{ t.onClick }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer">
+          <div style="width:100%;height:46px;border-radius:12px;background:{{ t.swatch }};border:1.5px solid {{ t.ring }};box-shadow:inset 0 0 0 1px {{ t.inner }}"></div>
+          <span style="font-size:11px;font-weight:500;color:{{ t.label }}">{{ t.name }}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- font -->
+    <div style="font-size:10.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:{{ uSub }};margin-bottom:9px">Typeface</div>
+    <div style="display:flex;background:{{ uTrack }};border-radius:11px;padding:4px;margin-bottom:18px">
+      <sc-for list="{{ fontOpts }}" as="f" hint-placeholder-count="2">
+        <div onClick="{{ f.onClick }}" style="flex:1;text-align:center;padding:9px 0;border-radius:8px;cursor:pointer;background:{{ f.bg }};box-shadow:{{ f.sh }};color:{{ f.fg }};font-family:{{ f.fam }};font-size:15px;font-weight:600">{{ f.label }}</div>
+      </sc-for>
+    </div>
+
+    <!-- size -->
+    <div style="font-size:10.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:{{ uSub }};margin-bottom:9px">Text size</div>
+    <div style="display:flex;align-items:center;background:{{ uTrack }};border-radius:11px;margin-bottom:18px;overflow:hidden">
+      <div onClick="{{ sizeDown }}" style="width:58px;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ uFg }};font-family:'Flecha',serif;font-weight:700;font-size:16px">A</div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:9px">
+        <sc-for list="{{ sizeDots }}" as="d" hint-placeholder-count="5">
+          <span style="width:7px;height:7px;border-radius:50%;background:{{ d.c }}"></span>
+        </sc-for>
+      </div>
+      <div onClick="{{ sizeUp }}" style="width:58px;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ uFg }};font-family:'Flecha',serif;font-weight:700;font-size:24px">A</div>
+    </div>
+
+    <!-- line spacing -->
+    <div style="font-size:10.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:{{ uSub }};margin-bottom:9px">Line spacing</div>
+    <div style="display:flex;background:{{ uTrack }};border-radius:11px;padding:4px;margin-bottom:18px">
+      <div onClick="{{ l0click }}" style="flex:1;display:flex;align-items:center;justify-content:center;padding:12px 0;border-radius:8px;cursor:pointer;background:{{ l0bg }};box-shadow:{{ l0sh }}">
+        <svg width="20" height="16" viewBox="0 0 20 16" fill="none" stroke="{{ l0fg }}" stroke-width="1.6" stroke-linecap="round"><path d="M2 3h16"/><path d="M2 8h16"/><path d="M2 13h16"/></svg>
+      </div>
+      <div onClick="{{ l1click }}" style="flex:1;display:flex;align-items:center;justify-content:center;padding:12px 0;border-radius:8px;cursor:pointer;background:{{ l1bg }};box-shadow:{{ l1sh }}">
+        <svg width="20" height="18" viewBox="0 0 20 20" fill="none" stroke="{{ l1fg }}" stroke-width="1.6" stroke-linecap="round"><path d="M2 3h16"/><path d="M2 10h16"/><path d="M2 17h16"/></svg>
+      </div>
+      <div onClick="{{ l2click }}" style="flex:1;display:flex;align-items:center;justify-content:center;padding:12px 0;border-radius:8px;cursor:pointer;background:{{ l2bg }};box-shadow:{{ l2sh }}">
+        <svg width="20" height="20" viewBox="0 0 20 24" fill="none" stroke="{{ l2fg }}" stroke-width="1.6" stroke-linecap="round"><path d="M2 3h16"/><path d="M2 12h16"/><path d="M2 21h16"/></svg>
+      </div>
+    </div>
+
+    <!-- reading mode -->
+    <div style="font-size:10.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:{{ uSub }};margin-bottom:9px">Page turn</div>
+    <div style="display:flex;background:{{ uTrack }};border-radius:11px;padding:4px">
+      <sc-for list="{{ modeOpts }}" as="m" hint-placeholder-count="3">
+        <div onClick="{{ m.onClick }}" style="flex:1;text-align:center;padding:9px 0;border-radius:8px;cursor:pointer;background:{{ m.bg }};box-shadow:{{ m.sh }};color:{{ m.fg }};font-size:13px;font-weight:600">{{ m.label }}</div>
+      </sc-for>
+    </div>
+  </div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { chrome: true, sheet: false, theme: 'Paper', font: 'Flecha', sizeIdx: 2, lineIdx: 1, mode: 'Scroll', scrollPct: 0.06, page: 3 };
+  sizes = [16, 17, 18, 20, 22];
+  lines = [1.45, 1.62, 1.85];
+  pageTotal = 14;
+
+  themes = {
+    Paper: { bg: '#F4EFE3', fg: '#2A2419', sub: '#857A67', hair: '#E1D8C5', sw: '#F4EFE3', in: '#E1D8C5' },
+    White: { bg: '#FFFFFF', fg: '#1C1A17', sub: '#8A8275', hair: '#ECE7DC', sw: '#FFFFFF', in: '#E7E2D6' },
+    Sepia: { bg: '#EBE0CB', fg: '#473B22', sub: '#8E7C53', hair: '#D8C9A8', sw: '#EBE0CB', in: '#D8C9A8' },
+    Night: { bg: '#191D1A', fg: '#C8C6BC', sub: '#828A80', hair: '#2C322D', sw: '#191D1A', in: '#333A34' },
+  };
+
+  renderVals() {
+    const s = this.state;
+    const T = this.themes[s.theme];
+    const night = s.theme === 'Night';
+    const famOf = (k) => k === 'Flecha' ? "'Flecha', serif" : "'IBM Plex Sans', sans-serif";
+
+    // sheet UI palette
+    const u = night
+      ? { bg: '#23282480', track: '#2B312B', active: '#3C443C', fg: '#DAD8CE', sub: '#8E968C', hair: '#39403A', idle: '#9AA197' }
+      : { bg: '#FBF7EC', track: '#EFE9DA', active: '#FFFFFF', fg: '#2A2419', sub: '#8E836F', hair: '#E1D8C5', idle: '#857A67' };
+    if (night) u.bg = '#232824';
+
+    const seg = (selected) => selected
+      ? { bg: u.active, sh: night ? 'none' : '0 1px 2px rgba(40,34,22,.16)', fg: u.fg }
+      : { bg: 'transparent', sh: 'none', fg: u.idle };
+
+    const themeOpts = ['Paper', 'White', 'Sepia', 'Night'].map(name => {
+      const th = this.themes[name];
+      const on = name === s.theme;
+      return { name, swatch: th.sw, inner: th.in, ring: on ? '#C8941F' : 'transparent', label: on ? (night ? '#E0A93A' : '#A8761A') : u.sub, onClick: () => this.setState({ theme: name }) };
+    });
+
+    const fontOpts = [['Flecha', 'Flecha'], ['Plex', 'Plex Sans']].map(([k, label]) => {
+      const g = seg(s.font === k);
+      return { label, fam: famOf(k === 'Plex' ? 'Plex' : 'Flecha'), bg: g.bg, sh: g.sh, fg: g.fg, onClick: () => this.setState({ font: k }) };
+    });
+
+    const lg = [0, 1, 2].map(i => { const g = seg(s.lineIdx === i); return { bg: g.bg, sh: g.sh, fg: g.fg, click: () => this.setState({ lineIdx: i }) }; });
+
+    const modeOpts = ['Curl', 'Slide', 'Scroll'].map(label => {
+      const g = seg(s.mode === label);
+      return { label, bg: g.bg, sh: g.sh, fg: g.fg, onClick: () => this.setState({ mode: label }) };
+    });
+
+    const sizeDots = this.sizes.map((_, i) => ({ c: i <= s.sizeIdx ? '#C8941F' : (night ? '#3C443C' : '#D8CFBC') }));
+
+    const isScroll = s.mode === 'Scroll';
+    const pct = isScroll ? s.scrollPct : (s.page / this.pageTotal);
+    const minsLeft = Math.max(1, Math.round(8 * (1 - pct)));
+
+    // chrome / sheet (chrome hides while sheet open too)
+    const chromeOn = s.chrome && !s.sheet;
+
+    return {
+      screenBg: T.bg, readBg: T.bg, readFg: T.fg, readSub: T.sub, readHair: T.hair,
+      fontFam: famOf(s.font), fontSz: this.sizes[s.sizeIdx] + 'px', lineH: this.lines[s.lineIdx],
+      padStr: '108px 30px 96px',
+
+      barBg: night ? 'rgba(25,29,26,.82)' : (s.theme === 'White' ? 'rgba(255,255,255,.84)' : 'rgba(244,239,227,.84)'),
+      barHair: T.hair, barFg: T.fg, barSub: T.sub, trackBg: night ? '#2C322D' : '#E1D8C5',
+      topY: chromeOn ? 'translateY(0)' : 'translateY(-100%)',
+      botY: chromeOn ? 'translateY(0)' : 'translateY(100%)',
+      chromeOpa: chromeOn ? 1 : 0,
+
+      toggleChrome: () => { if (!this.state.sheet) this.setState(st => ({ chrome: !st.chrome })); },
+      openSheet: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ sheet: true }); },
+      closeSheet: () => this.setState({ sheet: false }),
+      sheetY: s.sheet ? 'translateY(0)' : 'translateY(110%)',
+      scrimOpa: s.sheet ? 1 : 0,
+      scrimPe: s.sheet ? 'auto' : 'none',
+
+      onScroll: (e) => {
+        const el = e.currentTarget;
+        const max = el.scrollHeight - el.clientHeight;
+        this.setState({ scrollPct: max > 0 ? Math.min(1, el.scrollTop / max) : 0 });
+      },
+
+      isScroll, isPaged: !isScroll,
+      progressPct: (pct * 100).toFixed(1) + '%',
+      progressLabel: Math.round(pct * 100) + '% read',
+      timeLeft: minsLeft + ' min left',
+      page: s.page, pageTotal: this.pageTotal,
+      nextPage: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.setState(st => ({ page: Math.min(this.pageTotal, st.page + 1) })); },
+      prevPage: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.setState(st => ({ page: Math.max(1, st.page - 1) })); },
+
+      themeOpts, fontOpts, modeOpts, sizeDots,
+      l0bg: lg[0].bg, l0sh: lg[0].sh, l0fg: lg[0].fg, l0click: lg[0].click,
+      l1bg: lg[1].bg, l1sh: lg[1].sh, l1fg: lg[1].fg, l1click: lg[1].click,
+      l2bg: lg[2].bg, l2sh: lg[2].sh, l2fg: lg[2].fg, l2click: lg[2].click,
+      sizeUp: () => this.setState(st => ({ sizeIdx: Math.min(this.sizes.length - 1, st.sizeIdx + 1) })),
+      sizeDown: () => this.setState(st => ({ sizeIdx: Math.max(0, st.sizeIdx - 1) })),
+
+      uBg: u.bg, uTrack: u.track, uFg: u.fg, uSub: u.sub, uHair: u.hair,
+    };
+  }
+}
+</script>
+</body>
+</html>
