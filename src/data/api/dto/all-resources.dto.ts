@@ -14,6 +14,12 @@ export interface AllResourcesItemDto {
   readonly link: string;
   readonly excerpt: string;
   readonly featured_image_url: string | null;
+  /** Present on the unified feed; carries resized variants (notably `medium`, ~300px). */
+  readonly better_featured_image?: {
+    readonly media_details?: {
+      readonly sizes?: Record<string, { readonly source_url?: string } | undefined>;
+    };
+  } | null;
   readonly people_display?: readonly string[];
   /** Video URL (YouTube) when present; sparse across the feed. */
   readonly videoEmbed?: string | null;

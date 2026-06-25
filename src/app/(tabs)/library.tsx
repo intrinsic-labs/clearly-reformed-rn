@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -11,39 +11,26 @@ import { CONTENT_TYPE_LABEL } from '@/presentation/components/content-icons';
 import { useResourceFeed } from '@/presentation/hooks/queries/use-resource-feed';
 import { Colors, Spacing, Type } from '@/presentation/theme';
 
-/** Client-side filtering: keep paging until a filter shows a few matches, but cap the
- * auto-paging so a sparse type can't quietly pull the whole feed. */
-const MIN_FILTERED = 8;
-const MAX_AUTO_PAGES = 12;
-
 export default function LibraryScreen() {
-  const { data, isLoading, isError, refetch, isRefetching, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useResourceFeed();
   const [filter, setFilter] = useState<ContentFilter>('all');
+  const isAll = filter === 'all';
 
-  const allItems = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data]);
-  const filtered = useMemo(
-    () => (filter === 'all' ? allItems : allItems.filter((item) => item.type === filter)),
-    [allItems, filter],
-  );
+  // Each filter reads its own paginated endpoint, so the infinite scroll knows its end.
+  const { data, isLoading, isError, refetch, isRefetching, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useResourceFeed(isAll ? undefined : filter);
 
-  const showFeatured = filter === 'all' && filtered.length > 0;
-  const featured = showFeatured ? filtered[0] : null;
-  const listItems = showFeatured ? filtered.slice(1) : filtered;
+  const items = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data]);
   const totalItems = data?.pages[0]?.totalItems ?? 0;
+
+  // On the unified feed, lift the newest item into the Featured hero.
+  const featured = isAll && items.length > 0 ? items[0] : null;
+  const listItems = featured ? items.slice(1) : items;
 
   const loadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // When a filter is active, the loaded window may hold few matches — keep paging,
-  // but stop after MAX_AUTO_PAGES so a sparse type doesn't silently load everything.
-  const pagesLoaded = data?.pages.length ?? 0;
-  useEffect(() => {
-    if (filter !== 'all' && filtered.length < MIN_FILTERED && pagesLoaded < MAX_AUTO_PAGES) loadMore();
-  }, [filter, filtered.length, pagesLoaded, loadMore]);
-
-  const sectionTitle = filter === 'all' ? 'All Resources' : `${CONTENT_TYPE_LABEL[filter]}s`;
+  const sectionTitle = isAll ? 'All Resources' : `${CONTENT_TYPE_LABEL[filter]}s`;
 
   const keyExtractor = useCallback((item: Resource) => `${item.type}-${item.id}`, []);
   const renderItem = useCallback(({ item }: { item: Resource }) => <ResourceCard resource={item} />, []);
@@ -59,7 +46,7 @@ export default function LibraryScreen() {
       <View style={styles.sectionHeader}>
         <Text style={styles.eyebrow}>{sectionTitle}</Text>
         <Text style={styles.sortLabel}>
-          {filter === 'all' ? `${totalItems} · ` : ''}
+          {totalItems > 0 ? `${totalItems} · ` : ''}
           <Text style={styles.sortAccent}>Newest</Text>
         </Text>
       </View>

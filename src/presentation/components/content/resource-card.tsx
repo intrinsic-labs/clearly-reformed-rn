@@ -18,7 +18,7 @@ export function ResourceCard({ resource, onPress }: { resource: Resource; onPres
     <Pressable style={styles.row} onPress={onPress}>
       <View style={styles.thumbWrap}>
         <Image
-          source={resource.imageUrl ? { uri: resource.imageUrl } : undefined}
+          source={resource.thumbnailUrl ? { uri: resource.thumbnailUrl } : undefined}
           style={styles.thumb}
           contentFit="cover"
           transition={150}

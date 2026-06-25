@@ -31,8 +31,10 @@ export interface Resource {
   readonly slug: string;
   /** Short, plain-text summary suitable for a card. */
   readonly excerpt: string;
-  /** Resolved featured image URL, or null when absent. */
+  /** Full-resolution featured image URL (for heroes/detail), or null when absent. */
   readonly imageUrl: string | null;
+  /** Smaller image variant for list thumbnails; falls back to the full image. */
+  readonly thumbnailUrl: string | null;
   /** Human display date as provided by the source, e.g. "June 23, 2026". */
   readonly displayDate: string;
   /** Author/speaker display names. */

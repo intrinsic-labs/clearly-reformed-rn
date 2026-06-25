@@ -44,7 +44,13 @@ function stripHtml(text: string): string {
   return text.replace(/<[^>]*>/g, '').trim();
 }
 
-/** Map a raw `all-resources` item onto the domain `Resource` vocabulary. */
+/** Pick a smaller image variant for thumbnails (only `medium` is actually resized). */
+function thumbnailFor(dto: AllResourcesItemDto): string | null {
+  const medium = dto.better_featured_image?.media_details?.sizes?.medium?.source_url;
+  return medium || dto.featured_image_url || null;
+}
+
+/** Map a raw `all-resources` / per-type feed item onto the domain `Resource` vocabulary. */
 export function mapResource(dto: AllResourcesItemDto): Resource {
   const scriptureRef = dto.acf?.scriptureReference?.trim();
   return {
@@ -54,6 +60,7 @@ export function mapResource(dto: AllResourcesItemDto): Resource {
     slug: dto.slug,
     excerpt: decodeEntities(stripHtml(dto.excerpt)),
     imageUrl: dto.featured_image_url || null,
+    thumbnailUrl: thumbnailFor(dto),
     displayDate: dto.date,
     people: dto.people_display ?? [],
     link: dto.link,
