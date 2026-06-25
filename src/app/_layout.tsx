@@ -5,10 +5,15 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { Colors, Fonts } from '@/presentation/theme';
+import { createContainer } from '@/composition/container';
+import { AppProviders } from '@/presentation/providers/app-providers';
 import { useAppFonts } from '@/presentation/hooks/use-app-fonts';
+import { Colors, Fonts } from '@/presentation/theme';
 
 SplashScreen.preventAutoHideAsync();
+
+// Composition root: wire concrete implementations once at app startup.
+const container = createContainer();
 
 /** Light-first navigation theme keyed to the cream palette (no white flash on transitions). */
 const AppTheme = {
@@ -48,12 +53,14 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <ThemeProvider value={AppTheme}>
-          <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
-            <Stack.Screen name="(tabs)" />
-          </Stack>
-        </ThemeProvider>
+        <AppProviders useCases={container.useCases}>
+          <ThemeProvider value={AppTheme}>
+            <StatusBar style="dark" />
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
+              <Stack.Screen name="(tabs)" />
+            </Stack>
+          </ThemeProvider>
+        </AppProviders>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

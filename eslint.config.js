@@ -23,6 +23,7 @@ module.exports = [
       // classify individual files here, leaving rules silently inert).
       'boundaries/elements': [
         { type: 'app', pattern: 'src/app/**/*', mode: 'file' },
+        { type: 'composition', pattern: 'src/composition/**/*', mode: 'file' },
         { type: 'presentation', pattern: 'src/presentation/**/*', mode: 'file' },
         { type: 'data', pattern: 'src/data/**/*', mode: 'file' },
         { type: 'application', pattern: 'src/application/**/*', mode: 'file' },
@@ -40,7 +41,9 @@ module.exports = [
             { from: 'application', allow: ['domain', 'application'] },
             { from: 'data', allow: ['domain', 'application', 'data'] },
             { from: 'presentation', allow: ['domain', 'application', 'presentation'] },
-            { from: 'app', allow: ['domain', 'application', 'data', 'presentation', 'app'] },
+            // The composition root wires concretes — it may see every layer.
+            { from: 'composition', allow: ['domain', 'application', 'data', 'composition'] },
+            { from: 'app', allow: ['domain', 'application', 'data', 'presentation', 'composition', 'app'] },
           ],
         },
       ],
