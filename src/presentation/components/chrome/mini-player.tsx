@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { PauseIcon, PlayIcon, SkipBackIcon } from '@/components/icons';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { PauseIcon, PlayIcon, SkipBackIcon } from '@/presentation/components/icons';
+import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
 
 /**
  * Persistent mini-player that sits directly above the tab bar as one chrome unit.

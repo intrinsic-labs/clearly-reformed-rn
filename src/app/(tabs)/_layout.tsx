@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 
-import { TabBar } from '@/components/chrome/tab-bar';
+import { TabBar } from '@/presentation/components/chrome/tab-bar';
 
 export default function TabsLayout() {
   return (

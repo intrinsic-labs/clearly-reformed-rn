@@ -1,4 +1,4 @@
-import { ScreenPlaceholder } from '@/components/screen-placeholder';
+import { ScreenPlaceholder } from '@/presentation/components/screen-placeholder';
 
 export default function NotebookScreen() {
   return (

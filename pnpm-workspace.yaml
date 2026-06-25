@@ -1,0 +1,5 @@
+# unrs-resolver (via eslint-import-resolver-typescript) ships prebuilt napi binaries;
+# its native build step is unnecessary, so we decline it. This also silences pnpm's
+# "ignored build scripts" prompt.
+allowBuilds:
+  unrs-resolver: false

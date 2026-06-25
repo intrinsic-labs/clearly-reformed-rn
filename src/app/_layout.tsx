@@ -5,8 +5,8 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { Colors, Fonts } from '@/constants/theme';
-import { useAppFonts } from '@/hooks/use-app-fonts';
+import { Colors, Fonts } from '@/presentation/theme';
+import { useAppFonts } from '@/presentation/hooks/use-app-fonts';
 
 SplashScreen.preventAutoHideAsync();
 

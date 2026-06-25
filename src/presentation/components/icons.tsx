@@ -1,6 +1,6 @@
 import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
 
-import { Colors } from '@/constants/theme';
+import { Colors } from '@/presentation/theme';
 
 export type IconProps = {
   size?: number;

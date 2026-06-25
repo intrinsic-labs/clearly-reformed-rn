@@ -1,8 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AppHeader } from '@/components/chrome/app-header';
-import { Colors, Spacing, Type } from '@/constants/theme';
+import { AppHeader } from '@/presentation/components/chrome/app-header';
+import { Colors, Spacing, Type } from '@/presentation/theme';
 
 /**
  * Home shell — shared app header over a placeholder body. The magazine feed

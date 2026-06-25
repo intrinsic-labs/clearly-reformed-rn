@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { LogoMark, SearchIcon } from '@/components/icons';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { LogoMark, SearchIcon } from '@/presentation/components/icons';
+import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
 
 /**
  * Shared top app bar used on every tab: the gold Clearly Reformed mark + a

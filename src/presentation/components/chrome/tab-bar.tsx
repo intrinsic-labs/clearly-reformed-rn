@@ -3,9 +3,9 @@ import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { MiniPlayer } from '@/components/chrome/mini-player';
-import { HomeIcon, IconProps, LibraryIcon, NotebookIcon, SearchIcon } from '@/components/icons';
-import { Colors, Fonts, Spacing } from '@/constants/theme';
+import { MiniPlayer } from '@/presentation/components/chrome/mini-player';
+import { HomeIcon, IconProps, LibraryIcon, NotebookIcon, SearchIcon } from '@/presentation/components/icons';
+import { Colors, Fonts, Spacing } from '@/presentation/theme';
 
 /** The props expo-router hands its `tabBar` render prop (uses the vendored react-navigation types). */
 type TabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
