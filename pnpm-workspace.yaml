@@ -3,3 +3,13 @@
 # "ignored build scripts" prompt.
 allowBuilds:
   unrs-resolver: false
+
+minimumReleaseAgeExclude:
+  - expo-notifications@56.0.20
+
+# expo-notifications 56.0.20 → @expo/image-utils@0.10.2 asks for @expo/require-utils@^56.1.4,
+# which upstream only published as a canary (stable latest is 56.1.3). Pin the stable release
+# until Expo publishes a non-canary 56.1.4.
+overrides:
+  "@expo/image-utils>@expo/require-utils": 56.1.3
+  "@expo/env@~2.3.1": 2.3.0

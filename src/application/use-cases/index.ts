@@ -1,12 +1,22 @@
-import type { GetResourceContent } from '@/application/use-cases/get-resource-content';
-import type { GetResourceFeed } from '@/application/use-cases/get-resource-feed';
+import type { ContentUseCases } from '@/application/use-cases/content';
+import type { DailyUseCases } from '@/application/use-cases/daily';
+import type { NotebookUseCases } from '@/application/use-cases/notebook';
+import type { PodcastUseCases } from '@/application/use-cases/podcast';
+import type { ProgressUseCases } from '@/application/use-cases/progress';
+import type { SavedUseCases } from '@/application/use-cases/saved';
+import type { SearchUseCases } from '@/application/use-cases/search';
 
 /**
- * The application's use cases as a single injectable bag. The composition root
- * builds it (wiring concrete repositories); the presentation layer consumes it
- * through a DI context. Grows one entry per use case as features land.
+ * Everything the presentation layer may do, grouped by feature. The composition
+ * root builds this once with concrete repositories; UI reaches it through the
+ * use-cases context and never sees the data layer.
  */
 export interface UseCases {
-  readonly getResourceFeed: GetResourceFeed;
-  readonly getResourceContent: GetResourceContent;
+  readonly content: ContentUseCases;
+  readonly notebook: NotebookUseCases;
+  readonly progress: ProgressUseCases;
+  readonly saved: SavedUseCases;
+  readonly podcast: PodcastUseCases;
+  readonly search: SearchUseCases;
+  readonly daily: DailyUseCases;
 }

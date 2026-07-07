@@ -11,11 +11,11 @@ const PER_PAGE = 20;
  * so `hasNextPage` reflects the true end of that type (no client-side filtering).
  */
 export function useResourceFeed(type?: ContentType) {
-  const { getResourceFeed } = useUseCases();
+  const { content } = useUseCases();
 
   return useInfiniteQuery({
     queryKey: ['resource-feed', type ?? 'all'],
-    queryFn: ({ pageParam }) => getResourceFeed({ page: pageParam, perPage: PER_PAGE, type }),
+    queryFn: ({ pageParam }) => content.getFeed({ page: pageParam, perPage: PER_PAGE, type }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => (lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined),
   });

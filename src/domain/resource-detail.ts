@@ -15,4 +15,9 @@ export interface ResourceDetail extends Resource {
   readonly audioUrl: string | null;
   /** Original/canonical source URL when the piece is a cross-post; otherwise null. */
   readonly sourceUrl: string | null;
+  /**
+   * Podcast episode number (`acf["podcast_episode_#"]`) — matches the RSS feed's
+   * `itunes:episode`, which is how podcast audio is resolved. Null for other types.
+   */
+  readonly episodeNumber: number | null;
 }

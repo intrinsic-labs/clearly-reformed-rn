@@ -25,6 +25,8 @@ export interface ResourceDetailDto {
   readonly acf?: {
     readonly audioFile?: string;
     readonly podcast_mp3?: string;
+    /** Podcast episode number — matches the RSS feed's `itunes:episode`. */
+    readonly 'podcast_episode_#'?: number | string;
     readonly video_embed?: string;
     /** Sermons carry the video URL here instead of `video_embed`. */
     readonly video?: string;

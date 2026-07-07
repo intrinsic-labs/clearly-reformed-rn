@@ -27,5 +27,12 @@ export function mapResourceDetail(dto: ResourceDetailDto): ResourceDetail {
     bodyHtml: dto.content?.rendered ?? '',
     audioUrl,
     sourceUrl: acf?.source_url || null,
+    episodeNumber: toEpisodeNumber(acf?.['podcast_episode_#']),
   };
+}
+
+function toEpisodeNumber(value: number | string | undefined): number | null {
+  if (value == null || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }

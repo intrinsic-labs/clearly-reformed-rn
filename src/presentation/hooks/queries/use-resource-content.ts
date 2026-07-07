@@ -9,11 +9,11 @@ import { useUseCases } from '@/presentation/providers/use-cases-context';
  * stable, so it caches generously.
  */
 export function useResourceContent(type: ContentType | undefined, slug: string | undefined) {
-  const { getResourceContent } = useUseCases();
+  const { content } = useUseCases();
 
   return useQuery({
     queryKey: ['resource-content', type, slug],
-    queryFn: () => getResourceContent({ type: type!, slug: slug! }),
+    queryFn: () => content.getDetail({ type: type!, slug: slug! }),
     enabled: Boolean(type && slug),
     staleTime: 60 * 60 * 1000,
   });
