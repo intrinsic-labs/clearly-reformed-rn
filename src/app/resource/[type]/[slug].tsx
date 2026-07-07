@@ -27,6 +27,7 @@ import { formatTime, shortDate } from '@/presentation/lib/format';
 import { htmlToBlocks, readingTimeMinutes } from '@/presentation/lib/html';
 import { parseYouTubeId } from '@/presentation/lib/video';
 import { usePlayer } from '@/presentation/playback/use-player';
+import { ReaderScreen } from '@/presentation/reader/reader-screen';
 import { Colors, Fonts, Reader, Spacing, Type } from '@/presentation/theme';
 
 const KNOWN_TYPES = new Set<ContentType>([
@@ -85,6 +86,12 @@ export default function ResourceDetailScreen() {
     const max = contentSize.height - layoutMeasurement.height;
     progress.setValue(max > 0 ? Math.min(1, Math.max(0, contentOffset.y / max)) : 0);
   };
+
+  // Long-form written content gets the immersive Reader; media types keep the
+  // detail layout below (hero, play, inline video, show notes).
+  if (data && (data.type === 'article' || data.type === 'book') && data.bodyHtml.trim()) {
+    return <ReaderScreen detail={data} />;
+  }
 
   const sectionLabel = type ? `${CONTENT_TYPE_LABEL[type]}s` : 'Reading';
   const byline = data
