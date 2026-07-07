@@ -44,6 +44,10 @@ const FILTERS: readonly { key: FeedFilter; label: string }[] = [
 
 type FeedItem = NotebookEntry | { readonly kind: 'saved'; readonly saved: SavedItem };
 
+function feedTime(item: FeedItem): number {
+  return item.kind === 'saved' ? item.saved.savedAt : item.createdAt;
+}
+
 /**
  * The Notebook — the cross-media personal study layer. One feed of highlights,
  * clips, and notes with filter chips, FTS search, tap-through to sources, and a
@@ -66,11 +70,14 @@ export default function NotebookScreen() {
   const openResource = useOpenResource();
   const { playClip, pendingId } = usePlayClip();
 
+  const savedAsFeed: readonly FeedItem[] = (savedList.data ?? []).map((saved) => ({ kind: 'saved' as const, saved }));
   const entries: readonly FeedItem[] = searching
     ? (found.data ?? [])
     : filter === 'saved'
-      ? (savedList.data ?? []).map((saved) => ({ kind: 'saved' as const, saved }))
-      : (list.data ?? []);
+      ? savedAsFeed
+      : filter === 'all'
+        ? [...(list.data ?? []), ...savedAsFeed].sort((a, b) => feedTime(b) - feedTime(a))
+        : (list.data ?? []);
 
   const confirmDelete = useCallback(
     (entry: NotebookEntry) => {

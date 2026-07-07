@@ -2,7 +2,7 @@ import TrackPlayer from '@javascriptcommon/react-native-track-player';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Pressable, Share, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,7 +21,7 @@ import {
 } from '@/presentation/components/icons';
 import { CONTENT_TYPE_LABEL } from '@/presentation/components/content-icons';
 import { useDownload, useDownloadMutations } from '@/presentation/hooks/queries/use-downloads';
-import { useNotebookMutations } from '@/presentation/hooks/queries/use-notebook';
+import { useNotebook, useNotebookMutations } from '@/presentation/hooks/queries/use-notebook';
 import { useIsSaved, useToggleSaved } from '@/presentation/hooks/queries/use-saved';
 import { formatRate, formatTime } from '@/presentation/lib/format';
 import { cyclePlaybackRate, PLAYBACK_RATES } from '@/presentation/playback/player';
@@ -66,6 +66,15 @@ export default function PlayerScreen() {
   useEffect(() => () => {
     if (clipTimer.current) clearTimeout(clipTimer.current);
   }, []);
+
+  // Moments you've clipped in this episode, as subtle dots on the seek bar.
+  const clips = useNotebook('clips');
+  const clipMarkers = useMemo(() => {
+    if (!playable || duration <= 0) return [];
+    return (clips.data ?? [])
+      .filter((entry) => entry.kind === 'clip' && entry.resource.key === playable.resource.key)
+      .map((entry) => Math.min(1, Math.max(0, (entry.kind === 'clip' ? entry.startSec : 0) / duration)));
+  }, [clips.data, playable, duration]);
 
   // The player hooks resolve asynchronously, so `playable` is briefly null on every
   // open — only close if there's genuinely no session after a grace period.
@@ -178,7 +187,7 @@ export default function PlayerScreen() {
         </View>
 
         {/* Scrubber */}
-        <SeekBar position={position} duration={duration} />
+        <SeekBar position={position} duration={duration} markers={clipMarkers} />
 
         {/* Transport */}
         <View style={styles.transport}>
@@ -236,13 +245,37 @@ export default function PlayerScreen() {
   );
 }
 
-/** Touch-driven seek bar: drag previews the target, release commits the seek. */
-function SeekBar({ position, duration }: { position: number; duration: number }) {
+/**
+ * Touch-driven seek bar: drag previews the target, release commits the seek and
+ * holds the bar at the target until playback catches up (no snap-back flicker).
+ * `markers` are clipped moments, drawn as subtle dots on the track.
+ */
+function SeekBar({
+  position,
+  duration,
+  markers = [],
+}: {
+  position: number;
+  duration: number;
+  markers?: readonly number[];
+}) {
   const [width, setWidth] = useState(0);
   const [scrubFraction, setScrubFraction] = useState<number | null>(null);
+  const [pendingFraction, setPendingFraction] = useState<number | null>(null);
 
-  const fraction = scrubFraction ?? (duration > 0 ? Math.min(1, position / duration) : 0);
-  const shownPosition = scrubFraction != null ? scrubFraction * duration : position;
+  // Time-cap the hold in case the seek silently fails; the normal release below
+  // is derived from playback catching up, not from state writes.
+  useEffect(() => {
+    if (pendingFraction == null) return;
+    const timer = setTimeout(() => setPendingFraction(null), 3000);
+    return () => clearTimeout(timer);
+  }, [pendingFraction]);
+
+  const caughtUp =
+    pendingFraction != null && duration > 0 && Math.abs(position - pendingFraction * duration) < 1.5;
+  const heldFraction = scrubFraction ?? (pendingFraction != null && !caughtUp ? pendingFraction : null);
+  const fraction = heldFraction ?? (duration > 0 ? Math.min(1, position / duration) : 0);
+  const shownPosition = heldFraction != null ? heldFraction * duration : position;
 
   const fractionFromEvent = (event: GestureResponderEvent) =>
     width > 0 ? Math.min(1, Math.max(0, event.nativeEvent.locationX / width)) : 0;
@@ -259,11 +292,17 @@ function SeekBar({ position, duration }: { position: number; duration: number })
         onResponderRelease={(e) => {
           const target = fractionFromEvent(e);
           setScrubFraction(null);
-          if (duration > 0) TrackPlayer.seekTo(target * duration);
+          if (duration > 0) {
+            setPendingFraction(target);
+            TrackPlayer.seekTo(target * duration);
+          }
         }}
         onResponderTerminate={() => setScrubFraction(null)}>
         <View style={styles.seekTrack} />
         <View style={[styles.seekFill, { width: `${fraction * 100}%` }]} />
+        {markers.map((marker, index) => (
+          <View key={index} style={[styles.seekMarker, { left: `${marker * 100}%` }]} />
+        ))}
         <View style={[styles.seekThumb, { left: `${fraction * 100}%` }]} />
       </View>
       <View style={styles.timesRow}>
@@ -315,14 +354,19 @@ const styles = StyleSheet.create({
     color: P.icon,
     marginTop: 2,
   },
+  // Flexible: shrinks on short screens (SE-class) instead of pushing the
+  // transport/actions off the bottom; caps at the mockup size on tall ones.
   artworkWrap: {
     paddingHorizontal: 30,
-    paddingTop: 26,
-    alignItems: 'center',
+    paddingTop: 18,
+    flexGrow: 4,
+    flexShrink: 1,
+    minHeight: 150,
+    maxHeight: 320,
   },
   artwork: {
     width: '100%',
-    height: 286,
+    flex: 1,
     borderRadius: 22,
     borderWidth: 1,
     borderColor: 'rgba(241,235,221,0.06)',
@@ -385,6 +429,15 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: Colors.goldBright,
   },
+  seekMarker: {
+    position: 'absolute',
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    marginLeft: -2.5,
+    top: 10.5,
+    backgroundColor: 'rgba(241,235,221,0.55)',
+  },
   seekThumb: {
     position: 'absolute',
     width: 14,
@@ -417,18 +470,22 @@ const styles = StyleSheet.create({
   },
   transportSide: {
     width: 46,
+    height: 44,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   speedLabel: {
     fontFamily: Fonts.sansSemiBold,
     fontSize: 13,
     color: Colors.goldBright,
   },
+  // Absolutely positioned so appearing/disappearing never nudges the moon icon.
   sleepLabel: {
+    position: 'absolute',
+    bottom: -6,
     fontFamily: Fonts.sansSemiBold,
     fontSize: 9.5,
     color: Colors.goldBright,
-    marginTop: 2,
   },
   playButton: {
     width: 72,
@@ -443,7 +500,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
   },
   spacer: {
-    flex: 1,
+    flexGrow: 1,
+    minHeight: 10,
   },
   actionsPanel: {
     marginHorizontal: 18,

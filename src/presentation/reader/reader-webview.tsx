@@ -42,6 +42,8 @@ interface Props {
   /** Restore position (character offset) and existing highlights, sent at page-ready. */
   readonly initialCharOffset: number;
   readonly initialHighlights: readonly HighlightEntry[];
+  /** Open scrolled to this highlight's mark (wins over the character offset). */
+  readonly targetHighlightId?: string;
   readonly onProgress: (event: ReaderProgressEvent) => void;
   readonly onLayout: (info: { totalChars: number; pageCount: number }) => void;
   readonly onTap: () => void;
@@ -59,8 +61,16 @@ export const ReaderWebView = forwardRef<ReaderWebViewHandle, Props>(function Rea
   const webViewRef = useRef<WebView>(null);
   // The init payload is read at 'ready' time; keep the freshest values in refs so
   // the memoized HTML never rebuilds for them.
-  const initRef = useRef({ charOffset: props.initialCharOffset, highlights: props.initialHighlights });
-  initRef.current = { charOffset: props.initialCharOffset, highlights: props.initialHighlights };
+  const initRef = useRef({
+    charOffset: props.initialCharOffset,
+    highlights: props.initialHighlights,
+    targetHighlightId: props.targetHighlightId,
+  });
+  initRef.current = {
+    charOffset: props.initialCharOffset,
+    highlights: props.initialHighlights,
+    targetHighlightId: props.targetHighlightId,
+  };
 
   const html = useMemo(
     () => buildReaderHtml(props.bodyHtml, props.header, props.insets, props.initialPrefs),
@@ -104,9 +114,10 @@ export const ReaderWebView = forwardRef<ReaderWebViewHandle, Props>(function Rea
 
     switch (message.type) {
       case 'ready': {
-        const { charOffset, highlights } = initRef.current;
+        const { charOffset, highlights, targetHighlightId } = initRef.current;
         const payload = {
           charOffset,
+          targetHighlightId: targetHighlightId ?? null,
           highlights: highlights.map((h) => ({
             id: h.id,
             quote: h.quote,

@@ -72,8 +72,8 @@ export function buildReaderHtml(bodyHtml: string, header: ReaderHeaderInfo, inse
   --fsize: ${initial.fontSizePx}px;
   --lheight: ${initial.lineHeight};
   --hpad: 30px;
-  --vpad-top: ${Math.round(insets.top + 64)}px;
-  --vpad-bottom: ${Math.round(insets.bottom + 96)}px;
+  --vpad-top: ${Math.round(insets.top + 36)}px;
+  --vpad-bottom: ${Math.round(insets.bottom + 44)}px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { background: var(--bg); overscroll-behavior: none; }
@@ -263,11 +263,20 @@ mark.hl {
 
   /* ---------- layout / mode ---------- */
   function recomputePages() {
-    if (!paged) { state.pageCount = 1; state.page = 0; return; }
+    if (!paged) {
+      state.pageCount = 1;
+      state.page = 0;
+      content.style.width = '';
+      return;
+    }
     pageStep = window.innerWidth;
-    state.pageCount = Math.max(1, Math.round(content.scrollWidth / pageStep));
-    // scrollWidth of the column box can under-report; probe root's own extent too.
-    state.pageCount = Math.max(state.pageCount, Math.max(1, Math.round(root.scrollWidth / pageStep)));
+    // Measure the natural column extent, then force the content box to an exact
+    // page multiple: WebKit drops trailing padding in horizontal overflow, which
+    // otherwise leaves the last snap position short and the final page shifted.
+    content.style.width = '';
+    var natural = Math.max(content.scrollWidth, root.scrollWidth);
+    state.pageCount = Math.max(1, Math.ceil((natural - 8) / pageStep));
+    content.style.width = state.pageCount * pageStep + 'px';
   }
   function goToOffset(offset) {
     if (offset == null || offset <= 0) {
@@ -293,6 +302,38 @@ mark.hl {
       post('layout', { totalChars: state.totalChars, pageCount: state.pageCount });
     });
   }
+
+  /* ---------- initial target (restore position / jump to a highlight) ----------
+     Kept until the reader is touched, and re-applied when late layout shifts land
+     (font decode, image loads) so the target can't drift back to the top. */
+  var initialTarget = null;
+  function goToHighlight(id) {
+    var mark = document.querySelector('mark[data-id="' + id + '"]');
+    if (!mark) return false;
+    var rect = mark.getBoundingClientRect();
+    if (paged) {
+      var absLeft = rect.left + root.scrollLeft;
+      var page = Math.max(0, Math.floor((absLeft - 30) / pageStep));
+      root.scrollLeft = Math.min(page, state.pageCount - 1) * pageStep;
+    } else {
+      var vpadTop = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vpad-top')) || 80;
+      root.scrollTop = Math.max(0, rect.top + root.scrollTop - vpadTop - 12);
+    }
+    return true;
+  }
+  function applyInitialTarget() {
+    if (!initialTarget) return;
+    if (initialTarget.highlightId && goToHighlight(initialTarget.highlightId)) return;
+    if (initialTarget.charOffset) goToOffset(initialTarget.charOffset);
+  }
+  function reapplyTargetAfterShift() {
+    requestAnimationFrame(function () {
+      recomputePages();
+      applyInitialTarget();
+      report();
+    });
+  }
+  document.addEventListener('touchstart', function () { initialTarget = null; }, { passive: true, capture: true });
 
   /* ---------- paged-mode gestures (finger-tracking slide + snap) ---------- */
   var drag = null;
@@ -491,8 +532,12 @@ mark.hl {
       (payload.highlights || []).forEach(paintHighlight);
       recomputePages();
       state.ready = true;
-      if (payload.charOffset) goToOffset(payload.charOffset);
+      initialTarget = { highlightId: payload.targetHighlightId || null, charOffset: payload.charOffset || 0 };
+      applyInitialTarget();
       relayout(null);
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(reapplyTargetAfterShift);
+      }
     },
     applyPrefs: function (prefs) {
       var offset = firstVisibleOffset();
@@ -521,12 +566,16 @@ mark.hl {
     goPage: goPage,
   };
 
-  /* Images resize the flow as they load — recompute, keeping position. */
+  /* Images resize the flow as they load — recompute, keeping position (or the
+     still-pending initial target, which wins until the user touches). */
   Array.prototype.forEach.call(document.images, function (img) {
     if (img.complete) return;
     img.addEventListener('load', function () {
-      var offset = firstVisibleOffset();
-      relayout(offset);
+      if (initialTarget) {
+        reapplyTargetAfterShift();
+      } else {
+        relayout(firstVisibleOffset());
+      }
     });
   });
 

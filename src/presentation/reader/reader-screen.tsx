@@ -209,6 +209,7 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
         initialPrefs={webPrefs}
         initialCharOffset={initialCharOffset}
         initialHighlights={highlights.data ?? []}
+        targetHighlightId={highlightId}
         onProgress={onProgress}
         onLayout={(info) => {
           latest.current = { charOffset: latest.current?.charOffset ?? 0, totalChars: info.totalChars };
