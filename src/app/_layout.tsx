@@ -58,6 +58,7 @@ export default function RootLayout() {
             <StatusBar style="dark" />
             <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
               <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="resource/[type]/[slug]" options={{ animation: 'slide_from_right' }} />
             </Stack>
           </ThemeProvider>
         </AppProviders>

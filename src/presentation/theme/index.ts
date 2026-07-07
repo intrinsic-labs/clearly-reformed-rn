@@ -60,6 +60,24 @@ export const Colors = {
 export type ColorToken = keyof typeof Colors;
 
 /**
+ * Reader surface palette — the immersive reading view runs warmer and higher-contrast
+ * than the app chrome. This is the "Paper" theme from the Reader mockup; the full
+ * Reader slice will add the White/Sepia/Night variants on top of it.
+ */
+export const Reader = {
+  /** Reading background ("paper"). */
+  bg: '#F4EFE3',
+  /** Body + heading ink. */
+  fg: '#2A2419',
+  /** Byline / caption / secondary. */
+  sub: '#857A67',
+  /** Hairline divider. */
+  hair: '#E1D8C5',
+  /** Gold accent (drop cap, rules, quote bar). */
+  accent: Colors.gold,
+} as const;
+
+/**
  * Font family keys — must match the names registered in use-app-fonts.ts.
  * Flecha = editorial display serif; FlechaText = its text-optimized cut (body serif);
  * IBM Plex Sans = UI / labels / meta.

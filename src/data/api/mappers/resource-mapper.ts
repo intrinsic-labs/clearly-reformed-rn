@@ -19,12 +19,12 @@ const TYPE_MAP: Record<string, ContentType> = {
   event: 'event',
 };
 
-function toContentType(wpType: string): ContentType {
+export function toContentType(wpType: string): ContentType {
   return TYPE_MAP[wpType] ?? 'article';
 }
 
 /** Decode the handful of HTML entities WordPress leaves in `*.rendered` / excerpt text. */
-function decodeEntities(text: string): string {
+export function decodeEntities(text: string): string {
   return text
     .replace(/&#8217;|&#x2019;/g, '’')
     .replace(/&#8216;|&#x2018;/g, '‘')
@@ -40,7 +40,7 @@ function decodeEntities(text: string): string {
 }
 
 /** Strip any residual HTML tags (excerpts occasionally arrive wrapped). */
-function stripHtml(text: string): string {
+export function stripHtml(text: string): string {
   return text.replace(/<[^>]*>/g, '').trim();
 }
 

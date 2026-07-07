@@ -1,3 +1,4 @@
+import type { GetResourceContent } from '@/application/use-cases/get-resource-content';
 import type { GetResourceFeed } from '@/application/use-cases/get-resource-feed';
 
 /**
@@ -7,4 +8,5 @@ import type { GetResourceFeed } from '@/application/use-cases/get-resource-feed'
  */
 export interface UseCases {
   readonly getResourceFeed: GetResourceFeed;
+  readonly getResourceContent: GetResourceContent;
 }

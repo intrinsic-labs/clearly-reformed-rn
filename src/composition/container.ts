@@ -1,5 +1,7 @@
 import type { UseCases } from '@/application/use-cases';
+import { makeGetResourceContent } from '@/application/use-cases/get-resource-content';
 import { makeGetResourceFeed } from '@/application/use-cases/get-resource-feed';
+import { createWordPressResourceContentRepository } from '@/data/api/wordpress-resource-content-repository';
 import { createWordPressResourceRepository } from '@/data/api/wordpress-resource-repository';
 
 /**
@@ -10,9 +12,11 @@ import { createWordPressResourceRepository } from '@/data/api/wordpress-resource
  */
 export function createContainer(): { useCases: UseCases } {
   const resourceRepository = createWordPressResourceRepository();
+  const resourceContentRepository = createWordPressResourceContentRepository();
 
   const useCases: UseCases = {
     getResourceFeed: makeGetResourceFeed(resourceRepository),
+    getResourceContent: makeGetResourceContent(resourceContentRepository),
   };
 
   return { useCases };

@@ -8,7 +8,7 @@ const boundaries = require('eslint-plugin-boundaries');
 module.exports = [
   ...expoConfig,
   {
-    ignores: ['dist/*', 'ios/*', 'android/*', '.expo/*', 'node_modules/*', 'scripts/*'],
+    ignores: ['dist/*', 'ios/*', 'android/*', '.expo/*', 'node_modules/*', 'scripts/*', 'design/**'],
   },
   {
     files: ['src/**/*.{ts,tsx}'],

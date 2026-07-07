@@ -9,11 +9,13 @@ import { type ContentFilter, FilterChips } from '@/presentation/components/conte
 import { ResourceCard } from '@/presentation/components/content/resource-card';
 import { CONTENT_TYPE_LABEL } from '@/presentation/components/content-icons';
 import { useResourceFeed } from '@/presentation/hooks/queries/use-resource-feed';
+import { useOpenResource } from '@/presentation/hooks/use-open-resource';
 import { Colors, Spacing, Type } from '@/presentation/theme';
 
 export default function LibraryScreen() {
   const [filter, setFilter] = useState<ContentFilter>('all');
   const isAll = filter === 'all';
+  const openResource = useOpenResource();
 
   // Each filter reads its own paginated endpoint, so the infinite scroll knows its end.
   const { data, isLoading, isError, refetch, isRefetching, fetchNextPage, hasNextPage, isFetchingNextPage } =
@@ -33,14 +35,17 @@ export default function LibraryScreen() {
   const sectionTitle = isAll ? 'All Resources' : `${CONTENT_TYPE_LABEL[filter]}s`;
 
   const keyExtractor = useCallback((item: Resource) => `${item.type}-${item.id}`, []);
-  const renderItem = useCallback(({ item }: { item: Resource }) => <ResourceCard resource={item} />, []);
+  const renderItem = useCallback(
+    ({ item }: { item: Resource }) => <ResourceCard resource={item} onPress={() => openResource(item)} />,
+    [openResource],
+  );
 
   const header = (
     <View>
       {featured ? (
         <View style={styles.featuredSection}>
           <Text style={styles.eyebrow}>Featured</Text>
-          <FeaturedCard resource={featured} />
+          <FeaturedCard resource={featured} onPress={() => openResource(featured)} />
         </View>
       ) : null}
       <View style={styles.sectionHeader}>

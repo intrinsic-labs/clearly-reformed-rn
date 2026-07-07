@@ -72,6 +72,15 @@ export function LogoMark({ size = 30, color = '#CD8A11' }: IconProps) {
   );
 }
 
+/** Back chevron (reader top bar). */
+export function ChevronLeftIcon({ size = 22, color = Colors.ink, weight = 1.8 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M15 5l-7 7 7 7" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 /** Filled play triangle (mini-player / hero). */
 export function PlayIcon({ size = 16, color = Colors.ink }: IconProps) {
   return (
