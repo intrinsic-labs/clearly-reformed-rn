@@ -13,3 +13,6 @@ minimumReleaseAgeExclude:
 overrides:
   "@expo/image-utils>@expo/require-utils": 56.1.3
   "@expo/env@~2.3.1": 2.3.0
+
+patchedDependencies:
+  '@javascriptcommon/react-native-track-player': patches/@javascriptcommon__react-native-track-player.patch

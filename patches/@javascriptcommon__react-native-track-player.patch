@@ -1,0 +1,23 @@
+diff --git a/lib/src/hooks/useTrackPlayerEvents.js b/lib/src/hooks/useTrackPlayerEvents.js
+index 660272bdbf425e182895df35ff66cee07ffac606..a91bed9f41a178f4b854eab03d2a67e4da97c615 100644
+--- a/lib/src/hooks/useTrackPlayerEvents.js
++++ b/lib/src/hooks/useTrackPlayerEvents.js
+@@ -1,5 +1,6 @@
+ import { useEffect, useRef } from 'react';
+ import { addEventListener } from '../trackPlayer';
++import { Event } from '../constants';
+ /**
+  * Attaches a handler to the given TrackPlayer events and performs cleanup on unmount
+  * @param events - TrackPlayer events to subscribe to
+diff --git a/src/hooks/useTrackPlayerEvents.ts b/src/hooks/useTrackPlayerEvents.ts
+index 9415ea353f6a76b72379e1dc680e4c9db7c7f2a9..a031546a36a37aab1f913843c7ef72dd8b33a3c4 100644
+--- a/src/hooks/useTrackPlayerEvents.ts
++++ b/src/hooks/useTrackPlayerEvents.ts
+@@ -1,6 +1,7 @@
+ import { useEffect, useRef } from 'react';
+ 
+ import { addEventListener } from '../trackPlayer';
++import { Event } from '../constants';
+ import type { EventPayloadByEvent, EventPayloadByEventWithType } from '../interfaces';
+ 
+ /**
