@@ -1,7 +1,8 @@
-import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
+import { Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { Colors } from '@/presentation/theme';
+import { Colors, Fonts } from '@/presentation/theme';
 
 /**
  * UI icons. Professionally-drawn sets via @expo/vector-icons (Feather for line
@@ -37,21 +38,9 @@ export function SearchIcon({ size = DEFAULT_SIZE, color = Colors.ink }: IconProp
   return <Feather name="search" size={size} color={color} />;
 }
 
-/** Notebook — journal with bookmark and ruled lines (brand asset). */
-export function NotebookIcon({ size = DEFAULT_SIZE, color = Colors.ink, weight = 1.7 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M6 3.5h11.5a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6"
-        stroke={color}
-        strokeWidth={weight}
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-      <Path d="M6 3.5A2.5 2.5 0 0 0 6 20.5" stroke={color} strokeWidth={weight} strokeLinecap="round" />
-      <Path d="M14 3.5v6l-2-1.6-2 1.6v-6" stroke={color} strokeWidth={weight} strokeLinejoin="round" strokeLinecap="round" />
-    </Svg>
-  );
+/** Notebook — closed book with spine. */
+export function NotebookIcon({ size = DEFAULT_SIZE, color = Colors.ink }: IconProps) {
+  return <Feather name="book" size={size} color={color} />;
 }
 
 /** Clearly Reformed brand mark (gold). 32×32 source artwork. */
@@ -81,14 +70,31 @@ export function ChevronRightIcon({ size = 17, color = Colors.ink }: IconProps) {
   return <Feather name="chevron-right" size={size} color={color} />;
 }
 
+/**
+ * Numbered skip icons: a Feather rotate arrow with the seconds set in the app's
+ * own sans — lighter than the stock chunky-numeral glyphs.
+ */
+function SkipIcon({ size = 20, color = Colors.ink, seconds, back }: IconProps & { seconds: number; back: boolean }) {
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Feather name={back ? 'rotate-ccw' : 'rotate-cw'} size={size} color={color} style={{ position: 'absolute' }} />
+      <Text
+        allowFontScaling={false}
+        style={{ fontFamily: Fonts.sansSemiBold, fontSize: size * 0.34, color, marginTop: size * 0.12 }}>
+        {seconds}
+      </Text>
+    </View>
+  );
+}
+
 /** Skip forward 30s. */
 export function SkipForwardIcon({ size = 20, color = Colors.ink }: IconProps) {
-  return <MaterialCommunityIcons name="fast-forward-30" size={size} color={color} />;
+  return <SkipIcon size={size} color={color} seconds={30} back={false} />;
 }
 
 /** Skip back 15s. */
 export function SkipBackIcon({ size = 20, color = Colors.ink }: IconProps) {
-  return <MaterialCommunityIcons name="rewind-15" size={size} color={color} />;
+  return <SkipIcon size={size} color={color} seconds={15} back />;
 }
 
 /** Heart — outline or filled (save/like). */
@@ -148,7 +154,7 @@ export function TagIcon({ size = 19, color = Colors.ink }: IconProps) {
 
 /** Settings gear. */
 export function GearIcon({ size = 19, color = Colors.ink }: IconProps) {
-  return <Feather name="settings" size={size} color={color} />;
+  return <Ionicons name="settings-outline" size={size} color={color} />;
 }
 
 /** Filled play triangle (mini-player / hero). */

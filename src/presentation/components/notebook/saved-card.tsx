@@ -15,7 +15,7 @@ export function SavedCard({
 }: {
   item: SavedItem;
   onOpen: () => void;
-  onLongPress: () => void;
+  onLongPress?: () => void;
 }) {
   return (
     <NotebookCardShell

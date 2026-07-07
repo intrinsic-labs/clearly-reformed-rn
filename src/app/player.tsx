@@ -143,7 +143,9 @@ export default function PlayerScreen() {
     <View style={styles.screen}>
       <LinearGradient colors={['#2A352E', '#202821', '#1A211C']} locations={[0, 0.46, 1]} style={StyleSheet.absoluteFill} />
 
-      <View style={[styles.content, { paddingTop: insets.top + 6, paddingBottom: insets.bottom + 18 }]}>
+      {/* Modal sheets already sit below the status bar — a small fixed top pad
+          reads tighter than the full safe-area inset. */}
+      <View style={[styles.content, { paddingTop: 14, paddingBottom: insets.bottom + 18 }]}>
         {/* Header */}
         <View style={styles.header}>
           <Pressable style={styles.headerButton} onPress={() => router.back()} hitSlop={8} accessibilityLabel="Close player">
@@ -497,10 +499,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.goldBright,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.goldBright,
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 10 },
   },
   spacer: {
     flexGrow: 1,

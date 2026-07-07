@@ -22,7 +22,7 @@ export function ClipCard({
   entry: ClipEntry;
   onPlay: () => void;
   onOpenSource: () => void;
-  onLongPress: () => void;
+  onLongPress?: () => void;
 }) {
   const range = entry.endSec != null ? `${formatTime(entry.startSec)}–${formatTime(entry.endSec)}` : formatTime(entry.startSec);
   const label = `Clip · ${entry.mediaKind === 'video' ? 'Video' : CONTENT_TYPE_LABEL[entry.resource.type]}`;

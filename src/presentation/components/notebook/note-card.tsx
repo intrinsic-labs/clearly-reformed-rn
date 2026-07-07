@@ -17,7 +17,7 @@ export function NoteCard({
   entry: NoteEntry;
   onPress: () => void;
   onOpenSource: () => void;
-  onLongPress: () => void;
+  onLongPress?: () => void;
 }) {
   return (
     <NotebookCardShell

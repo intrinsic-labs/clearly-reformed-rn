@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   KeyboardAvoidingView,
@@ -13,16 +13,19 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CloseIcon, TagIcon } from '@/presentation/components/icons';
+import { ChevronLeftIcon, CloseIcon, TagIcon } from '@/presentation/components/icons';
 import { useNotebook, useNotebookMutations } from '@/presentation/hooks/queries/use-notebook';
 import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
 
 /**
- * Note editor — a full screen pushed onto the stack (writing isn't a quick,
- * throwaway act). Three uses, routed by params:
- *  - no params            → new standalone note
- *  - noteId (+fields)     → edit an existing note
- *  - highlightId (+note)  → attach/edit the annotation on a highlight
+ * The note screen — pushed onto the stack, with two modes: a clean reading view
+ * (long notes are their own little reading surface) and an edit mode toggled from
+ * the header. Edits save on Done and on back — nothing is lost silently.
+ *
+ * Routed by params:
+ *  - no params            → new standalone note (opens in edit mode)
+ *  - noteId (+fields)     → existing note (opens reading)
+ *  - highlightId (+note)  → annotation on a highlight
  *
  * Tags are managed from the tag button in the header: a sheet listing every tag
  * you've used before (tap to toggle) plus a field for new ones.
@@ -40,6 +43,7 @@ export default function NoteEditorScreen() {
   }>();
 
   const forHighlight = Boolean(params.highlightId);
+  const [noteId, setNoteId] = useState(params.noteId);
   const [title, setTitle] = useState(params.title ?? '');
   const [body, setBody] = useState(forHighlight ? (params.note ?? '') : (params.body ?? ''));
   const [tags, setTags] = useState<string[]>(() =>
@@ -49,28 +53,55 @@ export default function NoteEditorScreen() {
       .filter(Boolean),
   );
   const [tagsOpen, setTagsOpen] = useState(false);
+  const [editing, setEditing] = useState(() => (forHighlight ? !(params.note ?? '').trim() : !params.noteId));
+
+  const bodyRef = useRef<TextInput>(null);
+  useEffect(() => {
+    if (editing) {
+      // Focus after the input mounts (toggling from reading mode).
+      const timer = setTimeout(() => bodyRef.current?.focus(), 80);
+      return () => clearTimeout(timer);
+    }
+  }, [editing]);
 
   const { addNote, updateNote, setHighlightNote } = useNotebookMutations();
-  const canSave = body.trim().length > 0 || (forHighlight && (params.note ?? '').length > 0);
+  const canSave = body.trim().length > 0 || forHighlight;
 
-  const onSave = () => {
+  const persist = () => {
+    if (!canSave) return;
     if (forHighlight) {
       setHighlightNote.mutate({ id: params.highlightId!, note: body.trim() || null });
-    } else if (params.noteId) {
-      updateNote.mutate({ id: params.noteId, title: title.trim() || null, body: body.trim(), tags });
+    } else if (noteId) {
+      updateNote.mutate({ id: noteId, title: title.trim() || null, body: body.trim(), tags });
     } else {
-      addNote.mutate({ resource: null, title: title.trim() || null, body: body.trim(), tags });
+      addNote.mutate(
+        { resource: null, title: title.trim() || null, body: body.trim(), tags },
+        { onSuccess: (entry) => setNoteId(entry.id) },
+      );
     }
+  };
+
+  const onToggleMode = () => {
+    if (editing) {
+      persist();
+      setEditing(false);
+    } else {
+      setEditing(true);
+    }
+  };
+
+  const onBack = () => {
+    if (editing) persist();
     router.back();
   };
 
-  const heading = forHighlight ? 'Note on highlight' : params.noteId ? 'Edit note' : 'New note';
+  const heading = forHighlight ? 'Note on highlight' : 'Note';
 
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
-          <Text style={styles.cancel}>Cancel</Text>
+        <Pressable onPress={onBack} hitSlop={8} style={styles.backButton} accessibilityLabel="Back to notebook">
+          <ChevronLeftIcon size={24} color={Colors.inkSoft} />
         </Pressable>
         <Text style={styles.heading}>{heading}</Text>
         <View style={styles.headerActions}>
@@ -84,33 +115,51 @@ export default function NoteEditorScreen() {
               ) : null}
             </Pressable>
           ) : null}
-          <Pressable onPress={onSave} disabled={!canSave} hitSlop={8}>
-            <Text style={[styles.save, !canSave && styles.saveDisabled]}>Save</Text>
+          <Pressable onPress={onToggleMode} disabled={editing && !canSave} hitSlop={8}>
+            <Text style={[styles.save, editing && !canSave && styles.saveDisabled]}>{editing ? 'Done' : 'Edit'}</Text>
           </Pressable>
         </View>
       </View>
 
       <ScrollView style={styles.form} keyboardShouldPersistTaps="handled">
-        {!forHighlight ? (
-          <TextInput
-            style={styles.titleInput}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Title"
-            placeholderTextColor={Colors.textMuted}
-            returnKeyType="next"
-          />
-        ) : null}
-        <TextInput
-          style={styles.bodyInput}
-          value={body}
-          onChangeText={setBody}
-          placeholder={forHighlight ? 'Add your thoughts on this highlight…' : 'Write your note…'}
-          placeholderTextColor={Colors.textMuted}
-          multiline
-          autoFocus
-          textAlignVertical="top"
-        />
+        {editing ? (
+          <>
+            {!forHighlight ? (
+              <TextInput
+                style={styles.titleInput}
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Title"
+                placeholderTextColor={Colors.textMuted}
+                returnKeyType="next"
+              />
+            ) : null}
+            <TextInput
+              ref={bodyRef}
+              style={styles.bodyInput}
+              value={body}
+              onChangeText={setBody}
+              placeholder={forHighlight ? 'Add your thoughts on this highlight…' : 'Write your note…'}
+              placeholderTextColor={Colors.textMuted}
+              multiline
+              textAlignVertical="top"
+            />
+          </>
+        ) : (
+          <Pressable onPress={() => setEditing(true)}>
+            {!forHighlight && title ? <Text style={styles.readTitle}>{title}</Text> : null}
+            {tags.length > 0 ? (
+              <View style={styles.readTagsRow}>
+                {tags.map((tag) => (
+                  <View key={tag} style={styles.readTag}>
+                    <Text style={styles.readTagLabel}>#{tag}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            <Text style={styles.readBody}>{body}</Text>
+          </Pressable>
+        )}
         <View style={{ height: 60 }} />
       </ScrollView>
 
@@ -270,10 +319,9 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: Colors.white,
   },
-  cancel: {
-    fontFamily: Fonts.sansMedium,
-    fontSize: 14,
-    color: Colors.textMuted,
+  backButton: {
+    width: 32,
+    marginLeft: -8,
   },
   save: {
     fontFamily: Fonts.sansSemiBold,
@@ -302,6 +350,39 @@ const styles = StyleSheet.create({
     minHeight: 220,
     paddingTop: 4,
   },
+  readTitle: {
+    fontFamily: Fonts.serifBold,
+    fontSize: 24,
+    lineHeight: 29,
+    color: Colors.ink,
+    paddingTop: 18,
+  },
+  readTagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 7,
+    paddingTop: 12,
+  },
+  readTag: {
+    backgroundColor: '#F1E7D0',
+    borderWidth: 1,
+    borderColor: '#E6D9BB',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.pill,
+  },
+  readTagLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 11.5,
+    color: Colors.bodyText,
+  },
+  readBody: {
+    fontFamily: Fonts.serifText,
+    fontSize: 17,
+    lineHeight: 27,
+    color: '#4A4232',
+    paddingTop: 16,
+  },
   scrim: {
     position: 'absolute',
     top: 0,
@@ -319,7 +400,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingTop: 8,
     shadowColor: '#14120C',
     shadowOpacity: 0.35,
     shadowRadius: 24,
@@ -331,14 +412,12 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     alignSelf: 'center',
     backgroundColor: Colors.borderChrome,
-    marginBottom: 6,
   },
   sheetTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 6,
-    paddingBottom: 14,
+    paddingBottom: 10,
   },
   sheetTitle: {
     fontFamily: Fonts.serifBold,

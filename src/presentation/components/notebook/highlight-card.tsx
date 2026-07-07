@@ -15,7 +15,7 @@ export function HighlightCard({
 }: {
   entry: HighlightEntry;
   onOpenSource: () => void;
-  onLongPress: () => void;
+  onLongPress?: () => void;
 }) {
   return (
     <NotebookCardShell

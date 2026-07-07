@@ -3,6 +3,7 @@ import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, View } from '
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { Resource } from '@/domain/resource';
+import { AppHeader } from '@/presentation/components/chrome/app-header';
 import { SearchIcon } from '@/presentation/components/icons';
 import { ResourceCard } from '@/presentation/components/content/resource-card';
 import {
@@ -33,8 +34,8 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      <AppHeader title="Search" showSearch={false} />
       <View style={styles.header}>
-        <Text style={styles.title}>Search</Text>
         <View style={styles.field}>
           <SearchIcon size={17} color={Colors.textMuted} />
           <TextInput
@@ -95,13 +96,6 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: Spacing.xl,
-    paddingTop: 6,
-  },
-  title: {
-    ...Type.display,
-    fontSize: 30,
-    color: Colors.ink,
-    marginTop: 6,
   },
   field: {
     flexDirection: 'row',
@@ -112,7 +106,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderChrome,
     borderRadius: 13,
     paddingHorizontal: 13,
-    marginTop: 16,
+    marginTop: 2,
     marginBottom: 6,
   },
   input: {

@@ -2,9 +2,9 @@ import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Pressable,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -15,11 +15,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NotebookFilter } from '@/application/ports/notebook-repository';
 import type { SavedItem } from '@/application/ports/saved-repository';
 import type { NotebookEntry } from '@/domain/notebook';
-import { CloseIcon, PencilIcon, PlusIcon, SearchIcon } from '@/presentation/components/icons';
+import { AppHeader } from '@/presentation/components/chrome/app-header';
+import { CloseIcon, PencilIcon, PlusIcon, SearchIcon, ShareIcon } from '@/presentation/components/icons';
 import { ClipCard } from '@/presentation/components/notebook/clip-card';
 import { HighlightCard } from '@/presentation/components/notebook/highlight-card';
 import { NoteCard } from '@/presentation/components/notebook/note-card';
 import { SavedCard } from '@/presentation/components/notebook/saved-card';
+import { SwipeToDelete } from '@/presentation/components/notebook/swipe-to-delete';
 import {
   useNotebook,
   useNotebookCounts,
@@ -28,7 +30,9 @@ import {
 } from '@/presentation/hooks/queries/use-notebook';
 import { useSavedList, useToggleSaved } from '@/presentation/hooks/queries/use-saved';
 import { useOpenResource } from '@/presentation/hooks/use-open-resource';
+import { buildNotebookMarkdown } from '@/presentation/lib/notebook-export';
 import { usePlayClip } from '@/presentation/playback/use-play-clip';
+import { useUseCases } from '@/presentation/providers/use-cases-context';
 import { Colors, Fonts, Spacing, Type } from '@/presentation/theme';
 
 /** The notebook's chips: the three study kinds plus bookmarked content. */
@@ -69,6 +73,14 @@ export default function NotebookScreen() {
   const { remove } = useNotebookMutations();
   const openResource = useOpenResource();
   const { playClip, pendingId } = usePlayClip();
+  const { notebook: notebookUseCases, saved: savedUseCases } = useUseCases();
+
+  const onExport = useCallback(async () => {
+    setFabOpen(false);
+    const [allEntries, allSaved] = await Promise.all([notebookUseCases.list('all'), savedUseCases.list()]);
+    if (allEntries.length === 0 && allSaved.length === 0) return;
+    Share.share({ message: buildNotebookMarkdown(allEntries, allSaved) }).catch(() => {});
+  }, [notebookUseCases, savedUseCases]);
 
   const savedAsFeed: readonly FeedItem[] = (savedList.data ?? []).map((saved) => ({ kind: 'saved' as const, saved }));
   const entries: readonly FeedItem[] = searching
@@ -79,13 +91,8 @@ export default function NotebookScreen() {
         ? [...(list.data ?? []), ...savedAsFeed].sort((a, b) => feedTime(b) - feedTime(a))
         : (list.data ?? []);
 
-  const confirmDelete = useCallback(
-    (entry: NotebookEntry) => {
-      Alert.alert(`Delete this ${entry.kind}?`, 'It will be removed from your notebook.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => remove.mutate({ kind: entry.kind, id: entry.id }) },
-      ]);
-    },
+  const deleteEntry = useCallback(
+    (entry: NotebookEntry) => remove.mutate({ kind: entry.kind, id: entry.id }),
     [remove],
   );
 
@@ -104,67 +111,46 @@ export default function NotebookScreen() {
     [router],
   );
 
-  const confirmUnsave = useCallback(
-    (item: SavedItem) => {
-      Alert.alert('Remove from saved?', 'The item stays in the library — just not in your saved list.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Remove', style: 'destructive', onPress: () => toggleSaved.mutate(item.resource) },
-      ]);
-    },
-    [toggleSaved],
-  );
-
   const renderEntry = useCallback(
     ({ item }: { item: FeedItem }) => {
       if (item.kind === 'saved') {
         return (
-          <SavedCard
-            item={item.saved}
-            onOpen={() => openResource(item.saved.resource)}
-            onLongPress={() => confirmUnsave(item.saved)}
-          />
+          <SwipeToDelete label="Remove" onDelete={() => toggleSaved.mutate(item.saved.resource)}>
+            <SavedCard item={item.saved} onOpen={() => openResource(item.saved.resource)} />
+          </SwipeToDelete>
         );
       }
       const onOpenSource = () => item.resource && openResource(item.resource);
-      switch (item.kind) {
-        case 'highlight':
-          return (
-            <HighlightCard
-              entry={item}
-              onOpenSource={() => openResource(item.resource, { highlightId: item.id })}
-              onLongPress={() => confirmDelete(item)}
-            />
-          );
-        case 'clip':
-          return (
-            <ClipCard
-              entry={item}
-              onPlay={() => {
-                if (pendingId) return;
-                playClip(item).then((ok) => {
-                  if (ok) router.push('/player');
-                });
-              }}
-              onOpenSource={() =>
-                item.mediaKind === 'video'
-                  ? openResource(item.resource, { startAtSec: item.startSec })
-                  : onOpenSource()
-              }
-              onLongPress={() => confirmDelete(item)}
-            />
-          );
-        case 'note':
-          return (
-            <NoteCard
-              entry={item}
-              onPress={() => openEditor(item)}
-              onOpenSource={onOpenSource}
-              onLongPress={() => confirmDelete(item)}
-            />
-          );
-      }
+      const card = (() => {
+        switch (item.kind) {
+          case 'highlight':
+            return (
+              <HighlightCard entry={item} onOpenSource={() => openResource(item.resource, { highlightId: item.id })} />
+            );
+          case 'clip':
+            return (
+              <ClipCard
+                entry={item}
+                onPlay={() => {
+                  if (pendingId) return;
+                  playClip(item).then((ok) => {
+                    if (ok) router.push('/player');
+                  });
+                }}
+                onOpenSource={() =>
+                  item.mediaKind === 'video'
+                    ? openResource(item.resource, { startAtSec: item.startSec })
+                    : onOpenSource()
+                }
+              />
+            );
+          case 'note':
+            return <NoteCard entry={item} onPress={() => openEditor(item)} onOpenSource={onOpenSource} />;
+        }
+      })();
+      return <SwipeToDelete onDelete={() => deleteEntry(item)}>{card}</SwipeToDelete>;
     },
-    [openResource, confirmDelete, confirmUnsave, openEditor, playClip, pendingId, router],
+    [openResource, deleteEntry, toggleSaved, openEditor, playClip, pendingId, router],
   );
 
   const countParts = counts.data
@@ -177,20 +163,19 @@ export default function NotebookScreen() {
 
   const header = (
     <View>
-      <View style={styles.titleRow}>
-        <View>
-          <Text style={styles.title}>Notebook</Text>
-          {countParts ? (
-            <Text style={styles.countsLine}>
-              {countParts.map(([n, label], index) => (
-                <Text key={label}>
-                  {index > 0 ? <Text style={styles.countsDot}> · </Text> : null}
-                  <Text style={styles.countsNumber}>{n}</Text> {label}
-                </Text>
-              ))}
-            </Text>
-          ) : null}
-        </View>
+      <View style={styles.countsRow}>
+        {countParts ? (
+          <Text style={styles.countsLine}>
+            {countParts.map(([n, label], index) => (
+              <Text key={label}>
+                {index > 0 ? <Text style={styles.countsDot}> · </Text> : null}
+                <Text style={styles.countsNumber}>{n}</Text> {label}
+              </Text>
+            ))}
+          </Text>
+        ) : (
+          <View />
+        )}
         <Pressable
           style={styles.searchButton}
           onPress={() => {
@@ -236,6 +221,7 @@ export default function NotebookScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      <AppHeader title="Notebook" showSearch={false} />
       <FlatList
         data={entries}
         keyExtractor={(item) => (item.kind === 'saved' ? `saved-${item.saved.resource.key}` : item.id)}
@@ -271,6 +257,12 @@ export default function NotebookScreen() {
       {fabOpen ? (
         <Pressable style={styles.fabScrim} onPress={() => setFabOpen(false)}>
           <View style={styles.fabMenu}>
+            <Pressable style={styles.fabMenuItem} onPress={onExport}>
+              <Text style={styles.fabMenuLabel}>Export notebook</Text>
+              <View style={styles.fabMenuIcon}>
+                <ShareIcon size={18} color={Colors.inkSoft} />
+              </View>
+            </Pressable>
             <Pressable style={styles.fabMenuItem} onPress={() => openEditor()}>
               <Text style={styles.fabMenuLabel}>Blank note</Text>
               <View style={styles.fabMenuIcon}>
@@ -302,22 +294,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingBottom: 120,
   },
-  titleRow: {
+  countsRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 6,
-  },
-  title: {
-    ...Type.display,
-    fontSize: 30,
-    color: Colors.ink,
-    marginTop: 6,
+    paddingTop: 2,
   },
   countsLine: {
     ...Type.meta,
     color: Colors.textMuted,
-    marginTop: 11,
     letterSpacing: 0.4,
   },
   countsNumber: {
@@ -336,7 +321,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderChrome,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 4,
   },
   searchInput: {
     marginTop: 18,
@@ -416,8 +400,8 @@ const styles = StyleSheet.create({
   fabMenuLabel: {
     fontFamily: Fonts.serifBold,
     fontSize: 14,
-    color: '#F4EFE2',
-    backgroundColor: 'rgba(34,28,19,0.6)',
+    color: Colors.onGreen,
+    backgroundColor: Colors.green,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 9,
@@ -444,9 +428,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 6,
-    shadowColor: '#966C10',
-    shadowOpacity: 0.55,
-    shadowRadius: 13,
-    shadowOffset: { width: 0, height: 10 },
+    shadowColor: '#14120C',
+    shadowOpacity: 0.28,
+    shadowRadius: 9,
+    shadowOffset: { width: 0, height: 5 },
   },
 });
