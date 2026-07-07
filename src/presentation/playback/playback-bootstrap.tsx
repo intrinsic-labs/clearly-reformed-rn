@@ -26,7 +26,8 @@ export function PlaybackBootstrap() {
   const { position } = useProgress(5000);
   const restored = useRef(false);
 
-  // 1. Cold-launch restore.
+  // 1. Cold-launch restore (from the downloaded file when one exists).
+  const { downloads } = useUseCases();
   useEffect(() => {
     if (restored.current) return;
     restored.current = true;
@@ -35,13 +36,14 @@ export function PlaybackBootstrap() {
         await ensurePlayerReady();
         const latest = await progress.latestListen();
         if (latest?.playable && !latest.progress.completed) {
-          await restoreTrack(latest.playable, latest.progress.position);
+          const url = await downloads.resolvePlaybackUrl(latest.playable.resource.key, latest.playable.audioUrl);
+          await restoreTrack(latest.playable, latest.progress.position, url);
         }
       } catch {
         // A failed restore must never block startup; the player just starts empty.
       }
     })();
-  }, [progress]);
+  }, [progress, downloads]);
 
   // 2. Periodic persistence while playing (5s cadence from useProgress above).
   const lastSaved = useRef(-1);

@@ -1,5 +1,6 @@
 import type { ContentUseCases } from '@/application/use-cases/content';
 import type { DailyUseCases } from '@/application/use-cases/daily';
+import type { DownloadsUseCases } from '@/application/use-cases/downloads';
 import type { NotebookUseCases } from '@/application/use-cases/notebook';
 import type { PodcastUseCases } from '@/application/use-cases/podcast';
 import type { ProgressUseCases } from '@/application/use-cases/progress';
@@ -19,4 +20,5 @@ export interface UseCases {
   readonly podcast: PodcastUseCases;
   readonly search: SearchUseCases;
   readonly daily: DailyUseCases;
+  readonly downloads: DownloadsUseCases;
 }

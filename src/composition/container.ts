@@ -1,6 +1,7 @@
 import type { UseCases } from '@/application/use-cases';
 import { makeContentUseCases } from '@/application/use-cases/content';
 import { makeDailyUseCases } from '@/application/use-cases/daily';
+import { makeDownloadsUseCases } from '@/application/use-cases/downloads';
 import { makeNotebookUseCases } from '@/application/use-cases/notebook';
 import { makePodcastUseCases } from '@/application/use-cases/podcast';
 import { makeProgressUseCases } from '@/application/use-cases/progress';
@@ -13,6 +14,7 @@ import { createSqliteContentCache } from '@/data/db/sqlite-content-cache';
 import { createSqliteNotebookRepository } from '@/data/db/sqlite-notebook-repository';
 import { createSqliteProgressRepository } from '@/data/db/sqlite-progress-repository';
 import { createSqliteSavedRepository } from '@/data/db/sqlite-saved-repository';
+import { createFileDownloadsRepository } from '@/data/files/file-downloads-repository';
 import { createLbePodcastRepository } from '@/data/rss/lbe-podcast-repository';
 
 /**
@@ -30,6 +32,7 @@ export function createContainer(): { useCases: UseCases } {
   const progressRepository = createSqliteProgressRepository();
   const savedRepository = createSqliteSavedRepository();
   const contentCache = createSqliteContentCache();
+  const downloadsRepository = createFileDownloadsRepository();
 
   const useCases: UseCases = {
     content: makeContentUseCases(resourceRepository, resourceContentRepository, contentCache, savedRepository),
@@ -39,6 +42,7 @@ export function createContainer(): { useCases: UseCases } {
     podcast: makePodcastUseCases(podcastRepository),
     search: makeSearchUseCases(searchRepository, contentCache),
     daily: makeDailyUseCases(resourceRepository),
+    downloads: makeDownloadsUseCases(downloadsRepository),
   };
 
   return { useCases };

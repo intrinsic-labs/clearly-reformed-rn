@@ -12,7 +12,7 @@ import { useUseCases } from '@/presentation/providers/use-cases-context';
  * refreshes progress-derived views.
  */
 export function usePlayer() {
-  const { progress } = useUseCases();
+  const { progress, downloads } = useUseCases();
   const invalidateProgress = useInvalidateProgress();
 
   const play = useCallback(
@@ -20,7 +20,9 @@ export function usePlayer() {
       const stored = await progress.get(playable.resource.key);
       const resumeAt = stored && stored.kind === 'listen' && !stored.completed ? stored.position : 0;
 
-      await startTrack(playable, resumeAt);
+      // Downloaded audio plays from disk (offline-first).
+      const url = await downloads.resolvePlaybackUrl(playable.resource.key, playable.audioUrl);
+      await startTrack(playable, resumeAt, url);
 
       const length = playable.durationSec ?? stored?.length ?? 0;
       await progress.save({
@@ -32,7 +34,7 @@ export function usePlayer() {
       });
       invalidateProgress();
     },
-    [progress, invalidateProgress],
+    [progress, downloads, invalidateProgress],
   );
 
   const toggle = useCallback(async () => {

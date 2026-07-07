@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, Share, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
+import { Alert, Pressable, Share, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -20,6 +20,7 @@ import {
   TranscriptIcon,
 } from '@/presentation/components/icons';
 import { CONTENT_TYPE_LABEL } from '@/presentation/components/content-icons';
+import { useDownload, useDownloadMutations } from '@/presentation/hooks/queries/use-downloads';
 import { useNotebookMutations } from '@/presentation/hooks/queries/use-notebook';
 import { useIsSaved, useToggleSaved } from '@/presentation/hooks/queries/use-saved';
 import { formatRate, formatTime } from '@/presentation/lib/format';
@@ -57,6 +58,8 @@ export default function PlayerScreen() {
 
   const isSaved = useIsSaved(playable?.resource.key).data ?? false;
   const toggleSaved = useToggleSaved();
+  const download = useDownload(playable?.resource.key);
+  const { start: startDownload, remove: removeDownload, progress: downloadProgress } = useDownloadMutations();
   const { addClip } = useNotebookMutations();
   const [clippedAt, setClippedAt] = useState<number | null>(null);
   const clipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -88,6 +91,33 @@ export default function PlayerScreen() {
   const onShare = () => {
     Share.share({ message: `${playable.resource.title}\n${playable.resource.link}` }).catch(() => {});
   };
+
+  const downloaded = download.data?.status === 'done';
+  const downloading = startDownload.isPending;
+  const onDownload = () => {
+    if (downloading) return;
+    if (downloaded) {
+      Alert.alert('Remove download?', 'The audio file will be deleted from this device.', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => removeDownload.mutate(playable.resource.key),
+        },
+      ]);
+      return;
+    }
+    startDownload.mutate(playable, {
+      onError: () => Alert.alert('Download failed', 'Check your connection and try again.'),
+    });
+  };
+  const downloadLabel = downloading
+    ? downloadProgress != null
+      ? `${Math.round(downloadProgress * 100)}%`
+      : 'Saving…'
+    : downloaded
+      ? 'Downloaded'
+      : 'Download';
 
   return (
     <View style={styles.screen}>
@@ -181,10 +211,13 @@ export default function PlayerScreen() {
               <ShareIcon size={21} color={P.muted} />
               <Text style={styles.actionLabel}>Share</Text>
             </Pressable>
-            <View style={[styles.action, styles.actionDisabled]}>
-              <DownloadIcon size={21} color={P.muted} />
-              <Text style={styles.actionLabel}>Download</Text>
-            </View>
+            <Pressable
+              style={[styles.action, downloaded && styles.actionActive]}
+              onPress={onDownload}
+              accessibilityLabel={downloaded ? 'Remove download' : 'Download for offline listening'}>
+              <DownloadIcon size={21} color={downloaded ? '#E0A93A' : P.muted} />
+              <Text style={[styles.actionLabel, downloaded && styles.actionLabelActive]}>{downloadLabel}</Text>
+            </Pressable>
           </View>
         </View>
       </View>
