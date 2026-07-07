@@ -303,8 +303,23 @@ export function ReaderScreen({ detail }: { detail: ResourceDetail }) {
       ) : null}
       {tappedHighlight ? (
         <View style={[styles.actionPill, { bottom: insets.bottom + 92 }]}>
+          <Pressable
+            style={styles.actionButton}
+            onPress={() => {
+              const entry = highlights.data?.find((h) => h.id === tappedHighlight);
+              router.push({
+                pathname: '/note-editor',
+                params: { highlightId: tappedHighlight, note: entry?.note ?? '' },
+              });
+              setTappedHighlight(null);
+            }}>
+            <Text style={styles.actionButtonLabel}>
+              {highlights.data?.find((h) => h.id === tappedHighlight)?.note ? 'Edit note' : 'Add note'}
+            </Text>
+          </Pressable>
+          <View style={styles.actionDivider} />
           <Pressable style={styles.actionButton} onPress={onRemoveHighlight}>
-            <Text style={styles.actionButtonLabel}>Remove highlight</Text>
+            <Text style={styles.actionButtonLabel}>Remove</Text>
           </Pressable>
           <View style={styles.actionDivider} />
           <Pressable style={styles.actionButton} onPress={() => setTappedHighlight(null)}>

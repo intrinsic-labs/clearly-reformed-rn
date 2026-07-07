@@ -22,6 +22,16 @@ export function useNotebook(filter: NotebookFilter) {
   });
 }
 
+/** FTS search across quotes, captions, notes, and titles. */
+export function useNotebookSearch(term: string) {
+  const { notebook } = useUseCases();
+  return useQuery({
+    queryKey: ['notebook', 'find', term],
+    queryFn: () => notebook.search(term),
+    enabled: term.trim().length >= 2,
+  });
+}
+
 export function useNotebookCounts() {
   const { notebook } = useUseCases();
   return useQuery({

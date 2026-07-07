@@ -19,7 +19,16 @@ import { Radius, Spacing } from '@/presentation/theme';
  * every few seconds while playing (and resumes from it), so videos participate in
  * cross-content "Continue".
  */
-export function InlineVideo({ videoId, resource }: { videoId: string; resource?: ResourceRef }) {
+export function InlineVideo({
+  videoId,
+  resource,
+  startAtOverride,
+}: {
+  videoId: string;
+  resource?: ResourceRef;
+  /** Explicit start position (e.g. a notebook clip) — wins over stored progress. */
+  startAtOverride?: number;
+}) {
   const [width, setWidth] = useState(0);
   const height = Math.round((width * 9) / 16);
 
@@ -33,9 +42,11 @@ export function InlineVideo({ videoId, resource }: { videoId: string; resource?:
   const invalidateProgress = useInvalidateProgress();
   const stored = useResourceProgress(resource?.key);
   const startAt =
-    stored.data && stored.data.kind === 'watch' && !stored.data.completed
-      ? Math.max(0, Math.floor(stored.data.position) - 2)
-      : 0;
+    startAtOverride != null
+      ? Math.max(0, Math.floor(startAtOverride))
+      : stored.data && stored.data.kind === 'watch' && !stored.data.completed
+        ? Math.max(0, Math.floor(stored.data.position) - 2)
+        : 0;
 
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 

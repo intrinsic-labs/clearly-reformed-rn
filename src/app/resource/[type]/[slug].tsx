@@ -57,10 +57,12 @@ const PLAY_LABEL: Partial<Record<ContentType, string>> = {
 export default function ResourceDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ type: string; slug: string; title?: string }>();
+  const params = useLocalSearchParams<{ type: string; slug: string; title?: string; t?: string }>();
 
   const type = asContentType(params.type);
   const slug = params.slug;
+  const startAtParam = params.t ? Number(params.t) : undefined;
+  const startAt = Number.isFinite(startAtParam) ? startAtParam : undefined;
 
   const { data, isLoading, isError, refetch } = useResourceContent(type, slug);
 
@@ -143,7 +145,9 @@ export default function ResourceDetailScreen() {
               </Pressable>
             ) : null}
 
-            {youTubeId ? <InlineVideo videoId={youTubeId} resource={resource ?? undefined} /> : null}
+            {youTubeId ? (
+              <InlineVideo videoId={youTubeId} resource={resource ?? undefined} startAtOverride={startAt} />
+            ) : null}
 
             {externalUrl ? (
               <Pressable style={styles.sourceLink} onPress={() => Linking.openURL(externalUrl)}>
