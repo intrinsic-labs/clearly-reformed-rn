@@ -6,7 +6,7 @@ Read this first. It orients a fresh session; the detail lives in the linked docs
 
 A cross-platform mobile app (React Native + Expo) — the best way to consume the content of **Clearly Reformed**, the ministry of Kevin DeYoung (articles, the *Life and Books and Everything* podcast, explainer videos, sermons, lectures, books, Coram Deo conference). Brand: "Theology for the everyday" — a calm, editorial, literary-journal feel (cream/sage-green/gold palette, Flecha display serif + IBM Plex Sans).
 
-**Status:** planning complete, pre-development. No code yet. (Note: client greenlight pending — see prereqs.)
+**Status:** MVP feature-complete in code (July 2026), pending device testing + iteration. All v1 slices are built: app shell, Library feed, Reader (WebView layout, typography, Scroll/Slide/Curl-lite), audio (track-player fork, Now Playing, mini-player, downloads), local-first SQLite personal layer (highlights/clips/notes/progress/saved + FTS5), Notebook tab, Home daily surface + Continue, keyword Search with offline fallback, notification prefs + daily reminder, Settings. Not built (by design, v1.1/v2): sync/auth, semantic search, real push delivery, Skia page-curl shader (Curl mode currently runs the slide engine with an edge shade — see the Reader commit). (Note: client greenlight pending — see prereqs.)
 
 ## Canonical docs (source of truth)
 
@@ -49,7 +49,12 @@ MVP vs v2 split is in `project-info.md` §11.
 
 ## Conventions
 
-- TypeScript strict; ESLint + Prettier.
-- Dev build required (Skia, track-player, secure-store, etc. don't run in Expo Go).
+- TypeScript strict; ESLint (with clean-architecture boundaries) + Prettier.
+- Dev build required (track-player, sqlite, etc. don't run in Expo Go). After native
+  dep changes run `npx expo run:ios` (rebuilds the dev client + pods); day-to-day is
+  `pnpm start`.
+- Verify with: `pnpm typecheck`, `pnpm lint`, `pnpm test` (jest-expo; pure-logic units).
 - Use SDK/library types; don't redefine API shapes.
-- This is currently **not** a git repo — initialize one before first commit.
+- Audio player is the Apache-2.0 fork `@javascriptcommon/react-native-track-player`
+  (upstream v4 is frozen/broken on RN 0.85; official v5 `@rntp/player` is commercial —
+  revisit licensing before launch).

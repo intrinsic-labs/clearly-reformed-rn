@@ -3,7 +3,7 @@ import type { ContentType } from '@/domain/resource';
 import type { ResourceDetail } from '@/domain/resource-detail';
 import { resourceKey } from '@/domain/resource-ref';
 import { getDatabase } from '@/data/db/database';
-import { ftsQuery } from '@/data/db/sqlite-notebook-repository';
+import { ftsQuery } from '@/data/db/fts';
 
 /**
  * Offline body cache over SQLite. Bodies are stored as the full ResourceDetail JSON

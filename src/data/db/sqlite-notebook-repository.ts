@@ -17,6 +17,7 @@ import type {
 } from '@/domain/notebook';
 import type { ResourceRef } from '@/domain/resource-ref';
 import { getDatabase } from '@/data/db/database';
+import { ftsQuery } from '@/data/db/fts';
 
 /**
  * Notebook over the local SQLite store. Each kind has its own table; the feed is a
@@ -216,14 +217,6 @@ async function indexText(
   if (text) {
     await db.runAsync('INSERT INTO notebook_fts (text, entry_id, kind) VALUES (?, ?, ?)', [text, entryId, kind]);
   }
-}
-
-/** Quote each term so user input can't hit FTS5 query syntax; prefix-match the last term. */
-export function ftsQuery(term: string): string {
-  const words = term.split(/\s+/).filter(Boolean).map((w) => `"${w.replace(/"/g, '')}"`);
-  if (words.length === 0) return '""';
-  words[words.length - 1] += '*';
-  return words.join(' ');
 }
 
 interface HighlightRow {

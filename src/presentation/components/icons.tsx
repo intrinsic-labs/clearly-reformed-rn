@@ -230,6 +230,21 @@ export function ChevronRightIcon({ size = 17, color = Colors.ink, weight = 1.9 }
   );
 }
 
+/** Settings gear. */
+export function GearIcon({ size = 19, color = Colors.ink, weight = 1.6 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={12} r={3.2} stroke={color} strokeWidth={weight} />
+      <Path
+        d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3 1a7.7 7.7 0 0 0-2.6-1.5L14 2.6h-4l-.5 2.5a7.7 7.7 0 0 0-2.6 1.5l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-1a7.7 7.7 0 0 0 2.6 1.5l.5 2.5h4l.5-2.5a7.7 7.7 0 0 0 2.6-1.5l2.3 1 2-3.4z"
+        stroke={color}
+        strokeWidth={weight}
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 /** Filled play triangle (mini-player / hero). */
 export function PlayIcon({ size = 16, color = Colors.ink }: IconProps) {
   return (
