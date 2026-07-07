@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { LogoMark, SearchIcon } from '@/presentation/components/icons';
 import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
@@ -9,6 +10,8 @@ import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
  * title text changes per tab ("Clearly Reformed" on Home, the tab name elsewhere).
  */
 export function AppHeader({ title, showSearch = true }: { title: string; showSearch?: boolean }) {
+  const router = useRouter();
+
   return (
     <View style={styles.appBar}>
       <View style={styles.brand}>
@@ -16,9 +19,13 @@ export function AppHeader({ title, showSearch = true }: { title: string; showSea
         <Text style={styles.wordmark}>{title}</Text>
       </View>
       {showSearch ? (
-        <View style={styles.searchButton}>
+        <Pressable
+          style={styles.searchButton}
+          onPress={() => router.navigate('/search')}
+          hitSlop={6}
+          accessibilityLabel="Search">
           <SearchIcon size={18} color={Colors.inkSoft} weight={1.8} />
-        </View>
+        </Pressable>
       ) : null}
     </View>
   );
