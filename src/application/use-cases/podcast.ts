@@ -33,6 +33,7 @@ export function makePodcastUseCases(repository: PodcastRepository): PodcastUseCa
           artworkUrl: detail.imageUrl,
           artist,
           album: 'Clearly Reformed',
+          eyebrow: detail.displayDate || null,
         };
       }
 
@@ -42,6 +43,8 @@ export function makePodcastUseCases(repository: PodcastRepository): PodcastUseCa
       const episode = matchEpisode(episodes, detail.episodeNumber, detail.title);
       if (!episode) return null;
 
+      const numberLabel = episode.episodeNumber != null ? `Episode ${episode.episodeNumber}` : null;
+      const dateLabel = detail.displayDate || episode.publishedAt || null;
       return {
         resource,
         audioUrl: episode.audioUrl,
@@ -49,6 +52,7 @@ export function makePodcastUseCases(repository: PodcastRepository): PodcastUseCa
         artworkUrl: detail.imageUrl ?? episode.artworkUrl,
         artist,
         album: PODCAST_SHOW_TITLE,
+        eyebrow: [numberLabel, dateLabel].filter(Boolean).join(' · ') || null,
       };
     },
   };

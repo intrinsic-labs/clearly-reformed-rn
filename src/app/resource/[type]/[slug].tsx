@@ -15,14 +15,18 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ContentType } from '@/domain/resource';
+import { toResourceRef } from '@/domain/resource-ref';
 import { ArticleBody } from '@/presentation/components/reader/article-body';
 import { InlineVideo } from '@/presentation/components/reader/inline-video';
 import { CONTENT_TYPE_LABEL } from '@/presentation/components/content-icons';
-import { ChevronLeftIcon } from '@/presentation/components/icons';
+import { BookmarkIcon, ChevronLeftIcon, PlayIcon } from '@/presentation/components/icons';
 import { useResourceContent } from '@/presentation/hooks/queries/use-resource-content';
-import { shortDate } from '@/presentation/lib/format';
+import { useResolvedTrack } from '@/presentation/hooks/queries/use-resolved-track';
+import { useIsSaved, useToggleSaved } from '@/presentation/hooks/queries/use-saved';
+import { formatTime, shortDate } from '@/presentation/lib/format';
 import { htmlToBlocks, readingTimeMinutes } from '@/presentation/lib/html';
 import { parseYouTubeId } from '@/presentation/lib/video';
+import { usePlayer } from '@/presentation/playback/use-player';
 import { Colors, Fonts, Reader, Spacing, Type } from '@/presentation/theme';
 
 const KNOWN_TYPES = new Set<ContentType>([
@@ -41,6 +45,14 @@ function asContentType(value: string | undefined): ContentType | undefined {
   return value && KNOWN_TYPES.has(value as ContentType) ? (value as ContentType) : undefined;
 }
 
+const PLAY_LABEL: Partial<Record<ContentType, string>> = {
+  podcast: 'Play episode',
+  sermon: 'Play sermon',
+  lecture: 'Play lecture',
+  book: 'Play audiobook',
+  conference: 'Play session',
+};
+
 export default function ResourceDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -53,6 +65,18 @@ export default function ResourceDetailScreen() {
 
   const blocks = useMemo(() => (data ? htmlToBlocks(data.bodyHtml) : []), [data]);
   const minutes = useMemo(() => readingTimeMinutes(blocks), [blocks]);
+
+  const resource = data ? toResourceRef(data) : null;
+  const { data: track } = useResolvedTrack(data);
+  const { play } = usePlayer();
+  const isSaved = useIsSaved(resource?.key).data ?? false;
+  const toggleSaved = useToggleSaved();
+
+  const onPlay = async () => {
+    if (!track) return;
+    await play(track);
+    router.push('/player');
+  };
 
   // Lazy state (not a ref) so the interpolation can be read during render.
   const [progress] = useState(() => new Animated.Value(0));
@@ -102,7 +126,17 @@ export default function ResourceDetailScreen() {
             {byline ? <Text style={styles.byline}>{byline}</Text> : null}
             {data.scriptureRef ? <Text style={styles.scripture}>{data.scriptureRef}</Text> : null}
 
-            {youTubeId ? <InlineVideo videoId={youTubeId} /> : null}
+            {track ? (
+              <Pressable style={styles.playPill} onPress={onPlay} accessibilityRole="button">
+                <PlayIcon size={13} color={Colors.onGreen} />
+                <Text style={styles.playPillLabel}>
+                  {PLAY_LABEL[data.type] ?? 'Play audio'}
+                  {track.durationSec ? `  ·  ${formatTime(track.durationSec)}` : ''}
+                </Text>
+              </Pressable>
+            ) : null}
+
+            {youTubeId ? <InlineVideo videoId={youTubeId} resource={resource ?? undefined} /> : null}
 
             {externalUrl ? (
               <Pressable style={styles.sourceLink} onPress={() => Linking.openURL(externalUrl)}>
@@ -127,7 +161,14 @@ export default function ResourceDetailScreen() {
           <ChevronLeftIcon size={22} color={Reader.fg} />
         </Pressable>
         <Text style={styles.barLabel}>{sectionLabel}</Text>
-        <View style={styles.backButton} />
+        <Pressable
+          style={styles.backButton}
+          hitSlop={8}
+          disabled={!resource}
+          onPress={() => resource && toggleSaved.mutate(resource)}
+          accessibilityLabel={isSaved ? 'Remove from saved' : 'Save'}>
+          <BookmarkIcon size={19} color={isSaved ? Colors.gold : Reader.fg} filled={isSaved} />
+        </Pressable>
       </View>
 
       {/* Scroll progress */}
@@ -201,6 +242,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Reader.accent,
     marginTop: 8,
+  },
+  playPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    alignSelf: 'flex-start',
+    marginTop: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 999,
+    backgroundColor: Colors.green,
+  },
+  playPillLabel: {
+    fontFamily: Fonts.sansSemiBold,
+    fontSize: 13,
+    color: Colors.onGreen,
   },
   sourceLink: {
     marginTop: 16,

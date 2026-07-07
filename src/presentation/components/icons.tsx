@@ -81,6 +81,155 @@ export function ChevronLeftIcon({ size = 22, color = Colors.ink, weight = 1.8 }:
   );
 }
 
+/** Down chevron (dismiss the Now Playing sheet). */
+export function ChevronDownIcon({ size = 20, color = Colors.ink, weight = 1.8 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M6 9l6 6 6-6" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+/** Skip-forward (30s) curved arrow. */
+export function SkipForwardIcon({ size = 20, color = Colors.ink, weight = 1.7 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M13 5l5 4-5 4" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M18 9h-8a5 5 0 0 0 0 10h5" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+/** Heart — outline or filled (save/like). */
+export function HeartIcon({ size = 20, color = Colors.ink, weight = 1.7, filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? color : 'none'}>
+      <Path
+        d="M12 21s-7.5-4.6-10-9.3C.4 8.4 1.7 4.5 5.3 4.5c2.1 0 3.4 1.3 4.7 3 1.3-1.7 2.6-3 4.7-3 3.6 0 4.9 3.9 3.3 7.2C19.5 16.4 12 21 12 21z"
+        stroke={filled ? undefined : color}
+        strokeWidth={filled ? undefined : weight}
+      />
+    </Svg>
+  );
+}
+
+/** Crescent moon (sleep timer). */
+export function MoonIcon({ size = 22, color = Colors.ink, weight = 1.6 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M20 14.5A8 8 0 1 1 9.5 4a6.3 6.3 0 0 0 10.5 10.5z"
+        stroke={color}
+        strokeWidth={weight}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+/** Share nodes. */
+export function ShareIcon({ size = 21, color = Colors.ink, weight = 1.6 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={18} cy={5} r={2.6} stroke={color} strokeWidth={weight} />
+      <Circle cx={6} cy={12} r={2.6} stroke={color} strokeWidth={weight} />
+      <Circle cx={18} cy={19} r={2.6} stroke={color} strokeWidth={weight} />
+      <Path d="M8.3 10.7l7.4-4.3M8.3 13.3l7.4 4.3" stroke={color} strokeWidth={weight} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+/** Download arrow into tray. */
+export function DownloadIcon({ size = 21, color = Colors.ink, weight = 1.6 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 3v12" stroke={color} strokeWidth={weight} strokeLinecap="round" />
+      <Path d="M8 11l4 4 4-4" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M5 18.5h14" stroke={color} strokeWidth={weight} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+/** Transcript lines. */
+export function TranscriptIcon({ size = 21, color = Colors.ink, weight = 1.6 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M4 5h16M4 10h16M4 15h10M4 20h7" stroke={color} strokeWidth={weight} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+/** Overflow dots. */
+export function DotsIcon({ size = 19, color = Colors.ink }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <Circle cx={5} cy={12} r={1.7} />
+      <Circle cx={12} cy={12} r={1.7} />
+      <Circle cx={19} cy={12} r={1.7} />
+    </Svg>
+  );
+}
+
+/** Bookmark flag (reader top bar save). */
+export function BookmarkIcon({ size = 19, color = Colors.ink, weight = 1.7, filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? color : 'none'}>
+      <Path
+        d="M6 4h12v17l-6-4-6 4z"
+        stroke={filled ? undefined : color}
+        strokeWidth={filled ? undefined : weight}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+/** X close. */
+export function CloseIcon({ size = 14, color = Colors.ink, weight = 2.2 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M6 6l12 12M18 6L6 18" stroke={color} strokeWidth={weight} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+/** Pencil (new note). */
+export function PencilIcon({ size = 20, color = Colors.ink, weight = 1.8 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 20h9" stroke={color} strokeWidth={weight} strokeLinecap="round" />
+      <Path
+        d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"
+        stroke={color}
+        strokeWidth={weight}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+/** Plus (FAB). */
+export function PlusIcon({ size = 24, color = Colors.ink, weight = 2.2 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Line x1={12} y1={5} x2={12} y2={19} stroke={color} strokeWidth={weight} strokeLinecap="round" />
+      <Line x1={5} y1={12} x2={19} y2={12} stroke={color} strokeWidth={weight} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+/** Right chevron (row affordance). */
+export function ChevronRightIcon({ size = 17, color = Colors.ink, weight = 1.9 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M9 6l6 6-6 6" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 /** Filled play triangle (mini-player / hero). */
 export function PlayIcon({ size = 16, color = Colors.ink }: IconProps) {
   return (

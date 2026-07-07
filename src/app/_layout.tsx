@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { createContainer } from '@/composition/container';
 import { AppProviders } from '@/presentation/providers/app-providers';
 import { useAppFonts } from '@/presentation/hooks/use-app-fonts';
+import { PlaybackBootstrap } from '@/presentation/playback/playback-bootstrap';
 import { Colors, Fonts } from '@/presentation/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -56,9 +57,11 @@ export default function RootLayout() {
         <AppProviders useCases={container.useCases}>
           <ThemeProvider value={AppTheme}>
             <StatusBar style="dark" />
+            <PlaybackBootstrap />
             <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="resource/[type]/[slug]" options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="player" options={{ presentation: 'modal', contentStyle: { backgroundColor: '#1E2620' } }} />
             </Stack>
           </ThemeProvider>
         </AppProviders>

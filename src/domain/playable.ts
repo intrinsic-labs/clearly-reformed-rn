@@ -14,4 +14,6 @@ export interface PlayableTrack {
   readonly artist: string;
   /** Lock-screen "album" line — show name or content-type label. */
   readonly album: string;
+  /** Player kicker, e.g. "Episode 194 · June 9, 2026". Null → UI derives one. */
+  readonly eyebrow: string | null;
 }

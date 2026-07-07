@@ -19,6 +19,8 @@ export interface ResourceRef {
   readonly thumbnailUrl: string | null;
   /** Secondary card line — author/speaker or show name. May be empty. */
   readonly subtitle: string;
+  /** Canonical web URL (sharing). */
+  readonly link: string;
 }
 
 /** Build the stable local identity for a resource. */
@@ -36,5 +38,6 @@ export function toResourceRef(resource: Resource): ResourceRef {
     title: resource.title,
     thumbnailUrl: resource.thumbnailUrl ?? resource.imageUrl,
     subtitle: resource.people[0] ?? '',
+    link: resource.link,
   };
 }

@@ -1,43 +1,55 @@
-import { useState } from 'react';
+import TrackPlayer from '@javascriptcommon/react-native-track-player';
+import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PauseIcon, PlayIcon, SkipBackIcon } from '@/presentation/components/icons';
+import { formatTime } from '@/presentation/lib/format';
+import { useNowPlaying } from '@/presentation/playback/use-now-playing';
+import { usePlayer } from '@/presentation/playback/use-player';
 import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
 
 /**
- * Persistent mini-player that sits directly above the tab bar as one chrome unit.
- *
- * Slice-1 placeholder: static track + local play/pause toggle, no real audio.
- * The audio slice will feed this from react-native-track-player state and make the
- * whole bar tappable to expand into the Now Playing screen.
+ * Persistent mini-player above the tab bar — live playback state, tap to expand
+ * into the Now Playing screen. Renders nothing until a session exists (first play
+ * or a restored one from the last launch).
  */
 export function MiniPlayer() {
-  const [playing, setPlaying] = useState(false);
-  const progressPct = '38%';
+  const router = useRouter();
+  const { playable, playing, position, duration } = useNowPlaying();
+  const { toggle } = usePlayer();
+
+  if (!playable) return null;
+
+  const fraction = duration > 0 ? Math.min(1, position / duration) : 0;
 
   return (
-    <Pressable style={styles.container}>
+    <Pressable style={styles.container} onPress={() => router.push('/player')} accessibilityRole="button" accessibilityLabel="Open the player">
       <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: progressPct }]} />
+        <View style={[styles.progressFill, { width: `${fraction * 100}%` }]} />
       </View>
 
       <View style={styles.row}>
-        <View style={styles.artwork} />
+        {playable.artworkUrl ? (
+          <Image source={{ uri: playable.artworkUrl }} style={styles.artwork} contentFit="cover" />
+        ) : (
+          <View style={styles.artwork} />
+        )}
 
         <View style={styles.text}>
           <Text style={styles.title} numberOfLines={1}>
-            The Most Special Guest Ever
+            {playable.resource.title}
           </Text>
           <Text style={styles.meta} numberOfLines={1}>
-            22:14 · Life and Books and Everything
+            {formatTime(position)} · {playable.album}
           </Text>
         </View>
 
         <View style={styles.controls}>
-          <Pressable hitSlop={8} style={styles.skip}>
+          <Pressable hitSlop={8} style={styles.skip} onPress={() => TrackPlayer.seekBy(-15)}>
             <SkipBackIcon size={20} color="#D8DAD0" />
           </Pressable>
-          <Pressable hitSlop={8} style={styles.playButton} onPress={() => setPlaying((p) => !p)}>
+          <Pressable hitSlop={8} style={styles.playButton} onPress={toggle}>
             {playing ? <PauseIcon size={14} color={Colors.green} /> : <PlayIcon size={14} color={Colors.green} />}
           </Pressable>
         </View>
