@@ -13,27 +13,36 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { NotebookFilter } from '@/application/ports/notebook-repository';
+import type { SavedItem } from '@/application/ports/saved-repository';
 import type { NotebookEntry } from '@/domain/notebook';
 import { CloseIcon, PencilIcon, PlusIcon, SearchIcon } from '@/presentation/components/icons';
 import { ClipCard } from '@/presentation/components/notebook/clip-card';
 import { HighlightCard } from '@/presentation/components/notebook/highlight-card';
 import { NoteCard } from '@/presentation/components/notebook/note-card';
+import { SavedCard } from '@/presentation/components/notebook/saved-card';
 import {
   useNotebook,
   useNotebookCounts,
   useNotebookMutations,
   useNotebookSearch,
 } from '@/presentation/hooks/queries/use-notebook';
+import { useSavedList, useToggleSaved } from '@/presentation/hooks/queries/use-saved';
 import { useOpenResource } from '@/presentation/hooks/use-open-resource';
 import { usePlayClip } from '@/presentation/playback/use-play-clip';
 import { Colors, Fonts, Spacing, Type } from '@/presentation/theme';
 
-const FILTERS: readonly { key: NotebookFilter; label: string }[] = [
+/** The notebook's chips: the three study kinds plus bookmarked content. */
+type FeedFilter = NotebookFilter | 'saved';
+
+const FILTERS: readonly { key: FeedFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'highlights', label: 'Highlights' },
   { key: 'clips', label: 'Clips' },
   { key: 'notes', label: 'Notes' },
+  { key: 'saved', label: 'Saved' },
 ];
+
+type FeedItem = NotebookEntry | { readonly kind: 'saved'; readonly saved: SavedItem };
 
 /**
  * The Notebook — the cross-media personal study layer. One feed of highlights,
@@ -42,20 +51,26 @@ const FILTERS: readonly { key: NotebookFilter; label: string }[] = [
  */
 export default function NotebookScreen() {
   const router = useRouter();
-  const [filter, setFilter] = useState<NotebookFilter>('all');
+  const [filter, setFilter] = useState<FeedFilter>('all');
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [fabOpen, setFabOpen] = useState(false);
 
   const searching = searchOpen && searchTerm.trim().length >= 2;
-  const list = useNotebook(filter);
+  const list = useNotebook(filter === 'saved' ? 'all' : filter);
+  const savedList = useSavedList();
+  const toggleSaved = useToggleSaved();
   const found = useNotebookSearch(searchTerm);
   const counts = useNotebookCounts();
   const { remove } = useNotebookMutations();
   const openResource = useOpenResource();
   const { playClip, pendingId } = usePlayClip();
 
-  const entries = searching ? (found.data ?? []) : (list.data ?? []);
+  const entries: readonly FeedItem[] = searching
+    ? (found.data ?? [])
+    : filter === 'saved'
+      ? (savedList.data ?? []).map((saved) => ({ kind: 'saved' as const, saved }))
+      : (list.data ?? []);
 
   const confirmDelete = useCallback(
     (entry: NotebookEntry) => {
@@ -82,12 +97,37 @@ export default function NotebookScreen() {
     [router],
   );
 
+  const confirmUnsave = useCallback(
+    (item: SavedItem) => {
+      Alert.alert('Remove from saved?', 'The item stays in the library — just not in your saved list.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Remove', style: 'destructive', onPress: () => toggleSaved.mutate(item.resource) },
+      ]);
+    },
+    [toggleSaved],
+  );
+
   const renderEntry = useCallback(
-    ({ item }: { item: NotebookEntry }) => {
+    ({ item }: { item: FeedItem }) => {
+      if (item.kind === 'saved') {
+        return (
+          <SavedCard
+            item={item.saved}
+            onOpen={() => openResource(item.saved.resource)}
+            onLongPress={() => confirmUnsave(item.saved)}
+          />
+        );
+      }
       const onOpenSource = () => item.resource && openResource(item.resource);
       switch (item.kind) {
         case 'highlight':
-          return <HighlightCard entry={item} onOpenSource={onOpenSource} onLongPress={() => confirmDelete(item)} />;
+          return (
+            <HighlightCard
+              entry={item}
+              onOpenSource={() => openResource(item.resource, { highlightId: item.id })}
+              onLongPress={() => confirmDelete(item)}
+            />
+          );
         case 'clip':
           return (
             <ClipCard
@@ -100,7 +140,7 @@ export default function NotebookScreen() {
               }}
               onOpenSource={() =>
                 item.mediaKind === 'video'
-                  ? openResource(item.resource, item.startSec)
+                  ? openResource(item.resource, { startAtSec: item.startSec })
                   : onOpenSource()
               }
               onLongPress={() => confirmDelete(item)}
@@ -117,7 +157,7 @@ export default function NotebookScreen() {
           );
       }
     },
-    [openResource, confirmDelete, openEditor, playClip, pendingId, router],
+    [openResource, confirmDelete, confirmUnsave, openEditor, playClip, pendingId, router],
   );
 
   const countParts = counts.data
@@ -191,7 +231,7 @@ export default function NotebookScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <FlatList
         data={entries}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => (item.kind === 'saved' ? `saved-${item.saved.resource.key}` : item.id)}
         renderItem={renderEntry}
         ListHeaderComponent={header}
         contentContainerStyle={styles.listContent}
@@ -205,11 +245,15 @@ export default function NotebookScreen() {
             </View>
           ) : (
             <View style={styles.emptyWrap}>
-              <Text style={styles.emptyTitle}>{searching ? 'Nothing found' : 'Your study layer'}</Text>
+              <Text style={styles.emptyTitle}>
+                {searching ? 'Nothing found' : filter === 'saved' ? 'Nothing saved yet' : 'Your study layer'}
+              </Text>
               <Text style={styles.emptyNote}>
                 {searching
                   ? 'Try a different word or phrase.'
-                  : 'Highlight a sentence in an article, clip a moment in a podcast or video, or write a note — everything lands here, searchable and offline.'}
+                  : filter === 'saved'
+                    ? 'Tap the bookmark on any article, episode, or video and it will land here.'
+                    : 'Highlight a sentence in an article, clip a moment in a podcast or video, or write a note — everything lands here, searchable and offline.'}
               </Text>
             </View>
           )

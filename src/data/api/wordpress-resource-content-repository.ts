@@ -3,6 +3,7 @@ import type {
   ResourceContentRepository,
 } from '@/application/ports/resource-content-repository';
 import type { ResourceDetail } from '@/domain/resource-detail';
+import { getBibleBookNames } from '@/data/api/bible-books';
 import type { ResourceDetailDto } from '@/data/api/dto/resource-detail.dto';
 import { TYPE_PATH } from '@/data/api/endpoints';
 import { getList } from '@/data/api/http-client';
@@ -24,7 +25,23 @@ export function createWordPressResourceContentRepository(): ResourceContentRepos
       });
 
       const dto = data[0];
-      return dto ? mapResourceDetail(dto) : null;
+      if (!dto) return null;
+      const detail = mapResourceDetail(dto);
+      return { ...detail, scriptureRef: await withBookName(detail.scriptureRef, dto.bible_book) };
     },
   };
+}
+
+/**
+ * `acf.scriptureReference` usually omits the book ("3:1–2"); the book itself is a
+ * `bible_book` taxonomy term. Prefix the term name when the reference has no letters.
+ */
+async function withBookName(
+  scriptureRef: string | null,
+  bookIds: readonly number[] | undefined,
+): Promise<string | null> {
+  if (!scriptureRef || /[A-Za-z]/.test(scriptureRef) || !bookIds?.length) return scriptureRef;
+  const names = await getBibleBookNames();
+  const book = names.get(bookIds[0]);
+  return book ? `${book} ${scriptureRef}` : scriptureRef;
 }

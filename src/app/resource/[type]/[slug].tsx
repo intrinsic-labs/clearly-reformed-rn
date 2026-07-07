@@ -57,7 +57,7 @@ const PLAY_LABEL: Partial<Record<ContentType, string>> = {
 export default function ResourceDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ type: string; slug: string; title?: string; t?: string }>();
+  const params = useLocalSearchParams<{ type: string; slug: string; title?: string; t?: string; hl?: string }>();
 
   const type = asContentType(params.type);
   const slug = params.slug;
@@ -92,7 +92,7 @@ export default function ResourceDetailScreen() {
   // Long-form written content gets the immersive Reader; media types keep the
   // detail layout below (hero, play, inline video, show notes).
   if (data && (data.type === 'article' || data.type === 'book') && data.bodyHtml.trim()) {
-    return <ReaderScreen detail={data} />;
+    return <ReaderScreen detail={data} highlightId={params.hl} />;
   }
 
   const sectionLabel = type ? `${CONTENT_TYPE_LABEL[type]}s` : 'Reading';
@@ -166,8 +166,16 @@ export default function ResourceDetailScreen() {
         )}
       </ScrollView>
 
-      {/* Top bar */}
+      {/* Top bar (its bottom edge doubles as the reading-progress bar) */}
       <View style={[styles.topBar, { paddingTop: insets.top, height: insets.top + 50 }]}>
+        <View style={styles.headerTrack}>
+          <Animated.View
+            style={[
+              styles.headerFill,
+              { width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
+            ]}
+          />
+        </View>
         <Pressable style={styles.backButton} onPress={() => router.back()} hitSlop={8}>
           <ChevronLeftIcon size={22} color={Reader.fg} />
         </Pressable>
@@ -182,15 +190,6 @@ export default function ResourceDetailScreen() {
         </Pressable>
       </View>
 
-      {/* Scroll progress */}
-      <View style={[styles.progressTrack, { bottom: insets.bottom + 6 }]}>
-        <Animated.View
-          style={[
-            styles.progressFill,
-            { width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
-          ]}
-        />
-      </View>
     </View>
   );
 }
@@ -300,8 +299,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 10,
     backgroundColor: 'rgba(244,239,227,0.86)',
-    borderBottomWidth: 1,
-    borderBottomColor: Reader.hair,
+  },
+  headerTrack: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 2.5,
+    backgroundColor: Reader.hair,
+  },
+  headerFill: {
+    height: '100%',
+    backgroundColor: Colors.goldBright,
   },
   backButton: {
     width: 40,
@@ -314,19 +323,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 0.4,
     color: Reader.sub,
-  },
-  progressTrack: {
-    position: 'absolute',
-    left: 22,
-    right: 22,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: Reader.hair,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
-    backgroundColor: Colors.goldBright,
   },
 });

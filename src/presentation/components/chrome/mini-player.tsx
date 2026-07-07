@@ -12,7 +12,8 @@ import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
 /**
  * Persistent mini-player above the tab bar — live playback state, tap to expand
  * into the Now Playing screen. Renders nothing until a session exists (first play
- * or a restored one from the last launch).
+ * or a restored one from the last launch). Full-bleed width with rounded top
+ * corners, sitting flush on the tab bar.
  */
 export function MiniPlayer() {
   const router = useRouter();
@@ -60,7 +61,6 @@ export function MiniPlayer() {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 10,
     backgroundColor: Colors.green,
     borderTopLeftRadius: Radius.xl,
     borderTopRightRadius: Radius.xl,

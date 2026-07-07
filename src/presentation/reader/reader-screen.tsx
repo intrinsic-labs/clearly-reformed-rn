@@ -30,8 +30,9 @@ import { Colors, Fonts } from '@/presentation/theme';
  * The Reader (SPEC §8): immersive, book-like reading over the WebView layout
  * engine. Owns the chrome (top/bottom bars, settings sheet, selection actions),
  * reading-position persistence, and highlight capture into the Notebook.
+ * `highlightId` opens the article scrolled to that highlight (Notebook tap-through).
  */
-export function ReaderScreen({ detail }: { detail: ResourceDetail }) {
+export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; highlightId?: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const prefs = useReaderPrefs();
@@ -181,10 +182,14 @@ export function ReaderScreen({ detail }: { detail: ResourceDetail }) {
 
   const minutesLeft = Math.max(0, Math.ceil(totalMinutes * (1 - view.fraction)));
   const paged = prefs.mode !== 'scroll';
+  // A targeted highlight wins over the stored reading position; the char-offset
+  // anchor survives any typography settings because layout is derived from it.
+  const targetHighlight = highlightId ? highlights.data?.find((h) => h.id === highlightId) : undefined;
   const initialCharOffset =
-    storedProgress.data && storedProgress.data.kind === 'read' && !storedProgress.data.completed
+    targetHighlight?.charOffset ??
+    (storedProgress.data && storedProgress.data.kind === 'read' && !storedProgress.data.completed
       ? storedProgress.data.position
-      : 0;
+      : 0);
 
   // Hold rendering one frame set until the stored position is known — the offset
   // is delivered at document-ready and can't be re-sent later without a jump.
@@ -221,14 +226,13 @@ export function ReaderScreen({ detail }: { detail: ResourceDetail }) {
         }}
       />
 
-      {/* Top bar */}
+      {/* Top bar (its bottom edge is the live reading-progress bar) */}
       <Animated.View
         style={[
           styles.topBar,
           {
             paddingTop: insets.top,
             backgroundColor: palette.barBg,
-            borderBottomColor: palette.hair,
             transform: [{ translateY: topTranslate }],
           },
         ]}>
@@ -248,6 +252,9 @@ export function ReaderScreen({ detail }: { detail: ResourceDetail }) {
             <BookmarkIcon size={19} color={isSaved ? Colors.gold : palette.fg} filled={isSaved} />
           </Pressable>
         </View>
+        <View style={[styles.headerTrack, { backgroundColor: palette.track }]}>
+          <View style={[styles.progressFill, { width: `${Math.round(view.fraction * 100)}%` }]} />
+        </View>
       </Animated.View>
 
       {/* Bottom bar */}
@@ -261,9 +268,6 @@ export function ReaderScreen({ detail }: { detail: ResourceDetail }) {
             transform: [{ translateY: bottomTranslate }],
           },
         ]}>
-        <View style={[styles.progressTrack, { backgroundColor: palette.track }]}>
-          <View style={[styles.progressFill, { width: `${Math.round(view.fraction * 100)}%` }]} />
-        </View>
         {paged ? (
           <View style={styles.pagedRow}>
             <Pressable style={styles.pageButton} onPress={() => webViewRef.current?.goPage(-1)} hitSlop={6} accessibilityLabel="Previous page">
@@ -347,7 +351,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 10,
     paddingBottom: 8,
-    borderBottomWidth: 1,
+  },
+  headerTrack: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 2.5,
   },
   barButton: {
     width: 40,
@@ -374,17 +384,11 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderTopWidth: 1,
-    paddingTop: 13,
+    paddingTop: 6,
     paddingHorizontal: 22,
-  },
-  progressTrack: {
-    height: 3,
-    borderRadius: 2,
-    overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 2,
     backgroundColor: Colors.goldBright,
   },
   scrollRow: {

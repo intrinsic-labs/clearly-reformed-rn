@@ -22,6 +22,8 @@ export interface ResourceDetailDto {
   readonly content?: { readonly rendered?: string };
   readonly featured_image_url: string | null;
   readonly people_display?: readonly string[];
+  /** `bible_book` taxonomy term ids (the book name behind acf.scriptureReference). */
+  readonly bible_book?: readonly number[];
   readonly acf?: {
     readonly audioFile?: string;
     readonly podcast_mp3?: string;

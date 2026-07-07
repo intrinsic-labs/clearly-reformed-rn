@@ -67,9 +67,20 @@ export default function PlayerScreen() {
     if (clipTimer.current) clearTimeout(clipTimer.current);
   }, []);
 
+  // The player hooks resolve asynchronously, so `playable` is briefly null on every
+  // open — only close if there's genuinely no session after a grace period.
+  useEffect(() => {
+    if (playable) return;
+    const timer = setTimeout(() => router.back(), 1200);
+    return () => clearTimeout(timer);
+  }, [playable, router]);
+
   if (!playable) {
-    // The route can outlive the session (deep link, state restore) — just close.
-    return <View style={styles.screen} onLayout={() => router.back()} />;
+    return (
+      <View style={styles.screen}>
+        <LinearGradient colors={['#2A352E', '#202821', '#1A211C']} locations={[0, 0.46, 1]} style={StyleSheet.absoluteFill} />
+      </View>
+    );
   }
 
   const eyebrow = playable.eyebrow ?? CONTENT_TYPE_LABEL[playable.resource.type];

@@ -56,7 +56,11 @@ export function ReaderSettingsSheet({ visible, onClose }: { visible: boolean; on
     Animated.timing(slide, { toValue: visible ? 1 : 0, duration: 280, useNativeDriver: true }).start();
   }, [visible, slide]);
 
-  const translateY = slide.interpolate({ inputRange: [0, 1], outputRange: [480, 0] });
+  // Slide by the sheet's real height (measured) — a fixed offset leaves the top
+  // of a taller sheet stranded on screen when closed.
+  const [sheetHeight, setSheetHeight] = useState(0);
+  const offscreen = sheetHeight > 0 ? sheetHeight + 60 : 900;
+  const translateY = slide.interpolate({ inputRange: [0, 1], outputRange: [offscreen, 0] });
   const scrimOpacity = slide.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
 
   const segment = (selected: boolean) => ({
@@ -74,6 +78,7 @@ export function ReaderSettingsSheet({ visible, onClose }: { visible: boolean; on
       </Animated.View>
 
       <Animated.View
+        onLayout={(e) => setSheetHeight(e.nativeEvent.layout.height)}
         style={[
           styles.sheet,
           { backgroundColor: sheet.bg, paddingBottom: insets.bottom + 22, transform: [{ translateY }] },
