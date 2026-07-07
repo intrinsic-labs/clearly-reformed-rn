@@ -298,12 +298,15 @@ function SeekBar({
           }
         }}
         onResponderTerminate={() => setScrubFraction(null)}>
-        <View style={styles.seekTrack} />
-        <View style={[styles.seekFill, { width: `${fraction * 100}%` }]} />
+        {/* pointerEvents=none: touches must always target the bar itself, or
+            locationX comes back relative to a 5px dot / the thumb and the seek
+            math collapses to the child's left edge. */}
+        <View style={styles.seekTrack} pointerEvents="none" />
+        <View style={[styles.seekFill, { width: `${fraction * 100}%` }]} pointerEvents="none" />
         {markers.map((marker, index) => (
-          <View key={index} style={[styles.seekMarker, { left: `${marker * 100}%` }]} />
+          <View key={index} style={[styles.seekMarker, { left: `${marker * 100}%` }]} pointerEvents="none" />
         ))}
-        <View style={[styles.seekThumb, { left: `${fraction * 100}%` }]} />
+        <View style={[styles.seekThumb, { left: `${fraction * 100}%` }]} pointerEvents="none" />
       </View>
       <View style={styles.timesRow}>
         <Text style={styles.time}>{formatTime(shownPosition)}</Text>

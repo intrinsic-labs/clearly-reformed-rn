@@ -1,3 +1,4 @@
+import TrackPlayer, { useIsPlaying } from '@javascriptcommon/react-native-track-player';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import YoutubePlayer, { type YoutubeIframeRef } from 'react-native-youtube-iframe';
@@ -18,6 +19,9 @@ import { Radius, Spacing } from '@/presentation/theme';
  * When a `resource` is provided, watch position persists to the progress store
  * every few seconds while playing (and resumes from it), so videos participate in
  * cross-content "Continue".
+ *
+ * Audio and video are mutually exclusive: starting the video pauses the audio
+ * player, and starting audio pauses the video (derived `play` prop).
  */
 export function InlineVideo({
   videoId,
@@ -50,6 +54,13 @@ export function InlineVideo({
 
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Mutual exclusion with the audio player: `wantsPlay` tracks the user's intent
+  // (from player state events); the actual play prop is derived so audio starting
+  // force-pauses the video without a state write.
+  const [wantsPlay, setWantsPlay] = useState(false);
+  const { playing: audioPlaying } = useIsPlaying();
+  const videoShouldPlay = wantsPlay && !audioPlaying;
+
   const persistPosition = useCallback(async () => {
     const player = playerRef.current;
     if (!player || !resource) return;
@@ -74,13 +85,20 @@ export function InlineVideo({
 
   const onChangeState = useCallback(
     (state: string) => {
-      if (!resource) return;
       if (state === 'playing') {
-        stopPolling();
-        pollTimer.current = setInterval(persistPosition, 5000);
+        setWantsPlay(true);
+        // One player at a time: video starting silences the audio session.
+        TrackPlayer.pause().catch(() => {});
+        if (resource) {
+          stopPolling();
+          pollTimer.current = setInterval(persistPosition, 5000);
+        }
       } else if (state === 'paused' || state === 'ended') {
-        stopPolling();
-        persistPosition().then(invalidateProgress);
+        setWantsPlay(false);
+        if (resource) {
+          stopPolling();
+          persistPosition().then(invalidateProgress);
+        }
       }
     },
     [resource, persistPosition, stopPolling, invalidateProgress],
@@ -97,6 +115,7 @@ export function InlineVideo({
           videoId={videoId}
           width={width}
           height={height}
+          play={videoShouldPlay}
           initialPlayerParams={{ modestbranding: true, rel: false, start: startAt || undefined }}
           webViewProps={{ allowsInlineMediaPlayback: true }}
           onChangeState={onChangeState}

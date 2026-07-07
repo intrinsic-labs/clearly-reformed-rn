@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
+  Animated,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -12,8 +13,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CloseIcon } from '@/presentation/components/icons';
-import { useNotebookMutations } from '@/presentation/hooks/queries/use-notebook';
+import { CloseIcon, TagIcon } from '@/presentation/components/icons';
+import { useNotebook, useNotebookMutations } from '@/presentation/hooks/queries/use-notebook';
 import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
 
 /**
@@ -23,8 +24,8 @@ import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
  *  - noteId (+fields)     → edit an existing note
  *  - highlightId (+note)  → attach/edit the annotation on a highlight
  *
- * Tags live as pills directly under the title: type in the inline field and
- * commit with comma/space/return; tap a pill to remove it.
+ * Tags are managed from the tag button in the header: a sheet listing every tag
+ * you've used before (tap to toggle) plus a field for new ones.
  */
 export default function NoteEditorScreen() {
   const router = useRouter();
@@ -47,33 +48,18 @@ export default function NoteEditorScreen() {
       .map((tag) => tag.trim())
       .filter(Boolean),
   );
-  const [tagInput, setTagInput] = useState('');
+  const [tagsOpen, setTagsOpen] = useState(false);
 
   const { addNote, updateNote, setHighlightNote } = useNotebookMutations();
   const canSave = body.trim().length > 0 || (forHighlight && (params.note ?? '').length > 0);
 
-  const commitTag = (raw: string) => {
-    const tag = raw.trim().replace(/^#/, '').toLowerCase();
-    if (tag && !tags.includes(tag)) setTags((current) => [...current, tag]);
-    setTagInput('');
-  };
-
-  const onTagChange = (text: string) => {
-    if (/[,\s]$/.test(text)) {
-      commitTag(text);
-    } else {
-      setTagInput(text);
-    }
-  };
-
   const onSave = () => {
-    const finalTags = tagInput.trim() ? [...tags, tagInput.trim().replace(/^#/, '').toLowerCase()] : tags;
     if (forHighlight) {
       setHighlightNote.mutate({ id: params.highlightId!, note: body.trim() || null });
     } else if (params.noteId) {
-      updateNote.mutate({ id: params.noteId, title: title.trim() || null, body: body.trim(), tags: finalTags });
+      updateNote.mutate({ id: params.noteId, title: title.trim() || null, body: body.trim(), tags });
     } else {
-      addNote.mutate({ resource: null, title: title.trim() || null, body: body.trim(), tags: finalTags });
+      addNote.mutate({ resource: null, title: title.trim() || null, body: body.trim(), tags });
     }
     router.back();
   };
@@ -87,51 +73,33 @@ export default function NoteEditorScreen() {
           <Text style={styles.cancel}>Cancel</Text>
         </Pressable>
         <Text style={styles.heading}>{heading}</Text>
-        <Pressable onPress={onSave} disabled={!canSave} hitSlop={8}>
-          <Text style={[styles.save, !canSave && styles.saveDisabled]}>Save</Text>
-        </Pressable>
+        <View style={styles.headerActions}>
+          {!forHighlight ? (
+            <Pressable onPress={() => setTagsOpen(true)} hitSlop={8} accessibilityLabel="Edit tags">
+              <TagIcon size={18} color={tags.length > 0 ? Colors.goldDeep : Colors.textMuted} />
+              {tags.length > 0 ? (
+                <View style={styles.tagBadge}>
+                  <Text style={styles.tagBadgeLabel}>{tags.length}</Text>
+                </View>
+              ) : null}
+            </Pressable>
+          ) : null}
+          <Pressable onPress={onSave} disabled={!canSave} hitSlop={8}>
+            <Text style={[styles.save, !canSave && styles.saveDisabled]}>Save</Text>
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView style={styles.form} keyboardShouldPersistTaps="handled">
         {!forHighlight ? (
-          <>
-            <TextInput
-              style={styles.titleInput}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="Title"
-              placeholderTextColor={Colors.textMuted}
-              returnKeyType="next"
-            />
-            <View style={styles.tagsRow}>
-              {tags.map((tag) => (
-                <Pressable
-                  key={tag}
-                  style={styles.tagPill}
-                  onPress={() => setTags((current) => current.filter((t) => t !== tag))}
-                  accessibilityLabel={`Remove tag ${tag}`}>
-                  <Text style={styles.tagLabel}>#{tag}</Text>
-                  <CloseIcon size={9} color={Colors.textMuted} weight={2.4} />
-                </Pressable>
-              ))}
-              <TextInput
-                style={styles.tagInput}
-                value={tagInput}
-                onChangeText={onTagChange}
-                onSubmitEditing={() => commitTag(tagInput)}
-                onKeyPress={({ nativeEvent }) => {
-                  if (nativeEvent.key === 'Backspace' && tagInput === '' && tags.length > 0) {
-                    setTags((current) => current.slice(0, -1));
-                  }
-                }}
-                placeholder={tags.length === 0 ? 'Add tags' : 'Add another'}
-                placeholderTextColor={Colors.textMuted}
-                autoCapitalize="none"
-                autoCorrect={false}
-                blurOnSubmit={false}
-              />
-            </View>
-          </>
+          <TextInput
+            style={styles.titleInput}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Title"
+            placeholderTextColor={Colors.textMuted}
+            returnKeyType="next"
+          />
         ) : null}
         <TextInput
           style={styles.bodyInput}
@@ -145,7 +113,119 @@ export default function NoteEditorScreen() {
         />
         <View style={{ height: 60 }} />
       </ScrollView>
+
+      {!forHighlight ? (
+        <TagsSheet visible={tagsOpen} onClose={() => setTagsOpen(false)} tags={tags} onChange={setTags} />
+      ) : null}
     </KeyboardAvoidingView>
+  );
+}
+
+/**
+ * Tag picker sheet: every tag used across the notebook as toggle pills, plus a
+ * field for brand-new ones. Selection applies immediately; close when done.
+ */
+function TagsSheet({
+  visible,
+  onClose,
+  tags,
+  onChange,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  tags: readonly string[];
+  onChange: (tags: string[]) => void;
+}) {
+  const insets = useSafeAreaInsets();
+  const notes = useNotebook('notes');
+  const knownTags = useMemo(() => {
+    const all = new Set<string>();
+    for (const entry of notes.data ?? []) {
+      if (entry.kind === 'note') entry.tags.forEach((tag) => all.add(tag));
+    }
+    tags.forEach((tag) => all.add(tag));
+    return [...all].sort();
+  }, [notes.data, tags]);
+
+  const [newTag, setNewTag] = useState('');
+
+  // Lazy state (not a ref) so the interpolations can be read during render.
+  const [slide] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    Animated.timing(slide, { toValue: visible ? 1 : 0, duration: 260, useNativeDriver: true }).start();
+  }, [visible, slide]);
+  const [sheetHeight, setSheetHeight] = useState(0);
+  const offscreen = sheetHeight > 0 ? sheetHeight + 60 : 900;
+  const translateY = slide.interpolate({ inputRange: [0, 1], outputRange: [offscreen, 0] });
+  const scrimOpacity = slide.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+
+  const toggle = (tag: string) => {
+    onChange(tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag]);
+  };
+
+  const commitNew = () => {
+    const tag = newTag.trim().replace(/^#/, '').toLowerCase();
+    if (tag && !tags.includes(tag)) onChange([...tags, tag]);
+    setNewTag('');
+  };
+
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents={visible ? 'auto' : 'none'}>
+      <Animated.View style={[styles.scrim, { opacity: scrimOpacity }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close tags" />
+      </Animated.View>
+      <Animated.View
+        onLayout={(e) => setSheetHeight(e.nativeEvent.layout.height)}
+        style={[styles.sheet, { paddingBottom: insets.bottom + 22, transform: [{ translateY }] }]}>
+        <View style={styles.grabber} />
+        <View style={styles.sheetTitleRow}>
+          <Text style={styles.sheetTitle}>Tags</Text>
+          <Pressable style={styles.sheetClose} onPress={onClose} hitSlop={6}>
+            <CloseIcon size={13} color={Colors.inkSoft} />
+          </Pressable>
+        </View>
+
+        {knownTags.length > 0 ? (
+          <View style={styles.pillsWrap}>
+            {knownTags.map((tag) => {
+              const on = tags.includes(tag);
+              return (
+                <Pressable
+                  key={tag}
+                  style={[styles.pill, on ? styles.pillOn : null]}
+                  onPress={() => toggle(tag)}
+                  accessibilityState={{ selected: on }}>
+                  <Text style={[styles.pillLabel, on ? styles.pillLabelOn : null]}>#{tag}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : (
+          <Text style={styles.sheetHint}>No tags yet — add your first below.</Text>
+        )}
+
+        <View style={styles.newTagRow}>
+          <TextInput
+            style={styles.newTagInput}
+            value={newTag}
+            onChangeText={setNewTag}
+            onSubmitEditing={commitNew}
+            placeholder="New tag"
+            placeholderTextColor={Colors.textMuted}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="done"
+            blurOnSubmit={false}
+          />
+          <Pressable
+            style={[styles.addButton, !newTag.trim() && styles.addButtonDisabled]}
+            onPress={commitNew}
+            disabled={!newTag.trim()}>
+            <Text style={styles.addButtonLabel}>Add</Text>
+          </Pressable>
+        </View>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -167,6 +247,28 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.serifBold,
     fontSize: 17,
     color: Colors.ink,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 18,
+  },
+  tagBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -8,
+    minWidth: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: Colors.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  tagBadgeLabel: {
+    fontFamily: Fonts.sansSemiBold,
+    fontSize: 9,
+    color: Colors.white,
   },
   cancel: {
     fontFamily: Fonts.sansMedium,
@@ -190,41 +292,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: Colors.ink,
     paddingTop: 16,
-    paddingBottom: 6,
-  },
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 7,
     paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderSoft,
-    marginBottom: 12,
-  },
-  tagPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#F1E7D0',
-    borderWidth: 1,
-    borderColor: '#E6D9BB',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: Radius.pill,
-  },
-  tagLabel: {
-    fontFamily: Fonts.sansMedium,
-    fontSize: 11.5,
-    color: Colors.bodyText,
-  },
-  tagInput: {
-    minWidth: 90,
-    flexGrow: 1,
-    fontFamily: Fonts.sans,
-    fontSize: 12.5,
-    color: Colors.inkSoft,
-    paddingVertical: 5,
   },
   bodyInput: {
     fontFamily: Fonts.serifText,
@@ -233,5 +301,121 @@ const styles = StyleSheet.create({
     color: Colors.inkSoft,
     minHeight: 220,
     paddingTop: 4,
+  },
+  scrim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(20,18,12,0.34)',
+  },
+  sheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    shadowColor: '#14120C',
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: -12 },
+  },
+  grabber: {
+    width: 38,
+    height: 5,
+    borderRadius: 3,
+    alignSelf: 'center',
+    backgroundColor: Colors.borderChrome,
+    marginBottom: 6,
+  },
+  sheetTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 6,
+    paddingBottom: 14,
+  },
+  sheetTitle: {
+    fontFamily: Fonts.serifBold,
+    fontSize: 19,
+    color: Colors.ink,
+  },
+  sheetClose: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.borderChrome,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetHint: {
+    fontFamily: Fonts.serifText,
+    fontSize: 14,
+    color: Colors.textMuted,
+    marginBottom: 16,
+  },
+  pillsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 18,
+  },
+  pill: {
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.borderChrome,
+  },
+  pillOn: {
+    backgroundColor: Colors.green,
+    borderColor: Colors.green,
+  },
+  pillLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 12.5,
+    color: Colors.inkSoft,
+  },
+  pillLabelOn: {
+    color: Colors.background,
+  },
+  newTagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  newTagInput: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.borderChrome,
+    borderRadius: Radius.md,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+    fontFamily: Fonts.sans,
+    fontSize: 13.5,
+    color: Colors.ink,
+  },
+  addButton: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.green,
+  },
+  addButtonDisabled: {
+    opacity: 0.4,
+  },
+  addButtonLabel: {
+    fontFamily: Fonts.sansSemiBold,
+    fontSize: 13,
+    color: Colors.onGreen,
   },
 });

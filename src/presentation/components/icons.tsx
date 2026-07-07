@@ -1,49 +1,43 @@
-import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
+import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import Svg, { Path } from 'react-native-svg';
 
 import { Colors } from '@/presentation/theme';
+
+/**
+ * UI icons. Professionally-drawn sets via @expo/vector-icons (Feather for line
+ * icons, Ionicons for filled states, MaterialCommunityIcons for the numbered
+ * skip glyphs). Two exceptions stay as bundled SVG paths: the brand LogoMark and
+ * the Notebook glyph (traced from the design's own icon assets — see
+ * content-icons.tsx for the other brand content glyphs).
+ *
+ * `weight` is accepted for backwards compatibility but ignored by font icons.
+ */
 
 export type IconProps = {
   size?: number;
   color?: string;
-  /** Stroke width for outline icons. */
+  /** Stroke width — only honored by the custom SVG icons. */
   weight?: number;
 };
 
 const DEFAULT_SIZE = 23;
 
 /** Home — house outline. */
-export function HomeIcon({ size = DEFAULT_SIZE, color = Colors.ink, weight = 1.7 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M3 11l9-7 9 7" stroke={color} strokeWidth={weight} strokeLinejoin="round" strokeLinecap="round" />
-      <Path d="M5.5 9.5V20h13V9.5" stroke={color} strokeWidth={weight} strokeLinejoin="round" strokeLinecap="round" />
-    </Svg>
-  );
+export function HomeIcon({ size = DEFAULT_SIZE, color = Colors.ink }: IconProps) {
+  return <Feather name="home" size={size} color={color} />;
 }
 
 /** Library — 2×2 grid. */
-export function LibraryIcon({ size = DEFAULT_SIZE, color = Colors.ink, weight = 1.7 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Rect x={3.5} y={3.5} width={7} height={7} rx={1.4} stroke={color} strokeWidth={weight} />
-      <Rect x={13.5} y={3.5} width={7} height={7} rx={1.4} stroke={color} strokeWidth={weight} />
-      <Rect x={3.5} y={13.5} width={7} height={7} rx={1.4} stroke={color} strokeWidth={weight} />
-      <Rect x={13.5} y={13.5} width={7} height={7} rx={1.4} stroke={color} strokeWidth={weight} />
-    </Svg>
-  );
+export function LibraryIcon({ size = DEFAULT_SIZE, color = Colors.ink }: IconProps) {
+  return <Feather name="grid" size={size} color={color} />;
 }
 
 /** Search — magnifier. */
-export function SearchIcon({ size = DEFAULT_SIZE, color = Colors.ink, weight = 1.7 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Circle cx={11} cy={11} r={7} stroke={color} strokeWidth={weight} />
-      <Line x1={21} y1={21} x2={16.5} y2={16.5} stroke={color} strokeWidth={weight} strokeLinecap="round" />
-    </Svg>
-  );
+export function SearchIcon({ size = DEFAULT_SIZE, color = Colors.ink }: IconProps) {
+  return <Feather name="search" size={size} color={color} />;
 }
 
-/** Notebook — journal with bookmark and ruled lines. */
+/** Notebook — journal with bookmark and ruled lines (brand asset). */
 export function NotebookIcon({ size = DEFAULT_SIZE, color = Colors.ink, weight = 1.7 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -73,203 +67,96 @@ export function LogoMark({ size = 30, color = '#CD8A11' }: IconProps) {
 }
 
 /** Back chevron (reader top bar). */
-export function ChevronLeftIcon({ size = 22, color = Colors.ink, weight = 1.8 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M15 5l-7 7 7 7" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
+export function ChevronLeftIcon({ size = 22, color = Colors.ink }: IconProps) {
+  return <Feather name="chevron-left" size={size} color={color} />;
 }
 
 /** Down chevron (dismiss the Now Playing sheet). */
-export function ChevronDownIcon({ size = 20, color = Colors.ink, weight = 1.8 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M6 9l6 6 6-6" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
+export function ChevronDownIcon({ size = 20, color = Colors.ink }: IconProps) {
+  return <Feather name="chevron-down" size={size} color={color} />;
 }
 
-/** Skip-forward (30s) curved arrow. */
-export function SkipForwardIcon({ size = 20, color = Colors.ink, weight = 1.7 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M13 5l5 4-5 4" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M18 9h-8a5 5 0 0 0 0 10h5" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
+/** Right chevron (row affordance). */
+export function ChevronRightIcon({ size = 17, color = Colors.ink }: IconProps) {
+  return <Feather name="chevron-right" size={size} color={color} />;
+}
+
+/** Skip forward 30s. */
+export function SkipForwardIcon({ size = 20, color = Colors.ink }: IconProps) {
+  return <MaterialCommunityIcons name="fast-forward-30" size={size} color={color} />;
+}
+
+/** Skip back 15s. */
+export function SkipBackIcon({ size = 20, color = Colors.ink }: IconProps) {
+  return <MaterialCommunityIcons name="rewind-15" size={size} color={color} />;
 }
 
 /** Heart — outline or filled (save/like). */
-export function HeartIcon({ size = 20, color = Colors.ink, weight = 1.7, filled = false }: IconProps & { filled?: boolean }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? color : 'none'}>
-      <Path
-        d="M12 21s-7.5-4.6-10-9.3C.4 8.4 1.7 4.5 5.3 4.5c2.1 0 3.4 1.3 4.7 3 1.3-1.7 2.6-3 4.7-3 3.6 0 4.9 3.9 3.3 7.2C19.5 16.4 12 21 12 21z"
-        stroke={filled ? undefined : color}
-        strokeWidth={filled ? undefined : weight}
-      />
-    </Svg>
-  );
+export function HeartIcon({ size = 20, color = Colors.ink, filled = false }: IconProps & { filled?: boolean }) {
+  return <Ionicons name={filled ? 'heart' : 'heart-outline'} size={size} color={color} />;
 }
 
 /** Crescent moon (sleep timer). */
-export function MoonIcon({ size = 22, color = Colors.ink, weight = 1.6 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M20 14.5A8 8 0 1 1 9.5 4a6.3 6.3 0 0 0 10.5 10.5z"
-        stroke={color}
-        strokeWidth={weight}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
+export function MoonIcon({ size = 22, color = Colors.ink }: IconProps) {
+  return <Feather name="moon" size={size} color={color} />;
 }
 
 /** Share nodes. */
-export function ShareIcon({ size = 21, color = Colors.ink, weight = 1.6 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Circle cx={18} cy={5} r={2.6} stroke={color} strokeWidth={weight} />
-      <Circle cx={6} cy={12} r={2.6} stroke={color} strokeWidth={weight} />
-      <Circle cx={18} cy={19} r={2.6} stroke={color} strokeWidth={weight} />
-      <Path d="M8.3 10.7l7.4-4.3M8.3 13.3l7.4 4.3" stroke={color} strokeWidth={weight} strokeLinecap="round" />
-    </Svg>
-  );
+export function ShareIcon({ size = 21, color = Colors.ink }: IconProps) {
+  return <Feather name="share-2" size={size} color={color} />;
 }
 
 /** Download arrow into tray. */
-export function DownloadIcon({ size = 21, color = Colors.ink, weight = 1.6 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 3v12" stroke={color} strokeWidth={weight} strokeLinecap="round" />
-      <Path d="M8 11l4 4 4-4" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M5 18.5h14" stroke={color} strokeWidth={weight} strokeLinecap="round" />
-    </Svg>
-  );
+export function DownloadIcon({ size = 21, color = Colors.ink }: IconProps) {
+  return <Feather name="download" size={size} color={color} />;
 }
 
 /** Transcript lines. */
-export function TranscriptIcon({ size = 21, color = Colors.ink, weight = 1.6 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M4 5h16M4 10h16M4 15h10M4 20h7" stroke={color} strokeWidth={weight} strokeLinecap="round" />
-    </Svg>
-  );
+export function TranscriptIcon({ size = 21, color = Colors.ink }: IconProps) {
+  return <Feather name="align-left" size={size} color={color} />;
 }
 
 /** Overflow dots. */
 export function DotsIcon({ size = 19, color = Colors.ink }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-      <Circle cx={5} cy={12} r={1.7} />
-      <Circle cx={12} cy={12} r={1.7} />
-      <Circle cx={19} cy={12} r={1.7} />
-    </Svg>
-  );
+  return <Feather name="more-horizontal" size={size} color={color} />;
 }
 
 /** Bookmark flag (reader top bar save). */
-export function BookmarkIcon({ size = 19, color = Colors.ink, weight = 1.7, filled = false }: IconProps & { filled?: boolean }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? color : 'none'}>
-      <Path
-        d="M6 4h12v17l-6-4-6 4z"
-        stroke={filled ? undefined : color}
-        strokeWidth={filled ? undefined : weight}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
+export function BookmarkIcon({ size = 19, color = Colors.ink, filled = false }: IconProps & { filled?: boolean }) {
+  return <Ionicons name={filled ? 'bookmark' : 'bookmark-outline'} size={size} color={color} />;
 }
 
 /** X close. */
-export function CloseIcon({ size = 14, color = Colors.ink, weight = 2.2 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M6 6l12 12M18 6L6 18" stroke={color} strokeWidth={weight} strokeLinecap="round" />
-    </Svg>
-  );
+export function CloseIcon({ size = 14, color = Colors.ink }: IconProps) {
+  return <Feather name="x" size={size} color={color} />;
 }
 
 /** Pencil (new note). */
-export function PencilIcon({ size = 20, color = Colors.ink, weight = 1.8 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 20h9" stroke={color} strokeWidth={weight} strokeLinecap="round" />
-      <Path
-        d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"
-        stroke={color}
-        strokeWidth={weight}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
+export function PencilIcon({ size = 20, color = Colors.ink }: IconProps) {
+  return <Feather name="edit-3" size={size} color={color} />;
 }
 
 /** Plus (FAB). */
-export function PlusIcon({ size = 24, color = Colors.ink, weight = 2.2 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Line x1={12} y1={5} x2={12} y2={19} stroke={color} strokeWidth={weight} strokeLinecap="round" />
-      <Line x1={5} y1={12} x2={19} y2={12} stroke={color} strokeWidth={weight} strokeLinecap="round" />
-    </Svg>
-  );
+export function PlusIcon({ size = 24, color = Colors.ink }: IconProps) {
+  return <Feather name="plus" size={size} color={color} />;
 }
 
-/** Right chevron (row affordance). */
-export function ChevronRightIcon({ size = 17, color = Colors.ink, weight = 1.9 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M9 6l6 6-6 6" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
+/** Tag (note editor). */
+export function TagIcon({ size = 19, color = Colors.ink }: IconProps) {
+  return <Feather name="tag" size={size} color={color} />;
 }
 
 /** Settings gear. */
-export function GearIcon({ size = 19, color = Colors.ink, weight = 1.6 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Circle cx={12} cy={12} r={3.2} stroke={color} strokeWidth={weight} />
-      <Path
-        d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3 1a7.7 7.7 0 0 0-2.6-1.5L14 2.6h-4l-.5 2.5a7.7 7.7 0 0 0-2.6 1.5l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-1a7.7 7.7 0 0 0 2.6 1.5l.5 2.5h4l.5-2.5a7.7 7.7 0 0 0 2.6-1.5l2.3 1 2-3.4z"
-        stroke={color}
-        strokeWidth={weight}
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
+export function GearIcon({ size = 19, color = Colors.ink }: IconProps) {
+  return <Feather name="settings" size={size} color={color} />;
 }
 
 /** Filled play triangle (mini-player / hero). */
 export function PlayIcon({ size = 16, color = Colors.ink }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 16 18">
-      <Path d="M2 1l12.5 8L2 17z" fill={color} />
-    </Svg>
-  );
+  return <Ionicons name="play" size={size} color={color} />;
 }
 
 /** Filled pause bars. */
 export function PauseIcon({ size = 14, color = Colors.ink }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 14 15">
-      <Rect x={1} y={0} width={4} height={15} rx={1} fill={color} />
-      <Rect x={9} y={0} width={4} height={15} rx={1} fill={color} />
-    </Svg>
-  );
-}
-
-/** Skip-back (15s) curved arrow. */
-export function SkipBackIcon({ size = 20, color = Colors.ink, weight = 1.7 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M11 5L6 9l5 4" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M6 9h8a5 5 0 0 1 0 10H9" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
+  return <Ionicons name="pause" size={size} color={color} />;
 }
