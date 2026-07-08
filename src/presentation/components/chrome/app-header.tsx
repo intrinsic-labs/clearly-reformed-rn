@@ -4,6 +4,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { GearIcon, LogoMark, SearchIcon } from '@/presentation/components/icons';
 import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
 
+const ACTION_BUTTON_SIZE = 38;
+const ACTION_SLOT_WIDTH = ACTION_BUTTON_SIZE * 2 + Spacing.sm;
+
 /**
  * Shared top app bar used on every tab: the gold Clearly Reformed mark + a
  * wordmark in Flecha Regular, with a search affordance on the right. Only the
@@ -65,8 +68,11 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   actions: {
+    width: ACTION_SLOT_WIDTH,
+    minHeight: ACTION_BUTTON_SIZE,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: Spacing.sm,
   },
   wordmark: {
@@ -76,8 +82,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   searchButton: {
-    width: 38,
-    height: 38,
+    width: ACTION_BUTTON_SIZE,
+    height: ACTION_BUTTON_SIZE,
     borderRadius: Radius.pill,
     backgroundColor: Colors.surface,
     borderWidth: 1,
