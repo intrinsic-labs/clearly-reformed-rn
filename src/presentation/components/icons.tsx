@@ -142,13 +142,19 @@ export function PencilIcon({ size = 20, color = Colors.ink }: IconProps) {
   return <Feather name="edit-3" size={size} color={color} />;
 }
 
+/** Check mark (confirm / done). */
+export function CheckIcon({ size = 20, color = Colors.ink }: IconProps) {
+  return <Feather name="check" size={size} color={color} />;
+}
+
 /** Plus (FAB). */
 export function PlusIcon({ size = 24, color = Colors.ink }: IconProps) {
   return <Feather name="plus" size={size} color={color} />;
 }
 
 /** Tag (note editor). */
-export function TagIcon({ size = 19, color = Colors.ink }: IconProps) {
+export function TagIcon({ size = 19, color = Colors.ink, filled = false }: IconProps & { filled?: boolean }) {
+  if (filled) return <Ionicons name="pricetag" size={size} color={color} />;
   return <Feather name="tag" size={size} color={color} />;
 }
 

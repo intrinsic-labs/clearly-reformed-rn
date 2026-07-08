@@ -1,20 +1,11 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Animated,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ChevronLeftIcon, CloseIcon, TagIcon } from '@/presentation/components/icons';
+import { CheckIcon, ChevronLeftIcon, CloseIcon, PencilIcon, TagIcon } from '@/presentation/components/icons';
 import { useNotebook, useNotebookMutations } from '@/presentation/hooks/queries/use-notebook';
+import { useAnimatedKeyboardBottomInset } from '@/presentation/hooks/use-keyboard-bottom-inset';
 import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
 
 /**
@@ -67,6 +58,13 @@ export default function NoteEditorScreen() {
   const { addNote, updateNote, setHighlightNote } = useNotebookMutations();
   const canSave = body.trim().length > 0 || forHighlight;
 
+  const onTagsChange = (nextTags: string[]) => {
+    setTags(nextTags);
+    if (!forHighlight && noteId) {
+      updateNote.mutate({ id: noteId, title: title.trim() || null, body: body.trim(), tags: nextTags });
+    }
+  };
+
   const persist = () => {
     if (!canSave) return;
     if (forHighlight) {
@@ -98,25 +96,35 @@ export default function NoteEditorScreen() {
   const heading = forHighlight ? 'Note on highlight' : 'Note';
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <View style={styles.screen}>
       <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
-        <Pressable onPress={onBack} hitSlop={8} style={styles.backButton} accessibilityLabel="Back to notebook">
-          <ChevronLeftIcon size={24} color={Colors.inkSoft} />
-        </Pressable>
+        <View style={styles.headerSlot}>
+          <Pressable onPress={onBack} hitSlop={8} style={styles.headerIconButton} accessibilityLabel="Back to notebook">
+            <ChevronLeftIcon size={24} color={Colors.inkSoft} />
+          </Pressable>
+        </View>
         <Text style={styles.heading}>{heading}</Text>
-        <View style={styles.headerActions}>
+        <View style={[styles.headerSlot, styles.headerActions]}>
           {!forHighlight ? (
-            <Pressable onPress={() => setTagsOpen(true)} hitSlop={8} accessibilityLabel="Edit tags">
-              <TagIcon size={18} color={tags.length > 0 ? Colors.goldDeep : Colors.textMuted} />
-              {tags.length > 0 ? (
-                <View style={styles.tagBadge}>
-                  <Text style={styles.tagBadgeLabel}>{tags.length}</Text>
-                </View>
-              ) : null}
+            <Pressable
+              onPress={() => setTagsOpen(true)}
+              hitSlop={8}
+              style={styles.headerIconButton}
+              accessibilityLabel="Edit tags">
+              <TagIcon size={18} color={tags.length > 0 ? Colors.goldDeep : Colors.textMuted} filled={tags.length > 0} />
             </Pressable>
           ) : null}
-          <Pressable onPress={onToggleMode} disabled={editing && !canSave} hitSlop={8}>
-            <Text style={[styles.save, editing && !canSave && styles.saveDisabled]}>{editing ? 'Done' : 'Edit'}</Text>
+          <Pressable
+            onPress={onToggleMode}
+            disabled={editing && !canSave}
+            hitSlop={8}
+            style={[styles.headerIconButton, editing && !canSave && styles.saveDisabled]}
+            accessibilityLabel={editing ? 'Done editing note' : 'Edit note'}>
+            {editing ? (
+              <CheckIcon size={21} color={editing && !canSave ? Colors.textMuted : Colors.goldDeep} />
+            ) : (
+              <PencilIcon size={19} color={Colors.goldDeep} />
+            )}
           </Pressable>
         </View>
       </View>
@@ -164,9 +172,9 @@ export default function NoteEditorScreen() {
       </ScrollView>
 
       {!forHighlight ? (
-        <TagsSheet visible={tagsOpen} onClose={() => setTagsOpen(false)} tags={tags} onChange={setTags} />
+        <TagsSheet visible={tagsOpen} onClose={() => setTagsOpen(false)} tags={tags} onChange={onTagsChange} />
       ) : null}
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -186,6 +194,7 @@ function TagsSheet({
   onChange: (tags: string[]) => void;
 }) {
   const insets = useSafeAreaInsets();
+  const keyboardBottomInset = useAnimatedKeyboardBottomInset();
   const notes = useNotebook('notes');
   const knownTags = useMemo(() => {
     const all = new Set<string>();
@@ -201,12 +210,16 @@ function TagsSheet({
   // Lazy state (not a ref) so the interpolations can be read during render.
   const [slide] = useState(() => new Animated.Value(0));
   useEffect(() => {
-    Animated.timing(slide, { toValue: visible ? 1 : 0, duration: 260, useNativeDriver: true }).start();
+    Animated.timing(slide, { toValue: visible ? 1 : 0, duration: 260, useNativeDriver: false }).start();
   }, [visible, slide]);
   const [sheetHeight, setSheetHeight] = useState(0);
   const offscreen = sheetHeight > 0 ? sheetHeight + 60 : 900;
   const translateY = slide.interpolate({ inputRange: [0, 1], outputRange: [offscreen, 0] });
+  const keyboardTranslateY = Animated.multiply(keyboardBottomInset, -1);
+  const sheetTranslateY = Animated.add(translateY, keyboardTranslateY);
   const scrimOpacity = slide.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+  const keyboardBridgeBottom = Animated.multiply(keyboardBottomInset, -1);
+  const keyboardBridgeHeight = Animated.add(keyboardBottomInset, 12);
 
   const toggle = (tag: string) => {
     onChange(tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag]);
@@ -225,8 +238,14 @@ function TagsSheet({
       </Animated.View>
       <Animated.View
         onLayout={(e) => setSheetHeight(e.nativeEvent.layout.height)}
-        style={[styles.sheet, { paddingBottom: insets.bottom + 22, transform: [{ translateY }] }]}>
-        <View style={styles.grabber} />
+        style={[
+          styles.sheet,
+          { paddingBottom: insets.bottom + 22, transform: [{ translateY: sheetTranslateY }] },
+        ]}>
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.keyboardSheetBridge, { bottom: keyboardBridgeBottom, height: keyboardBridgeHeight }]}
+        />
         <View style={styles.sheetTitleRow}>
           <Text style={styles.sheetTitle}>Tags</Text>
           <Pressable style={styles.sheetClose} onPress={onClose} hitSlop={6}>
@@ -292,41 +311,27 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
+  headerSlot: {
+    width: 86,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   heading: {
+    flex: 1,
     fontFamily: Fonts.serifBold,
     fontSize: 17,
     color: Colors.ink,
+    textAlign: 'center',
   },
   headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: 18,
   },
-  tagBadge: {
-    position: 'absolute',
-    top: -6,
-    right: -8,
-    minWidth: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: Colors.gold,
+  headerIconButton: {
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 3,
-  },
-  tagBadgeLabel: {
-    fontFamily: Fonts.sansSemiBold,
-    fontSize: 9,
-    color: Colors.white,
-  },
-  backButton: {
-    width: 32,
-    marginLeft: -8,
-  },
-  save: {
-    fontFamily: Fonts.sansSemiBold,
-    fontSize: 14,
-    color: Colors.goldDeep,
   },
   saveDisabled: {
     opacity: 0.4,
@@ -337,15 +342,16 @@ const styles = StyleSheet.create({
   },
   titleInput: {
     fontFamily: Fonts.serifBold,
-    fontSize: 22,
+    fontSize: 24,
+    lineHeight: 29,
     color: Colors.ink,
     paddingTop: 16,
     paddingBottom: 10,
   },
   bodyInput: {
     fontFamily: Fonts.serifText,
-    fontSize: 16.5,
-    lineHeight: 25,
+    fontSize: 17,
+    lineHeight: 27,
     color: Colors.inkSoft,
     minHeight: 220,
     paddingTop: 4,
@@ -400,18 +406,17 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 18,
     shadowColor: '#14120C',
     shadowOpacity: 0.35,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: -12 },
   },
-  grabber: {
-    width: 38,
-    height: 5,
-    borderRadius: 3,
-    alignSelf: 'center',
-    backgroundColor: Colors.borderChrome,
+  keyboardSheetBridge: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    backgroundColor: Colors.surface,
   },
   sheetTitleRow: {
     flexDirection: 'row',
