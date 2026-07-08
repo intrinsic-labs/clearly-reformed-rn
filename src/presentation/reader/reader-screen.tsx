@@ -254,7 +254,7 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
           </Pressable>
         </View>
         <View style={[styles.headerTrack, { backgroundColor: palette.track }]}>
-          <View style={[styles.progressFill, { width: `${Math.round(view.fraction * 100)}%` }]} />
+          <View style={[styles.progressFill, { width: `${view.fraction * 100}%` }]} />
         </View>
       </Animated.View>
 

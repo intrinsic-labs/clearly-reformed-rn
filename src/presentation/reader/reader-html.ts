@@ -240,7 +240,13 @@ mark.hl {
 
   /* ---------- progress reporting ---------- */
   var reportTimer = null;
+  var reportFrame = null;
   function scheduleReport() {
+    if (!paged && window.requestAnimationFrame) {
+      if (reportFrame) return;
+      reportFrame = requestAnimationFrame(function () { reportFrame = null; report(); });
+      return;
+    }
     if (reportTimer) return;
     reportTimer = setTimeout(function () { reportTimer = null; report(); }, 350);
   }
