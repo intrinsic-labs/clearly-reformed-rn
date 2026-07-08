@@ -13,6 +13,7 @@ import { useInvalidateProgress, useResourceProgress } from '@/presentation/hooks
 import { useIsSaved, useToggleSaved } from '@/presentation/hooks/queries/use-saved';
 import { htmlToPlainText, sanitizeArticleHtml } from '@/presentation/lib/sanitize-html';
 import { shortDate } from '@/presentation/lib/format';
+import { parseYouTubeId, stripLeadingYouTubeEmbed } from '@/presentation/lib/video';
 import { useReaderPrefs, FONT_SIZES_PX, LINE_HEIGHTS } from '@/presentation/reader/prefs';
 import { READER_PALETTES } from '@/presentation/reader/themes';
 import type { ReaderWebPrefs } from '@/presentation/reader/reader-html';
@@ -54,7 +55,12 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
     [palette, prefs],
   );
 
-  const bodyHtml = useMemo(() => sanitizeArticleHtml(detail.bodyHtml), [detail.bodyHtml]);
+  const youtubeId = useMemo(() => parseYouTubeId(detail.videoUrl), [detail.videoUrl]);
+  const documentBaseUrl = useMemo(() => detail.link || 'https://control.kdy.org/', [detail.link]);
+  const bodyHtml = useMemo(
+    () => sanitizeArticleHtml(stripLeadingYouTubeEmbed(detail.bodyHtml, detail.videoUrl)),
+    [detail.bodyHtml, detail.videoUrl],
+  );
   const totalMinutes = useMemo(() => {
     const words = htmlToPlainText(bodyHtml).split(/\s+/).filter(Boolean).length;
     return Math.max(1, Math.round(words / 200));
@@ -205,6 +211,8 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
         ref={webViewRef}
         bodyHtml={bodyHtml}
         header={header}
+        video={youtubeId ? { youtubeId } : null}
+        documentBaseUrl={documentBaseUrl}
         insets={{ top: insets.top, bottom: insets.bottom }}
         initialPrefs={webPrefs}
         initialCharOffset={initialCharOffset}

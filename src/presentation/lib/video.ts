@@ -21,3 +21,25 @@ export function parseYouTubeId(url: string | null | undefined): string | null {
   }
   return null;
 }
+
+const LEADING_FIGURE_RE = /^\s*<figure\b[^>]*>[\s\S]*?<\/figure>\s*/i;
+const YOUTUBE_URL_RE = /https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)\/[^\s<"']+/i;
+
+/**
+ * WordPress video-backed articles can put a bare YouTube URL inside the first
+ * embed figure. When we render our own player, remove that source-only block so
+ * the transcript does not start with a duplicate URL.
+ */
+export function stripLeadingYouTubeEmbed(html: string, expectedUrl?: string | null): string {
+  if (!html) return '';
+  return html.replace(LEADING_FIGURE_RE, (figure) => {
+    const url = YOUTUBE_URL_RE.exec(figure)?.[0];
+    if (!url) return figure;
+
+    const embeddedId = parseYouTubeId(url);
+    const expectedId = parseYouTubeId(expectedUrl);
+    if (expectedId && embeddedId && embeddedId !== expectedId) return figure;
+
+    return '';
+  });
+}

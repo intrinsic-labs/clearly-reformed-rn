@@ -24,6 +24,10 @@ export interface ReaderHeaderInfo {
   readonly scripture: string | null;
 }
 
+export interface ReaderVideoInfo {
+  readonly youtubeId: string;
+}
+
 export interface ReaderInsets {
   readonly top: number;
   readonly bottom: number;
@@ -42,7 +46,14 @@ export interface ReaderWebPrefs {
   readonly curlShade: boolean;
 }
 
-export function buildReaderHtml(bodyHtml: string, header: ReaderHeaderInfo, insets: ReaderInsets, initial: ReaderWebPrefs): string {
+export function buildReaderHtml(
+  bodyHtml: string,
+  header: ReaderHeaderInfo,
+  insets: ReaderInsets,
+  initial: ReaderWebPrefs,
+  documentBaseUrl: string,
+  video?: ReaderVideoInfo | null,
+): string {
   const headerHtml = `
     <header id="head">
       <div class="eyebrow">${escapeHtml(header.eyebrow)}</div>
@@ -51,6 +62,19 @@ export function buildReaderHtml(bodyHtml: string, header: ReaderHeaderInfo, inse
       ${header.scripture ? `<div class="scripture">${escapeHtml(header.scripture)}</div>` : ''}
       <div class="rule"></div>
     </header>`;
+  const embedOrigin = originFromUrl(documentBaseUrl);
+  const videoHtml = video
+    ? `
+    <figure class="reader-video">
+      <iframe
+        src="https://www.youtube.com/embed/${encodeURIComponent(video.youtubeId)}?playsinline=1&rel=0&origin=${encodeURIComponent(embedOrigin)}"
+        title="Video player"
+        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerpolicy="origin-when-cross-origin"
+        allowfullscreen>
+      </iframe>
+    </figure>`
+    : '';
 
   return `<!DOCTYPE html>
 <html>
@@ -112,6 +136,23 @@ body { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent;
 #head .scripture { font-family:'Flecha',serif; font-size:.86em; color:var(--accent); margin-top:.7em; }
 #head .rule { height:1px; background:var(--hair); margin:1.4em 0 1.5em; }
 
+.reader-video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin: 0 0 1.5em;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+}
+.reader-video iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
 #body p { margin: 0 0 1.1em; }
 #body > p:first-of-type::first-letter {
   float:left; font-family:'Flecha',serif; font-weight:700;
@@ -156,6 +197,7 @@ mark.hl {
 <div id="root" class="${initial.paged ? 'paged' : 'scroll'}">
   <div id="content">
     ${headerHtml}
+    ${videoHtml}
     <div id="body">${bodyHtml}</div>
     <div class="end-spacer"></div>
   </div>
@@ -598,4 +640,9 @@ function escapeHtml(text: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function originFromUrl(url: string): string {
+  const match = /^[a-z][a-z0-9+.-]*:\/\/[^/]+/i.exec(url);
+  return match?.[0] ?? 'https://control.kdy.org';
 }

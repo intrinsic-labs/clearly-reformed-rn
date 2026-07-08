@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
@@ -7,6 +7,7 @@ import {
   buildReaderHtml,
   type ReaderHeaderInfo,
   type ReaderInsets,
+  type ReaderVideoInfo,
   type ReaderWebPrefs,
 } from '@/presentation/reader/reader-html';
 
@@ -37,6 +38,8 @@ export interface ReaderWebViewHandle {
 interface Props {
   readonly bodyHtml: string;
   readonly header: ReaderHeaderInfo;
+  readonly video?: ReaderVideoInfo | null;
+  readonly documentBaseUrl: string;
   readonly insets: ReaderInsets;
   readonly initialPrefs: ReaderWebPrefs;
   /** Restore position (character offset) and existing highlights, sent at page-ready. */
@@ -73,10 +76,17 @@ export const ReaderWebView = forwardRef<ReaderWebViewHandle, Props>(function Rea
   };
 
   const html = useMemo(
-    () => buildReaderHtml(props.bodyHtml, props.header, props.insets, props.initialPrefs),
+    () => buildReaderHtml(
+      props.bodyHtml,
+      props.header,
+      props.insets,
+      props.initialPrefs,
+      props.documentBaseUrl,
+      props.video,
+    ),
     // Rebuild only when the article itself changes — prefs flow through applyPrefs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [props.bodyHtml],
+    [props.bodyHtml, props.documentBaseUrl, props.video?.youtubeId],
   );
 
   const call = (expression: string) => {
@@ -153,10 +163,16 @@ export const ReaderWebView = forwardRef<ReaderWebViewHandle, Props>(function Rea
     }
   };
 
+  const onShouldStartLoadWithRequest = useCallback(
+    (request: { url: string; isTopFrame?: boolean }) =>
+      shouldStartReaderRequest(request, props.documentBaseUrl, props.onLink),
+    [props.documentBaseUrl, props.onLink],
+  );
+
   return (
     <WebView
       ref={webViewRef}
-      source={{ html }}
+      source={{ html, baseUrl: props.documentBaseUrl }}
       style={[styles.webview, { backgroundColor: props.initialPrefs.bg }]}
       onMessage={onMessage}
       originWhitelist={['*']}
@@ -167,11 +183,43 @@ export const ReaderWebView = forwardRef<ReaderWebViewHandle, Props>(function Rea
       dataDetectorTypes="none"
       hideKeyboardAccessoryView
       webviewDebuggingEnabled={__DEV__}
+      allowsInlineMediaPlayback
+      mediaPlaybackRequiresUserAction
       // External navigation never happens in-place; links surface via onLink.
-      onShouldStartLoadWithRequest={(request) => request.url === 'about:blank' || request.url.startsWith('data:')}
+      onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
     />
   );
 });
+
+function shouldStartReaderRequest(
+  request: { url: string; isTopFrame?: boolean },
+  documentBaseUrl: string,
+  onExternalLink: (href: string) => void,
+): boolean {
+  if (request.isTopFrame === false) return true;
+
+  const { url } = request;
+  if (isYouTubeWatchUrl(url)) {
+    onExternalLink(url);
+    return false;
+  }
+
+  return (
+    url === 'about:blank' ||
+    url.startsWith('data:') ||
+    url === documentBaseUrl ||
+    url.startsWith('https://www.youtube.com/embed/') ||
+    url.startsWith('https://www.youtube-nocookie.com/embed/')
+  );
+}
+
+function isYouTubeWatchUrl(url: string): boolean {
+  return (
+    url.startsWith('https://www.youtube.com/watch') ||
+    url.startsWith('https://m.youtube.com/watch') ||
+    url.startsWith('https://youtu.be/')
+  );
+}
 
 const styles = StyleSheet.create({
   webview: {

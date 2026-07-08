@@ -25,7 +25,7 @@ import { useResolvedTrack } from '@/presentation/hooks/queries/use-resolved-trac
 import { useIsSaved, useToggleSaved } from '@/presentation/hooks/queries/use-saved';
 import { formatTime, shortDate } from '@/presentation/lib/format';
 import { htmlToBlocks, readingTimeMinutes } from '@/presentation/lib/html';
-import { parseYouTubeId } from '@/presentation/lib/video';
+import { parseYouTubeId, stripLeadingYouTubeEmbed } from '@/presentation/lib/video';
 import { usePlayer } from '@/presentation/playback/use-player';
 import { ReaderScreen } from '@/presentation/reader/reader-screen';
 import { Colors, Fonts, Reader, Spacing, Type } from '@/presentation/theme';
@@ -66,8 +66,13 @@ export default function ResourceDetailScreen() {
 
   const { data, isLoading, isError, refetch } = useResourceContent(type, slug);
 
-  const blocks = useMemo(() => (data ? htmlToBlocks(data.bodyHtml) : []), [data]);
+  const bodyHtml = useMemo(
+    () => (data ? stripLeadingYouTubeEmbed(data.bodyHtml, data.videoUrl) : ''),
+    [data],
+  );
+  const blocks = useMemo(() => htmlToBlocks(bodyHtml), [bodyHtml]);
   const minutes = useMemo(() => readingTimeMinutes(blocks), [blocks]);
+  const youTubeId = parseYouTubeId(data?.videoUrl);
 
   const resource = data ? toResourceRef(data) : null;
   const { data: track } = useResolvedTrack(data);
@@ -99,7 +104,6 @@ export default function ResourceDetailScreen() {
   const byline = data
     ? [data.people[0], shortDate(data.displayDate), `${minutes} min read`].filter(Boolean).join('  ·  ')
     : '';
-  const youTubeId = parseYouTubeId(data?.videoUrl);
   // A YouTube video plays inline; a non-YouTube video falls back to opening on the
   // web; a cross-posted article links out to its original source.
   const fallbackVideoUrl = !youTubeId && data?.videoUrl ? data.videoUrl : null;
