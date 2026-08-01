@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { NoteEntry } from '@/domain/notebook';
 import { NotebookIcon } from '@/presentation/components/icons';
+import { MarkdownView } from '@/presentation/components/markdown-view';
 import { NotebookCardShell } from '@/presentation/components/notebook/card-shell';
 import { relativeDate } from '@/presentation/lib/format';
 import { Colors, Fonts, Radius } from '@/presentation/theme';
@@ -28,9 +29,8 @@ export function NoteCard({
       onPress={onPress}
       onLongPress={onLongPress}>
       {entry.title ? <Text style={styles.title}>{entry.title}</Text> : null}
-      <Text style={styles.body} numberOfLines={6}>
-        {entry.body}
-      </Text>
+      {/* Emphasis survives the preview; block structure collapses to lines. */}
+      <MarkdownView markdown={entry.body} bodyStyle={styles.body} numberOfLines={6} />
 
       {entry.tags.length > 0 ? (
         <View style={styles.tagsRow}>

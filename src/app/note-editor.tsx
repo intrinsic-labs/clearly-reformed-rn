@@ -1,17 +1,45 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Animated,
+  InputAccessoryView,
+  Keyboard,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type NativeSyntheticEvent,
+  type TextInputSelectionChangeEventData,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CheckIcon, ChevronLeftIcon, CloseIcon, PencilIcon, TagIcon } from '@/presentation/components/icons';
+import { MarkdownView } from '@/presentation/components/markdown-view';
+import { MarkdownToolbar } from '@/presentation/components/notebook/markdown-toolbar';
 import { useNotebook, useNotebookMutations } from '@/presentation/hooks/queries/use-notebook';
 import { useAnimatedKeyboardBottomInset } from '@/presentation/hooks/use-keyboard-bottom-inset';
+import {
+  activeMarkdownActions,
+  applyMarkdownAction,
+  type MarkdownAction,
+  type TextSelection,
+} from '@/presentation/lib/markdown-edit';
 import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
+
+/** Ties the iOS formatting bar to the body field. */
+const ACCESSORY_ID = 'note-markdown-toolbar';
 
 /**
  * The note screen — pushed onto the stack, with two modes: a clean reading view
- * (long notes are their own little reading surface) and an edit mode toggled from
- * the header. Edits save on Done and on back — nothing is lost silently.
+ * (long notes are their own little reading surface, rendered from Markdown) and an
+ * edit mode toggled from the header. Edit mode is deliberately plain text — raw
+ * Markdown in the field, formatting only in reading mode: live-styling a native
+ * `TextInput` from JS means replacing its attributed text every keystroke, which
+ * breaks scroll/caret behaviour (tried, reverted). Edits autosave on a debounce
+ * while typing and save again on Done and on back — nothing is lost silently.
  *
  * Routed by params:
  *  - no params            → new standalone note (opens in edit mode)
@@ -20,6 +48,13 @@ import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
  *
  * Tags are managed from the tag button in the header: a sheet listing every tag
  * you've used before (tap to toggle) plus a field for new ones.
+ *
+ * Keyboard handling: the body is a single flexing field rather than a growing
+ * input inside a ScrollView, so the caret is kept in view by the platform text
+ * view itself. iOS (where the keyboard overlays rather than resizes) shrinks the
+ * editor by the live keyboard inset and hangs the formatting bar off the keyboard
+ * via `InputAccessoryView`; Android's window already resizes, so the bar simply
+ * sits at the bottom of the layout.
  */
 export default function NoteEditorScreen() {
   const router = useRouter();
@@ -55,8 +90,35 @@ export default function NoteEditorScreen() {
     }
   }, [editing]);
 
+  /* ----- markdown formatting ----- */
+  // Tracked for the toolbar (what to wrap / which line to prefix) — but never
+  // forced back onto the native input. Steering the caret from JS via the
+  // `selection` prop is what made toolbar taps fling the caret and scroll
+  // around, so the native field owns the caret unconditionally.
+  const [selection, setSelection] = useState<TextSelection>({ start: 0, end: 0 });
+
+  const onSelectionChange = (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
+    setSelection(event.nativeEvent.selection);
+  };
+
+  const onFormat = (action: MarkdownAction) => {
+    const result = applyMarkdownAction(body, selection, action);
+    setBody(result.text);
+    setSelection(result.selection);
+  };
+
+  const activeFormats = useMemo(() => activeMarkdownActions(body, selection), [body, selection]);
+  const toolbar = (
+    <MarkdownToolbar active={activeFormats} onAction={onFormat} onDismissKeyboard={() => Keyboard.dismiss()} />
+  );
+
   const { addNote, updateNote, setHighlightNote } = useNotebookMutations();
   const canSave = body.trim().length > 0 || forHighlight;
+
+  // iOS floats the keyboard over the layout, so the editor has to give back the
+  // space itself; Android's window is already resized (adjustResize).
+  const keyboardOverlays = Platform.OS === 'ios';
+  const keyboardBottomInset = useAnimatedKeyboardBottomInset();
 
   const onTagsChange = (nextTags: string[]) => {
     setTags(nextTags);
@@ -65,19 +127,40 @@ export default function NoteEditorScreen() {
     }
   };
 
+  // Autosave can fire while the first insert is still in flight; without this
+  // guard a second tick would create a duplicate note instead of updating.
+  const creating = useRef(false);
   const persist = () => {
     if (!canSave) return;
     if (forHighlight) {
       setHighlightNote.mutate({ id: params.highlightId!, note: body.trim() || null });
     } else if (noteId) {
       updateNote.mutate({ id: noteId, title: title.trim() || null, body: body.trim(), tags });
-    } else {
+    } else if (!creating.current) {
+      creating.current = true;
       addNote.mutate(
         { resource: null, title: title.trim() || null, body: body.trim(), tags },
-        { onSuccess: (entry) => setNoteId(entry.id) },
+        {
+          onSuccess: (entry) => setNoteId(entry.id),
+          onSettled: () => {
+            creating.current = false;
+          },
+        },
       );
     }
   };
+
+  // Debounced autosave while editing: Done/back still save immediately, this
+  // just caps what a crash or swipe-away can lose to about a second of typing.
+  const persistRef = useRef(persist);
+  useEffect(() => {
+    persistRef.current = persist;
+  });
+  useEffect(() => {
+    if (!editing || !canSave) return;
+    const timer = setTimeout(() => persistRef.current(), 1000);
+    return () => clearTimeout(timer);
+  }, [editing, canSave, title, body, tags]);
 
   const onToggleMode = () => {
     if (editing) {
@@ -129,9 +212,9 @@ export default function NoteEditorScreen() {
         </View>
       </View>
 
-      <ScrollView style={styles.form} keyboardShouldPersistTaps="handled">
+      <Animated.View style={[styles.content, keyboardOverlays ? { marginBottom: keyboardBottomInset } : null]}>
         {editing ? (
-          <>
+          <View style={[styles.editor, { paddingBottom: insets.bottom }]}>
             {!forHighlight ? (
               <TextInput
                 style={styles.titleInput}
@@ -147,29 +230,45 @@ export default function NoteEditorScreen() {
               style={styles.bodyInput}
               value={body}
               onChangeText={setBody}
+              onSelectionChange={onSelectionChange}
+              inputAccessoryViewID={Platform.OS === 'ios' ? ACCESSORY_ID : undefined}
               placeholder={forHighlight ? 'Add your thoughts on this highlight…' : 'Write your note…'}
               placeholderTextColor={Colors.textMuted}
               multiline
+              scrollEnabled
               textAlignVertical="top"
             />
-          </>
+          </View>
         ) : (
-          <Pressable onPress={() => setEditing(true)}>
-            {!forHighlight && title ? <Text style={styles.readTitle}>{title}</Text> : null}
-            {tags.length > 0 ? (
-              <View style={styles.readTagsRow}>
-                {tags.map((tag) => (
-                  <View key={tag} style={styles.readTag}>
-                    <Text style={styles.readTagLabel}>#{tag}</Text>
-                  </View>
-                ))}
+          <ScrollView
+            style={styles.form}
+            contentContainerStyle={{ paddingBottom: insets.bottom + 60 }}
+            keyboardShouldPersistTaps="handled">
+            <Pressable onPress={() => setEditing(true)}>
+              {!forHighlight && title ? <Text style={styles.readTitle}>{title}</Text> : null}
+              {tags.length > 0 ? (
+                <View style={styles.readTagsRow}>
+                  {tags.map((tag) => (
+                    <View key={tag} style={styles.readTag}>
+                      <Text style={styles.readTagLabel}>#{tag}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+              <View style={styles.readBody}>
+                <MarkdownView markdown={body} />
               </View>
-            ) : null}
-            <Text style={styles.readBody}>{body}</Text>
-          </Pressable>
+            </Pressable>
+          </ScrollView>
         )}
-        <View style={{ height: 60 }} />
-      </ScrollView>
+      </Animated.View>
+
+      {editing && Platform.OS === 'ios' ? (
+        <InputAccessoryView nativeID={ACCESSORY_ID} backgroundColor={Colors.surface}>
+          {toolbar}
+        </InputAccessoryView>
+      ) : null}
+      {editing && Platform.OS !== 'ios' ? toolbar : null}
 
       {!forHighlight ? (
         <TagsSheet visible={tagsOpen} onClose={() => setTagsOpen(false)} tags={tags} onChange={onTagsChange} />
@@ -218,6 +317,10 @@ function TagsSheet({
   const keyboardTranslateY = Animated.multiply(keyboardBottomInset, -1);
   const sheetTranslateY = Animated.add(translateY, keyboardTranslateY);
   const scrimOpacity = slide.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+  // The keyboard offset above also applies while the sheet is "offscreen", so with
+  // the keyboard up its hidden position pokes into view behind the keys — fade it
+  // out entirely once the slide has (mostly) landed.
+  const sheetOpacity = slide.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0, 1, 1] });
   const keyboardBridgeBottom = Animated.multiply(keyboardBottomInset, -1);
   const keyboardBridgeHeight = Animated.add(keyboardBottomInset, 12);
 
@@ -240,7 +343,11 @@ function TagsSheet({
         onLayout={(e) => setSheetHeight(e.nativeEvent.layout.height)}
         style={[
           styles.sheet,
-          { paddingBottom: insets.bottom + 22, transform: [{ translateY: sheetTranslateY }] },
+          {
+            paddingBottom: insets.bottom + 22,
+            opacity: sheetOpacity,
+            transform: [{ translateY: sheetTranslateY }],
+          },
         ]}>
         <Animated.View
           pointerEvents="none"
@@ -336,7 +443,14 @@ const styles = StyleSheet.create({
   saveDisabled: {
     opacity: 0.4,
   },
+  content: {
+    flex: 1,
+  },
   form: {
+    flex: 1,
+    paddingHorizontal: Spacing.xl,
+  },
+  editor: {
     flex: 1,
     paddingHorizontal: Spacing.xl,
   },
@@ -349,11 +463,13 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   bodyInput: {
+    // Flexing (rather than growing inside a ScrollView) is what keeps the caret
+    // clear of the keyboard: the native text view scrolls itself.
+    flex: 1,
     fontFamily: Fonts.serifText,
     fontSize: 17,
     lineHeight: 27,
     color: Colors.inkSoft,
-    minHeight: 220,
     paddingTop: 4,
   },
   readTitle: {
@@ -383,10 +499,6 @@ const styles = StyleSheet.create({
     color: Colors.bodyText,
   },
   readBody: {
-    fontFamily: Fonts.serifText,
-    fontSize: 17,
-    lineHeight: 27,
-    color: '#4A4232',
     paddingTop: 16,
   },
   scrim: {

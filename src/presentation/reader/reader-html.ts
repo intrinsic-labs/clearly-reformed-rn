@@ -186,6 +186,13 @@ mark.hl {
   border-radius: 1px;
 }
 
+/* Fallback selection painting for column-split paragraphs (see the JS below):
+   the boxes live inside #root at content coordinates so they ride page turns. */
+#selOverlay { position: absolute; top: 0; left: 0; width: 0; height: 0; pointer-events: none; }
+#selOverlay .quad { position: absolute; background: rgba(200,148,31,.28); border-radius: 2px; }
+#selOverlay .knob { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+#selOverlay .stem { position: absolute; width: 2px; background: var(--accent); }
+
 #turnShade {
   position: fixed; top: 0; bottom: 0; width: 42px; pointer-events: none; opacity: 0;
   background: linear-gradient(90deg, rgba(20,16,8,.28), rgba(20,16,8,0));
@@ -201,6 +208,7 @@ mark.hl {
     <div id="body">${bodyHtml}</div>
     <div class="end-spacer"></div>
   </div>
+  <div id="selOverlay"></div>
 </div>
 <div id="turnShade"></div>
 <script>
@@ -210,6 +218,7 @@ mark.hl {
   var content = document.getElementById('content');
   var body = document.getElementById('body');
   var shade = document.getElementById('turnShade');
+  var selOverlay = document.getElementById('selOverlay');
 
   var paged = ${initial.paged};
   var curlShade = ${initial.curlShade};
@@ -450,6 +459,8 @@ mark.hl {
   }, { passive: true });
 
   function goPage(delta) {
+    // A deliberate turn overrides any pending selection-driven one.
+    cancelSelectionPaging();
     var target = Math.max(0, Math.min(state.pageCount - 1, state.page + delta));
     animateScrollLeft(target * pageStep, 240);
   }
@@ -480,9 +491,204 @@ mark.hl {
     post('tap');
   });
 
+  /* ---------- extending a selection past a page break (paged mode) ----------
+     #root.paged is an overflow:hidden multicolumn box, so WebKit never auto-scrolls
+     it while a selection grabber is dragged to the edge, and the grabber's own
+     touches are consumed by UIKit rather than reaching the document. The result was
+     that a sentence straddling two pages simply could not be selected — and so
+     could not be highlighted.
+
+     Instead of watching the finger, watch the selection: when its moving end parks
+     on the last character the current page can show, turn the page under it after a
+     short dwell so the drag can carry on. If nothing extends onto the new page the
+     finger had already lifted, so we turn straight back rather than stranding the
+     reader somewhere they didn't ask to be. */
+  var SEL_TURN_DWELL_MS = 420;
+  var SEL_TURN_REVERT_MS = 1400;
+  var selVersion = 0;
+  var selTurnTimer = null;
+  var selRevertTimer = null;
+
+  function currentPage() {
+    return Math.min(state.pageCount - 1, Math.max(0, Math.round(root.scrollLeft / pageStep)));
+  }
+  /** Page index a character sits on, skipping zero-area rects (line-end whitespace). */
+  function pageOfOffset(offset, direction) {
+    for (var i = 0; i < 4; i += 1) {
+      var probe = offset + direction * i;
+      if (probe < 0 || probe >= state.totalChars) return null;
+      var rect = offsetRect(probe);
+      if (rect && (rect.width > 0 || rect.height > 0)) {
+        return Math.floor((rect.left + root.scrollLeft - 30) / pageStep);
+      }
+    }
+    return null;
+  }
+  /**
+   * A selection edge that lands on a block boundary reports an element node, not a
+   * text node — resolve it to the nearest text position so it can be measured.
+   */
+  function textPoint(node, offset) {
+    if (!node) return null;
+    if (node.nodeType === Node.TEXT_NODE) return { node: node, offset: offset };
+    var child = node.childNodes[offset];
+    if (child) {
+      if (child.nodeType === Node.TEXT_NODE) return { node: child, offset: 0 };
+      var inner = document.createTreeWalker(child, NodeFilter.SHOW_TEXT, null).nextNode();
+      if (inner) return { node: inner, offset: 0 };
+    }
+    var w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null);
+    var last = null; var n;
+    while ((n = w.nextNode())) last = n;
+    return last ? { node: last, offset: last.data.length } : null;
+  }
+  /** +1/-1 when the selection's focus can grow no further on the visible page. */
+  function selectionPageStep(sel) {
+    if (!paged || !state.ready || state.pageCount < 2) return 0;
+    if (!sel || sel.isCollapsed || !sel.focusNode || !sel.anchorNode) return 0;
+    if (!body.contains(sel.focusNode) || !body.contains(sel.anchorNode)) return 0;
+    var focusPoint = textPoint(sel.focusNode, sel.focusOffset);
+    var anchorPoint = textPoint(sel.anchorNode, sel.anchorOffset);
+    if (!focusPoint || !anchorPoint) return 0;
+    var focus = pointToOffset(focusPoint.node, focusPoint.offset);
+    var anchor = pointToOffset(anchorPoint.node, anchorPoint.offset);
+    if (focus == null || anchor == null) return 0;
+    var page = currentPage();
+    if (focus > anchor) {
+      var next = pageOfOffset(focus, 1);
+      return next != null && next > page && page < state.pageCount - 1 ? 1 : 0;
+    }
+    if (focus < anchor) {
+      var prev = pageOfOffset(focus - 1, -1);
+      return prev != null && prev < page && page > 0 ? -1 : 0;
+    }
+    return 0;
+  }
+  function cancelSelectionPaging() {
+    if (selTurnTimer) { clearTimeout(selTurnTimer); selTurnTimer = null; }
+    if (selRevertTimer) { clearTimeout(selRevertTimer); selRevertTimer = null; }
+  }
+  var lastEdgeCheck = 0;
+  function watchSelectionEdge() {
+    // selectionchange fires on every frame of a drag and the edge test costs a few
+    // text-node walks; sampling is plenty, and any armed turn re-verifies when it
+    // fires anyway.
+    var now = Date.now();
+    if (now - lastEdgeCheck < 140) return;
+    lastEdgeCheck = now;
+
+    if (selTurnTimer) { clearTimeout(selTurnTimer); selTurnTimer = null; }
+    var step = selectionPageStep(window.getSelection());
+    if (step === 0) return;
+    selTurnTimer = setTimeout(function () {
+      selTurnTimer = null;
+      if (selectionPageStep(window.getSelection()) !== step) return;
+      var from = currentPage();
+      var target = Math.max(0, Math.min(state.pageCount - 1, from + step));
+      if (target === from) return;
+      var versionAtTurn = selVersion;
+      // Instant, not animated: an in-flight animation would fight the drag.
+      root.scrollLeft = target * pageStep;
+      state.page = target;
+      report();
+      selRevertTimer = setTimeout(function () {
+        selRevertTimer = null;
+        if (selVersion !== versionAtTurn) return;
+        root.scrollLeft = from * pageStep;
+        state.page = from;
+        report();
+      }, SEL_TURN_REVERT_MS);
+    }, SEL_TURN_DWELL_MS);
+  }
+
+  /* ---------- fallback selection painting (paged mode) ----------
+     WebKit's native selection UI (tint + grabbers) is drawn from unfragmented
+     flow geometry, so when the selection sits in the *continuation* of a
+     paragraph split across a column break — the top of a page that starts
+     mid-paragraph — the tint and handles land a page to the left, clipped out
+     of view. Range client rects, unlike the painted UI, are fragment-correct
+     (all the cross-page turn logic above depends on that), so when we detect
+     that case we paint the selection ourselves: tint quads plus handle-shaped
+     markers at either end, in content coordinates so they ride page turns. */
+  function clearSelectionOverlay() {
+    if (selOverlay.firstChild) selOverlay.innerHTML = '';
+  }
+  function blockOf(node) {
+    var el = node && node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+    while (el && el !== body && getComputedStyle(el).display === 'inline') el = el.parentElement;
+    return el && el !== body ? el : null;
+  }
+  function pageOfRect(rect) {
+    return Math.floor((rect.left + root.scrollLeft - 30) / pageStep);
+  }
+  /** Does either selection edge sit in a later fragment of a column-split block? */
+  function nativePaintBroken(range, rects) {
+    var edges = [
+      { block: blockOf(range.startContainer), rect: rects[0] },
+      { block: blockOf(range.endContainer), rect: rects[rects.length - 1] },
+    ];
+    for (var i = 0; i < edges.length; i += 1) {
+      var block = edges[i].block;
+      if (!block) continue;
+      var blockRects = block.getClientRects();
+      if (blockRects.length && pageOfRect(blockRects[0]) < pageOfRect(edges[i].rect)) return true;
+    }
+    return false;
+  }
+  var overlayFrame = null;
+  function scheduleSelectionOverlay() {
+    if (overlayFrame) return;
+    overlayFrame = requestAnimationFrame(function () {
+      overlayFrame = null;
+      updateSelectionOverlay();
+    });
+  }
+  function updateSelectionOverlay() {
+    var sel = window.getSelection();
+    if (!paged || !sel || sel.isCollapsed || sel.rangeCount === 0 || !body.contains(sel.anchorNode)) {
+      clearSelectionOverlay();
+      return;
+    }
+    var range = sel.getRangeAt(0);
+    var rects = [];
+    var all = range.getClientRects();
+    for (var i = 0; i < all.length; i += 1) {
+      if (all[i].width > 0.5 && all[i].height > 0.5) rects.push(all[i]);
+    }
+    if (rects.length === 0 || !nativePaintBroken(range, rects)) {
+      clearSelectionOverlay();
+      return;
+    }
+    var sx = root.scrollLeft;
+    var sy = root.scrollTop;
+    var html = '';
+    for (var j = 0; j < rects.length; j += 1) {
+      var r = rects[j];
+      html += '<div class="quad" style="left:' + (r.left + sx) + 'px;top:' + (r.top + sy) +
+        'px;width:' + r.width + 'px;height:' + r.height + 'px"></div>';
+    }
+    var first = rects[0];
+    var last = rects[rects.length - 1];
+    html += '<div class="stem" style="left:' + (first.left + sx - 1) + 'px;top:' + (first.top + sy) +
+      'px;height:' + first.height + 'px"></div>';
+    html += '<div class="knob" style="left:' + (first.left + sx - 5.5) + 'px;top:' + (first.top + sy - 10) + 'px"></div>';
+    html += '<div class="stem" style="left:' + (last.right + sx - 1) + 'px;top:' + (last.top + sy) +
+      'px;height:' + last.height + 'px"></div>';
+    html += '<div class="knob" style="left:' + (last.right + sx - 5.5) + 'px;top:' + (last.top + sy + last.height) + 'px"></div>';
+    selOverlay.innerHTML = html;
+  }
+
   /* ---------- selection capture ---------- */
   var selTimer = null;
   document.addEventListener('selectionchange', function () {
+    selVersion += 1;
+    // Any change means the drag is still live — keep the page we turned to.
+    if (selRevertTimer) { clearTimeout(selRevertTimer); selRevertTimer = null; }
+    var live = window.getSelection();
+    if (!live || live.isCollapsed) cancelSelectionPaging();
+    else watchSelectionEdge();
+    scheduleSelectionOverlay();
+
     if (selTimer) clearTimeout(selTimer);
     selTimer = setTimeout(function () {
       var sel = window.getSelection();
@@ -529,10 +735,49 @@ mark.hl {
   function applyHighlightToSelection(id) {
     var sel = window.getSelection();
     if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
+    cancelSelectionPaging();
+    // Wrapping splits text nodes and inserts inline elements, which can nudge the
+    // column flow — re-measure afterwards while holding the reader's place. This
+    // matters most for the case the marks span a page break.
+    var offset = firstVisibleOffset();
     wrapRange(sel.getRangeAt(0), id);
     sel.removeAllRanges();
+    clearSelectionOverlay();
     post('selection-clear');
+    relayout(offset);
   }
+  /** Text with every whitespace character removed, plus a map back to its indices. */
+  function squeeze(text) {
+    var out = ''; var map = [];
+    for (var i = 0; i < text.length; i += 1) {
+      if (/\s/.test(text[i])) continue;
+      out += text[i];
+      map.push(i);
+    }
+    return { text: out, map: map };
+  }
+
+  /**
+   * Re-anchor by whitespace-insensitive match. Selection.toString() inserts line
+   * breaks at block boundaries that the text-node walk doesn't have, so a quote
+   * spanning two paragraphs (which is what a selection dragged across a page break
+   * usually is) never matches literally.
+   */
+  function looseMatch(full, quote, near) {
+    var f = squeeze(full);
+    var q = squeeze(quote);
+    if (q.text.length < 2) return null;
+    var best = -1;
+    var at = f.text.indexOf(q.text);
+    while (at !== -1) {
+      if (best === -1 || (near != null && Math.abs(f.map[at] - near) < Math.abs(f.map[best] - near))) best = at;
+      if (near == null) break;
+      at = f.text.indexOf(q.text, at + 1);
+    }
+    if (best === -1) return null;
+    return { start: f.map[best], end: f.map[best + q.text.length - 1] + 1 };
+  }
+
   function paintHighlight(h) {
     if (document.querySelector('mark[data-id="' + h.id + '"]')) return;
     var full = bodyText();
@@ -541,20 +786,30 @@ mark.hl {
     var candidates = [];
     var idx = full.indexOf(quote);
     while (idx !== -1) { candidates.push(idx); idx = full.indexOf(quote, idx + 1); }
-    if (candidates.length === 0) return;
-    var best = candidates[0];
-    if (candidates.length > 1) {
-      var score = -1;
-      candidates.forEach(function (c) {
-        var s = 0;
-        if (h.prefix && full.slice(Math.max(0, c - h.prefix.length), c) === h.prefix) s += 2;
-        if (h.suffix && full.slice(c + quote.length, c + quote.length + h.suffix.length) === h.suffix) s += 2;
-        if (h.charOffset != null) s += 1 / (1 + Math.abs(c - h.charOffset));
-        if (s > score) { score = s; best = c; }
-      });
+
+    var start = null; var end = null;
+    if (candidates.length > 0) {
+      start = candidates[0];
+      if (candidates.length > 1) {
+        var score = -1;
+        candidates.forEach(function (c) {
+          var s = 0;
+          if (h.prefix && full.slice(Math.max(0, c - h.prefix.length), c) === h.prefix) s += 2;
+          if (h.suffix && full.slice(c + quote.length, c + quote.length + h.suffix.length) === h.suffix) s += 2;
+          if (h.charOffset != null) s += 1 / (1 + Math.abs(c - h.charOffset));
+          if (s > score) { score = s; start = c; }
+        });
+      }
+      end = start + quote.length;
+    } else {
+      var loose = looseMatch(full, quote, h.charOffset);
+      if (!loose) return;
+      start = loose.start;
+      end = loose.end;
     }
-    var startPoint = offsetToPoint(best);
-    var endPoint = offsetToPoint(best + quote.length);
+
+    var startPoint = offsetToPoint(start);
+    var endPoint = offsetToPoint(end);
     if (!startPoint || !endPoint) return;
     var range = document.createRange();
     try {
@@ -588,6 +843,8 @@ mark.hl {
       }
     },
     applyPrefs: function (prefs) {
+      cancelSelectionPaging();
+      clearSelectionOverlay();
       var offset = firstVisibleOffset();
       var cs = document.documentElement.style;
       cs.setProperty('--bg', prefs.bg);
@@ -607,8 +864,10 @@ mark.hl {
     paintHighlight: paintHighlight,
     removeHighlight: removeHighlight,
     clearSelection: function () {
+      cancelSelectionPaging();
       var sel = window.getSelection();
       if (sel) sel.removeAllRanges();
+      clearSelectionOverlay();
       post('selection-clear');
     },
     goPage: goPage,
