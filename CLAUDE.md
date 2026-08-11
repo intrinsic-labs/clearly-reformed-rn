@@ -13,7 +13,7 @@ A cross-platform mobile app (React Native + Expo) — the best way to consume th
 - **`project-info.md`** — product vision, audience, features (3 tiers), MVP vs v2 scope.
 - **`SPEC.md`** — the locked technical stack, library-per-concern.
 - **`API_DOCUMENTATION.md`** — the content API (WordPress REST + podcast RSS), incl. the discovered-endpoints addendum.
-- **`design/`** — fonts (Flecha, IBM Plex Sans), icons, color token, website screenshots. No mobile UI designs yet (see prereqs).
+- **`design/`** — fonts (Flecha, IBM Plex Sans), icons, color token, website screenshots, plus **`clearly-reformed-app-mockup-2026/`** — five Claude Design screen mockups (Home, Library, Notebook, Now Playing, Reader). Use the raw `.dc.html` files as the translation source; screenshots are the visual reference.
 
 ## Locked decisions (do not relitigate without reason)
 
@@ -41,7 +41,7 @@ MVP vs v2 split is in `project-info.md` §11.
 
 ## Prerequisites / things to line up (not code blockers, but gate features or shipping)
 
-- **Mobile UI/UX design** — the one real gap. Brand assets exist; screen designs don't. Sketch IA + home/library, reader, now-playing before going wide.
+- **Mobile UI/UX design** — the core screens are designed (`design/clearly-reformed-app-mockup-2026/`: Home, Library, Notebook, Now Playing, Reader). Secondary surfaces (detail pages, Search, Settings, onboarding) still follow the mockups' tokens rather than their own designs.
 - **Apple Developer Program** ($99/yr) + **Google Play Console** ($25) — for device builds, push, stores. Simulator dev works without.
 - **CarPlay entitlement** — Apple approves by request; slow, start early.
 - **Flecha font license** — verify it permits **app-binary embedding** (web license ≠ embedding license). IBM Plex is OFL (fine).
