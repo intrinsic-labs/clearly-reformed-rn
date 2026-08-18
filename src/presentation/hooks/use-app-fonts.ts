@@ -4,6 +4,8 @@ import {
   IBMPlexSans_400Regular_Italic,
   IBMPlexSans_500Medium,
   IBMPlexSans_600SemiBold,
+  IBMPlexSans_700Bold,
+  IBMPlexSans_700Bold_Italic,
 } from '@expo-google-fonts/ibm-plex-sans';
 
 /**
@@ -23,5 +25,10 @@ export function useAppFonts() {
     IBMPlexSans_400Regular_Italic,
     IBMPlexSans_500Medium,
     IBMPlexSans_600SemiBold,
+    // The 700 cuts exist for the note editor's bold runs: it derives bold from
+    // the base face via font-descriptor traits, which needs a true Bold-flagged
+    // member registered in the family (SemiBold doesn't carry the bold trait).
+    IBMPlexSans_700Bold,
+    IBMPlexSans_700Bold_Italic,
   });
 }

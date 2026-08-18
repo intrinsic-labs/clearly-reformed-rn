@@ -36,6 +36,15 @@
             "imageWidth": 76
           }
         }
+      ],
+      [
+        "react-native-enriched-markdown",
+        {
+          "enableMath": false,
+          "codeHighlight": {
+            "enabled": false
+          }
+        }
       ]
     ],
     "experiments": {

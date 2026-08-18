@@ -81,9 +81,9 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   body: {
-    fontFamily: Fonts.serifText,
-    fontSize: 14.5,
-    lineHeight: 22,
+    fontFamily: Fonts.sans,
+    fontSize: 13.5,
+    lineHeight: 20,
     color: '#5F5642',
     marginTop: 8,
   },

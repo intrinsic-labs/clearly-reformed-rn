@@ -2,48 +2,41 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
-  InputAccessoryView,
   Keyboard,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
-  type NativeSyntheticEvent,
-  type TextInputSelectionChangeEventData,
 } from 'react-native';
+import {
+  EnrichedMarkdownTextInput,
+  type EnrichedMarkdownTextInputInstance,
+  type StyleState,
+} from 'react-native-enriched-markdown';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CheckIcon, ChevronLeftIcon, CloseIcon, PencilIcon, TagIcon } from '@/presentation/components/icons';
-import { MarkdownView } from '@/presentation/components/markdown-view';
-import { MarkdownToolbar } from '@/presentation/components/notebook/markdown-toolbar';
+import { FormatToolbar, type FormatAction } from '@/presentation/components/notebook/format-toolbar';
 import { useNotebook, useNotebookMutations } from '@/presentation/hooks/queries/use-notebook';
 import { useAnimatedKeyboardBottomInset } from '@/presentation/hooks/use-keyboard-bottom-inset';
-import {
-  activeMarkdownActions,
-  applyMarkdownAction,
-  type MarkdownAction,
-  type TextSelection,
-} from '@/presentation/lib/markdown-edit';
 import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
 
-/** Ties the iOS formatting bar to the body field. */
-const ACCESSORY_ID = 'note-markdown-toolbar';
-
 /**
- * The note screen — pushed onto the stack, with two modes: a clean reading view
- * (long notes are their own little reading surface, rendered from Markdown) and an
- * edit mode toggled from the header. Edit mode is deliberately plain text — raw
- * Markdown in the field, formatting only in reading mode: live-styling a native
- * `TextInput` from JS means replacing its attributed text every keystroke, which
- * breaks scroll/caret behaviour (tried, reverted). Edits autosave on a debounce
- * while typing and save again on Done and on back — nothing is lost silently.
+ * The note screen — pushed onto the stack. One surface, like a system notes app:
+ * the note IS the live rich-text editor (`EnrichedMarkdownTextInput`, a native
+ * text view), so what you read and what you edit are the same pixels — "viewing"
+ * is just the keyboard being closed. Tap anywhere in the text and the caret
+ * lands there; tap Bold and the words go bold in place — the user never sees
+ * markup. Markdown exists only as the storage format, read via `defaultValue`
+ * and written back from `onChangeMarkdown`, so existing notes and the
+ * FTS/preview pipeline are untouched. Edits autosave on a debounce while typing
+ * and save again on Done and on back — nothing is lost silently.
  *
  * Routed by params:
- *  - no params            → new standalone note (opens in edit mode)
- *  - noteId (+fields)     → existing note (opens reading)
+ *  - no params            → new standalone note (opens with the keyboard up)
+ *  - noteId (+fields)     → existing note (opens with the keyboard closed)
  *  - highlightId (+note)  → annotation on a highlight
  *
  * Tags are managed from the tag button in the header: a sheet listing every tag
@@ -51,10 +44,10 @@ const ACCESSORY_ID = 'note-markdown-toolbar';
  *
  * Keyboard handling: the body is a single flexing field rather than a growing
  * input inside a ScrollView, so the caret is kept in view by the platform text
- * view itself. iOS (where the keyboard overlays rather than resizes) shrinks the
- * editor by the live keyboard inset and hangs the formatting bar off the keyboard
- * via `InputAccessoryView`; Android's window already resizes, so the bar simply
- * sits at the bottom of the layout.
+ * view itself. The formatting bar sits at the bottom of the editor layout: iOS
+ * (where the keyboard overlays rather than resizes) shrinks the editor by the
+ * live keyboard inset, which carries the bar up with it; Android's window
+ * already resizes (adjustResize).
  */
 export default function NoteEditorScreen() {
   const router = useRouter();
@@ -79,37 +72,51 @@ export default function NoteEditorScreen() {
       .filter(Boolean),
   );
   const [tagsOpen, setTagsOpen] = useState(false);
-  const [editing, setEditing] = useState(() => (forHighlight ? !(params.note ?? '').trim() : !params.noteId));
+  // "Editing" is simply whether the body has the keyboard — the note is always
+  // the same live editor; focus/blur below keep this in sync.
+  const [editing, setEditing] = useState(false);
 
-  const bodyRef = useRef<TextInput>(null);
+  const bodyRef = useRef<EnrichedMarkdownTextInputInstance>(null);
+  // Brand-new (or still-empty highlight) notes open straight into the keyboard.
+  const openKeyboardOnMount = useRef(forHighlight ? !(params.note ?? '').trim() : !params.noteId);
   useEffect(() => {
-    if (editing) {
-      // Focus after the input mounts (toggling from reading mode).
+    if (openKeyboardOnMount.current) {
       const timer = setTimeout(() => bodyRef.current?.focus(), 80);
       return () => clearTimeout(timer);
     }
-  }, [editing]);
+  }, []);
 
-  /* ----- markdown formatting ----- */
-  // Tracked for the toolbar (what to wrap / which line to prefix) — but never
-  // forced back onto the native input. Steering the caret from JS via the
-  // `selection` prop is what made toolbar taps fling the caret and scroll
-  // around, so the native field owns the caret unconditionally.
-  const [selection, setSelection] = useState<TextSelection>({ start: 0, end: 0 });
+  /* ----- live formatting ----- */
+  // The native input owns text, caret and styling; the toolbar just calls its
+  // toggles and lights up from the style state it reports at the caret.
+  const [styleState, setStyleState] = useState<StyleState | null>(null);
 
-  const onSelectionChange = (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
-    setSelection(event.nativeEvent.selection);
+  const onFormat = (action: FormatAction) => {
+    const input = bodyRef.current;
+    if (!input) return;
+    switch (action) {
+      case 'h1':
+      case 'h2':
+      case 'h3':
+        input.toggleHeading(Number(action[1]) as 1 | 2 | 3);
+        break;
+      case 'bold':
+        input.toggleBold();
+        break;
+      case 'italic':
+        input.toggleItalic();
+        break;
+      case 'bullet':
+        input.toggleUnorderedList();
+        break;
+      case 'ordered':
+        input.toggleOrderedList();
+        break;
+    }
   };
 
-  const onFormat = (action: MarkdownAction) => {
-    const result = applyMarkdownAction(body, selection, action);
-    setBody(result.text);
-    setSelection(result.selection);
-  };
-
-  const activeFormats = useMemo(() => activeMarkdownActions(body, selection), [body, selection]);
   const toolbar = (
-    <MarkdownToolbar active={activeFormats} onAction={onFormat} onDismissKeyboard={() => Keyboard.dismiss()} />
+    <FormatToolbar state={styleState} onAction={onFormat} onDismissKeyboard={() => Keyboard.dismiss()} />
   );
 
   const { addNote, updateNote, setHighlightNote } = useNotebookMutations();
@@ -119,6 +126,13 @@ export default function NoteEditorScreen() {
   // space itself; Android's window is already resized (adjustResize).
   const keyboardOverlays = Platform.OS === 'ios';
   const keyboardBottomInset = useAnimatedKeyboardBottomInset();
+  // The toolbar's own bottom padding: the safe-area inset while the keyboard is
+  // closed, easing to zero as the keyboard (taller than the inset) slides under it.
+  const toolbarPad = keyboardBottomInset.interpolate({
+    inputRange: [0, Math.max(1, insets.bottom)],
+    outputRange: [insets.bottom, 0],
+    extrapolate: 'clamp',
+  });
 
   const onTagsChange = (nextTags: string[]) => {
     setTags(nextTags);
@@ -150,29 +164,29 @@ export default function NoteEditorScreen() {
     }
   };
 
-  // Debounced autosave while editing: Done/back still save immediately, this
-  // just caps what a crash or swipe-away can lose to about a second of typing.
+  // Debounced autosave: Done/back still save immediately, this just caps what
+  // a crash or swipe-away can lose to about a second of typing.
   const persistRef = useRef(persist);
   useEffect(() => {
     persistRef.current = persist;
   });
   useEffect(() => {
-    if (!editing || !canSave) return;
+    if (!canSave) return;
     const timer = setTimeout(() => persistRef.current(), 1000);
     return () => clearTimeout(timer);
-  }, [editing, canSave, title, body, tags]);
+  }, [canSave, title, body, tags]);
 
   const onToggleMode = () => {
     if (editing) {
       persist();
-      setEditing(false);
+      bodyRef.current?.blur();
     } else {
-      setEditing(true);
+      bodyRef.current?.focus();
     }
   };
 
   const onBack = () => {
-    if (editing) persist();
+    persist();
     router.back();
   };
 
@@ -213,62 +227,48 @@ export default function NoteEditorScreen() {
       </View>
 
       <Animated.View style={[styles.content, keyboardOverlays ? { marginBottom: keyboardBottomInset } : null]}>
-        {editing ? (
-          <View style={[styles.editor, { paddingBottom: insets.bottom }]}>
-            {!forHighlight ? (
-              <TextInput
-                style={styles.titleInput}
-                value={title}
-                onChangeText={setTitle}
-                placeholder="Title"
-                placeholderTextColor={Colors.textMuted}
-                returnKeyType="next"
-              />
-            ) : null}
+        <View style={styles.editor}>
+          {!forHighlight ? (
             <TextInput
-              ref={bodyRef}
-              style={styles.bodyInput}
-              value={body}
-              onChangeText={setBody}
-              onSelectionChange={onSelectionChange}
-              inputAccessoryViewID={Platform.OS === 'ios' ? ACCESSORY_ID : undefined}
-              placeholder={forHighlight ? 'Add your thoughts on this highlight…' : 'Write your note…'}
+              style={styles.titleInput}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Title"
               placeholderTextColor={Colors.textMuted}
-              multiline
-              scrollEnabled
-              textAlignVertical="top"
+              returnKeyType="next"
             />
-          </View>
-        ) : (
-          <ScrollView
-            style={styles.form}
-            contentContainerStyle={{ paddingBottom: insets.bottom + 60 }}
-            keyboardShouldPersistTaps="handled">
-            <Pressable onPress={() => setEditing(true)}>
-              {!forHighlight && title ? <Text style={styles.readTitle}>{title}</Text> : null}
-              {tags.length > 0 ? (
-                <View style={styles.readTagsRow}>
-                  {tags.map((tag) => (
-                    <View key={tag} style={styles.readTag}>
-                      <Text style={styles.readTagLabel}>#{tag}</Text>
-                    </View>
-                  ))}
+          ) : null}
+          {!forHighlight && tags.length > 0 ? (
+            <Pressable style={styles.tagsRow} onPress={() => setTagsOpen(true)} accessibilityLabel="Edit tags">
+              {tags.map((tag) => (
+                <View key={tag} style={styles.tag}>
+                  <Text style={styles.tagLabel}>#{tag}</Text>
                 </View>
-              ) : null}
-              <View style={styles.readBody}>
-                <MarkdownView markdown={body} />
-              </View>
+              ))}
             </Pressable>
-          </ScrollView>
-        )}
+          ) : null}
+          <EnrichedMarkdownTextInput
+            ref={bodyRef}
+            style={styles.bodyInput}
+            markdownStyle={editorMarkdownStyle}
+            defaultValue={body}
+            onChangeMarkdown={setBody}
+            onChangeState={setStyleState}
+            onFocus={() => setEditing(true)}
+            onBlur={() => setEditing(false)}
+            placeholder={forHighlight ? 'Add your thoughts on this highlight…' : 'Write your note…'}
+            placeholderTextColor={Colors.textMuted}
+            cursorColor={Colors.goldDeep}
+            selectionColor={Colors.gold}
+            scrollEnabled
+            multiline
+          />
+        </View>
+        {editing ? (
+          /* Above the keyboard while it's up; clear of the home indicator when not. */
+          <Animated.View style={[styles.toolbarHolder, { paddingBottom: toolbarPad }]}>{toolbar}</Animated.View>
+        ) : null}
       </Animated.View>
-
-      {editing && Platform.OS === 'ios' ? (
-        <InputAccessoryView nativeID={ACCESSORY_ID} backgroundColor={Colors.surface}>
-          {toolbar}
-        </InputAccessoryView>
-      ) : null}
-      {editing && Platform.OS !== 'ios' ? toolbar : null}
 
       {!forHighlight ? (
         <TagsSheet visible={tagsOpen} onClose={() => setTagsOpen(false)} tags={tags} onChange={onTagsChange} />
@@ -404,6 +404,15 @@ function TagsSheet({
   );
 }
 
+/** Styling for the editor's styled runs (headings, bold, lists). */
+const editorMarkdownStyle = {
+  strong: { color: Colors.ink },
+  h1: { fontSize: 23, fontWeight: '600' },
+  h2: { fontSize: 19.5, fontWeight: '600' },
+  h3: { fontSize: 17, fontWeight: '600' },
+  list: { itemSpacing: 6 },
+};
+
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -446,18 +455,14 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  form: {
-    flex: 1,
-    paddingHorizontal: Spacing.xl,
-  },
   editor: {
     flex: 1,
     paddingHorizontal: Spacing.xl,
   },
   titleInput: {
-    fontFamily: Fonts.serifBold,
-    fontSize: 24,
-    lineHeight: 29,
+    fontFamily: Fonts.sansSemiBold,
+    fontSize: 22,
+    lineHeight: 28,
     color: Colors.ink,
     paddingTop: 16,
     paddingBottom: 10,
@@ -466,26 +471,22 @@ const styles = StyleSheet.create({
     // Flexing (rather than growing inside a ScrollView) is what keeps the caret
     // clear of the keyboard: the native text view scrolls itself.
     flex: 1,
-    fontFamily: Fonts.serifText,
-    fontSize: 17,
-    lineHeight: 27,
+    fontFamily: Fonts.sans,
+    fontSize: 16,
+    lineHeight: 25,
     color: Colors.inkSoft,
     paddingTop: 4,
   },
-  readTitle: {
-    fontFamily: Fonts.serifBold,
-    fontSize: 24,
-    lineHeight: 29,
-    color: Colors.ink,
-    paddingTop: 18,
+  toolbarHolder: {
+    backgroundColor: Colors.surface,
   },
-  readTagsRow: {
+  tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 7,
-    paddingTop: 12,
+    paddingBottom: 10,
   },
-  readTag: {
+  tag: {
     backgroundColor: '#F1E7D0',
     borderWidth: 1,
     borderColor: '#E6D9BB',
@@ -493,13 +494,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: Radius.pill,
   },
-  readTagLabel: {
+  tagLabel: {
     fontFamily: Fonts.sansMedium,
     fontSize: 11.5,
     color: Colors.bodyText,
-  },
-  readBody: {
-    paddingTop: 16,
   },
   scrim: {
     position: 'absolute',

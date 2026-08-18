@@ -1,11 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import type { StyleState } from 'react-native-enriched-markdown';
 
 import { ChevronDownIcon } from '@/presentation/components/icons';
-import type { MarkdownAction } from '@/presentation/lib/markdown-edit';
 import { Colors, Fonts, Radius } from '@/presentation/theme';
 
+export type FormatAction = 'h1' | 'h2' | 'h3' | 'bold' | 'italic' | 'bullet' | 'ordered';
+
 interface ButtonSpec {
-  readonly action: MarkdownAction;
+  readonly action: FormatAction;
   readonly glyph: string;
   readonly label: string;
   readonly style?: 'heading' | 'bold' | 'italic' | 'symbol';
@@ -23,23 +25,41 @@ const GROUPS: readonly (readonly ButtonSpec[])[] = [
   ],
   [
     { action: 'bullet', glyph: '•', label: 'Bulleted list', style: 'symbol' },
-    { action: 'quote', glyph: '“', label: 'Quote', style: 'symbol' },
+    { action: 'ordered', glyph: '1.', label: 'Numbered list', style: 'symbol' },
   ],
 ];
 
+function isActive(state: StyleState | null, action: FormatAction): boolean {
+  if (!state) return false;
+  switch (action) {
+    case 'h1':
+    case 'h2':
+    case 'h3':
+      return state.heading.isActive && state.heading.level === Number(action[1]);
+    case 'bold':
+      return state.bold.isActive;
+    case 'italic':
+      return state.italic.isActive;
+    case 'bullet':
+      return state.unorderedList.isActive;
+    case 'ordered':
+      return state.orderedList.isActive;
+  }
+}
+
 /**
- * The note editor's formatting bar. Lives above the keyboard — on iOS inside an
- * `InputAccessoryView` (see `app/note-editor.tsx`), on Android in normal flow
- * under the resized window — so it is a plain row here with no positioning of
- * its own.
+ * The note editor's formatting bar — plain buttons that toggle live styling on
+ * the rich-text input (no markup ever shown to the user). Sits at the bottom of
+ * the editor layout, riding the keyboard inset; it is a plain row here with no
+ * positioning of its own.
  */
-export function MarkdownToolbar({
-  active,
+export function FormatToolbar({
+  state,
   onAction,
   onDismissKeyboard,
 }: {
-  active: readonly MarkdownAction[];
-  onAction: (action: MarkdownAction) => void;
+  state: StyleState | null;
+  onAction: (action: FormatAction) => void;
   onDismissKeyboard: () => void;
 }) {
   return (
@@ -48,12 +68,11 @@ export function MarkdownToolbar({
         <View key={groupIndex} style={styles.group}>
           {groupIndex > 0 ? <View style={styles.divider} /> : null}
           {group.map((spec) => {
-            const on = active.includes(spec.action);
+            const on = isActive(state, spec.action);
             return (
               <Pressable
                 key={spec.action}
                 style={[styles.button, on && styles.buttonOn]}
-                // Keep the input focused so the selection survives the tap.
                 onPress={() => onAction(spec.action)}
                 accessibilityRole="button"
                 accessibilityLabel={spec.label}
@@ -81,21 +100,20 @@ export function MarkdownToolbar({
 
 const glyphStyles = StyleSheet.create({
   heading: {
-    fontFamily: Fonts.serifBold,
-    fontSize: 15,
+    fontFamily: Fonts.sansSemiBold,
+    fontSize: 14,
   },
   bold: {
-    fontFamily: Fonts.serifBold,
-    fontSize: 17,
+    fontFamily: Fonts.sansSemiBold,
+    fontSize: 16,
   },
   italic: {
-    fontFamily: Fonts.serifItalic,
-    fontStyle: 'italic',
-    fontSize: 17,
+    fontFamily: Fonts.sansItalic,
+    fontSize: 16,
   },
   symbol: {
-    fontFamily: Fonts.serifBold,
-    fontSize: 18,
+    fontFamily: Fonts.sansSemiBold,
+    fontSize: 15,
   },
 });
 

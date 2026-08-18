@@ -142,16 +142,16 @@ function InlineRun({ nodes }: { nodes: readonly MarkdownInline[] }) {
 
 const styles = StyleSheet.create({
   body: {
-    fontFamily: Fonts.serifText,
-    fontSize: 17,
-    lineHeight: 27,
+    fontFamily: Fonts.sans,
+    fontSize: 16,
+    lineHeight: 25,
     color: '#4A4232',
   },
   paragraph: {
     marginTop: 14,
   },
   heading: {
-    fontFamily: Fonts.serifBold,
+    fontFamily: Fonts.sansSemiBold,
     color: Colors.ink,
     marginTop: 22,
     marginBottom: 2,
@@ -198,14 +198,13 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   strong: {
-    fontFamily: Fonts.serifBold,
-    // Carried down so a nested italic run resolves to the bold-italic face.
-    fontWeight: '700',
+    // Family swap only — a fontWeight on a single-weight custom family makes
+    // iOS fall back to the system face.
+    fontFamily: Fonts.sansSemiBold,
     color: Colors.ink,
   },
   em: {
-    fontFamily: Fonts.serifItalic,
-    fontStyle: 'italic',
+    fontFamily: Fonts.sansItalic,
   },
   code: {
     fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),

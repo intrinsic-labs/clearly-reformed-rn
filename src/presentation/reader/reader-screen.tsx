@@ -1,3 +1,4 @@
+import * as Clipboard from 'expo-clipboard';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -302,6 +303,18 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
         <View style={[styles.actionPill, { bottom: insets.bottom + 92 }]}>
           <Pressable style={styles.actionButton} onPress={onHighlightPress}>
             <Text style={styles.actionButtonLabel}>Highlight</Text>
+          </Pressable>
+          <View style={styles.actionDivider} />
+          {/* The system menu (with its own Copy) can't appear for selections in a
+              paragraph continuation past a page break, so the pill carries one. */}
+          <Pressable
+            style={styles.actionButton}
+            onPress={() => {
+              Clipboard.setStringAsync(selection.text).catch(() => {});
+              webViewRef.current?.clearSelection();
+              setSelection(null);
+            }}>
+            <Text style={styles.actionButtonLabel}>Copy</Text>
           </Pressable>
           <View style={styles.actionDivider} />
           <Pressable

@@ -68,9 +68,9 @@ const styles = StyleSheet.create({
   },
   noteText: {
     flex: 1,
-    fontFamily: Fonts.serifText,
-    fontSize: 13.5,
-    lineHeight: 19.5,
+    fontFamily: Fonts.sans,
+    fontSize: 12.5,
+    lineHeight: 18.5,
     color: Colors.bodyText,
   },
 });

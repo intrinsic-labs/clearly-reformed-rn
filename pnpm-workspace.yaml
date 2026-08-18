@@ -1,7 +1,9 @@
 # unrs-resolver (via eslint-import-resolver-typescript) ships prebuilt napi binaries;
 # its native build step is unnecessary, so we decline it. This also silences pnpm's
 # "ignored build scripts" prompt.
+# react-native-enriched-markdown's postinstall downloads its prebuilt native assets.
 allowBuilds:
+  react-native-enriched-markdown: true
   unrs-resolver: false
 
 minimumReleaseAgeExclude:
@@ -16,3 +18,6 @@ overrides:
 
 patchedDependencies:
   '@javascriptcommon/react-native-track-player': patches/@javascriptcommon__react-native-track-player.patch
+  expo-splash-screen: patches/expo-splash-screen.patch
+  react-native-enriched-markdown@1.0.1: patches/react-native-enriched-markdown@1.0.1.patch
+  react-native-webview: patches/react-native-webview.patch
