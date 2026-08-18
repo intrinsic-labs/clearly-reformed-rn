@@ -53,8 +53,8 @@ One local database, clear table groups — deliberately consolidated for maximum
 
 ## 6. Audio & Video
 
-- **Audio player:** **`react-native-track-player`** — background playback, lock-screen controls, **CarPlay + Android Auto**, queue, 1.0–2.0× speed, sleep timer. The mature choice for this exact job.
-- **Video:** **`expo-video`** (current Expo video module; replaces deprecated `expo-av` video).
+- **Audio player:** **`react-native-track-player`** (shipping the Apache-2.0 fork `@javascriptcommon/react-native-track-player`; see `CLAUDE.md`) — background playback, lock-screen controls, **CarPlay + Android Auto**, queue, 1.0–2.0× speed, sleep timer. The mature choice for this exact job.
+- **Video:** **`react-native-youtube-iframe`** — every video in the catalog is YouTube-hosted, and YouTube exposes no direct stream, so a native video module (`expo-video`) has nothing to play. The resource detail screen mounts the official IFrame Player API through this wrapper (`presentation/components/reader/inline-video.tsx` — watch position persists into "Continue", and starting video pauses audio and vice versa); the Reader embeds a plain YouTube `/embed/` iframe inside its own WebView document. A non-YouTube `videoUrl` links out ("Watch on the web") rather than playing inline.
 - **Offline downloads:** **`expo-file-system`** — download audio + article/transcript assets to device; download manager state tracked in `expo-sqlite`.
 - **"Continue" / resume:** playback positions live in the Notebook store (§3), so resume works cross-device once sync is on and offline always.
 
@@ -107,7 +107,7 @@ One local database, clear table groups — deliberately consolidated for maximum
 - Local store → single **expo-sqlite** DB (notebook + content + **FTS5**); reactive via **TanStack Query**; settings in **react-native-mmkv**.
 - Notebook sync → **custom last-write-wins** pull/push to **Supabase** (no third-party sync engine; per-field LWW, playback most-recently-active-device-wins).
 - Auth → **Supabase Auth**: **Sign in with Apple** + **Google**, account-optional.
-- Audio → **react-native-track-player**; video → **expo-video**; downloads → **expo-file-system**.
+- Audio → **react-native-track-player** (Apache-2.0 fork); video → **react-native-youtube-iframe** (YouTube-hosted — no direct stream); downloads → **expo-file-system**.
 - Semantic search → **Voyage** embeddings + **Supabase pgvector**, **Claude** (Haiku query-rewrite, Opus/Sonnet synthesis) in **Supabase Edge Functions**.
 - Reader → self-styled **react-native-webview** layout + **Skia** page-curl + **Reanimated/Gesture Handler**.
 - Notifications → **expo-notifications** + Expo Push, triggered by **pg_cron** Edge Function.
