@@ -13,7 +13,7 @@ A cross-platform mobile app (React Native + Expo) — the best way to consume th
 - **`project-info.md`** — product vision, audience, features (3 tiers), MVP vs v2 scope.
 - **`SPEC.md`** — the locked technical stack, library-per-concern.
 - **`API_DOCUMENTATION.md`** — the content API (WordPress REST + podcast RSS), incl. the discovered-endpoints addendum.
-- **`design/`** — fonts (Flecha, IBM Plex Sans), icons, color token, website screenshots, plus **`clearly-reformed-app-mockup-2026/`** — five Claude Design screen mockups (Home, Library, Notebook, Now Playing, Reader). Use the raw `.dc.html` files as the translation source; screenshots are the visual reference.
+- **`design/`** — fonts (Flecha, IBM Plex Sans), icons, color token, website screenshots, plus **`clearly-reformed-app-mockup-2026/`** — five Claude Design screen mockups (Home, Library, Notebook, Now Playing, Reader). Use the raw `.dc.html` files as the translation source; screenshots are the visual reference. Its `uploads/` folder is the frozen input bundle that was handed to Claude Design — the `SPEC.md`/`project-info.md` copies in there are point-in-time snapshots, not live docs.
 
 ## Locked decisions (do not relitigate without reason)
 
@@ -21,7 +21,7 @@ A cross-platform mobile app (React Native + Expo) — the best way to consume th
 - **Local data:** a single **`expo-sqlite`** database for notebook + saved content + FTS5. Reactive via **TanStack Query**. No third-party sync engine.
 - **Sync (opt-in):** small **custom last-write-wins** pull/push to **Supabase** Postgres (per-field LWW; playback = most-recently-active-device-wins). Account-optional (local-only works with no account).
 - **Auth:** Supabase Auth — **Sign in with Apple + Google**, account only for sync; in-app account deletion.
-- **Media:** `react-native-track-player` (audio, CarPlay/Android Auto), `expo-video`, `expo-file-system` downloads.
+- **Media:** `react-native-track-player` (audio, CarPlay/Android Auto), `react-native-youtube-iframe` (video — the catalog's video is all YouTube-hosted, which exposes no direct stream for a native player), `expo-file-system` downloads.
 - **Reader:** self-styled `react-native-webview` for layout/pagination (our HTML/CSS, CSS multicol) + **Skia** page-curl shader + Reanimated/Gesture Handler. Modes: Curl / Slide / Scroll. Position stored as content offset.
 - **Semantic search (signature, v2):** hosted only — **Voyage** embeddings + Supabase **pgvector** + **Claude** (Haiku query-rewrite, Opus/Sonnet synthesis) in Supabase Edge Functions. Always cites sources. *Offline whole-corpus search was rejected as pointless* — offline search is **SQLite FTS5** over saved content only.
 - **Booklets:** `has_booklet` is just a display badge. Booklet text == article body (confirmed), so the Reader renders article text natively — **no Publuu dependency**.
