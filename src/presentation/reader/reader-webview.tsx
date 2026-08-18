@@ -180,6 +180,14 @@ export const ReaderWebView = forwardRef<ReaderWebViewHandle, Props>(function Rea
       bounces={false}
       setSupportMultipleWindows={false}
       allowsLinkPreview={false}
+      // The system edit menu (Copy/Look Up/…) is suppressed natively — see
+      // patches/react-native-webview.patch — so the app's selection pill is the
+      // one selection UI everywhere. (It could never appear for selections in
+      // the continuation of a page-break-split paragraph anyway; WebKit places
+      // it from unfragmented flow geometry, a page off-screen.) Deliberately NOT
+      // via the `menuItems` prop: setting it installs a long-press recognizer
+      // with cancelsTouchesInView that corrupts WebKit's own selection gesture,
+      // and its canPerformAction path isn't consulted by iOS 16+ menus anyway.
       dataDetectorTypes="none"
       hideKeyboardAccessoryView
       webviewDebuggingEnabled={__DEV__}

@@ -6,6 +6,7 @@ import { NotebookIcon } from '@/presentation/components/icons';
 import { cardShellStyles, NotebookCardShell } from '@/presentation/components/notebook/card-shell';
 import { SourceRow } from '@/presentation/components/notebook/source-row';
 import { relativeDate } from '@/presentation/lib/format';
+import { markdownToPlainText } from '@/presentation/lib/markdown';
 import { Colors, Fonts, Spacing } from '@/presentation/theme';
 
 export function HighlightCard({
@@ -31,7 +32,8 @@ export function HighlightCard({
       {entry.note ? (
         <View style={styles.noteBox}>
           <NotebookIcon size={13} color={Colors.textMuted} />
-          <Text style={styles.noteText}>{entry.note}</Text>
+          {/* A compact meta box — flatten any Markdown rather than scaling headings here. */}
+          <Text style={styles.noteText}>{markdownToPlainText(entry.note)}</Text>
         </View>
       ) : null}
 
@@ -66,9 +68,9 @@ const styles = StyleSheet.create({
   },
   noteText: {
     flex: 1,
-    fontFamily: Fonts.serifText,
-    fontSize: 13.5,
-    lineHeight: 19.5,
+    fontFamily: Fonts.sans,
+    fontSize: 12.5,
+    lineHeight: 18.5,
     color: Colors.bodyText,
   },
 });

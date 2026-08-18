@@ -1,0 +1,55 @@
+diff --git a/plugin/build/InterfaceBuilder.js b/plugin/build/InterfaceBuilder.js
+index 5d1be2c115d7013d50b27e6f1d9820026fcdf5be..833617d6893bbd06d7e05d29c0451e62b6ef5fa0 100644
+--- a/plugin/build/InterfaceBuilder.js
++++ b/plugin/build/InterfaceBuilder.js
+@@ -35,19 +35,19 @@ const CONTAINER_ID = 'EXPO-ContainerView';
+ function removeImageFromSplashScreen(xml, { imageName }) {
+     const mainView = xml.document.scenes[0]?.scene[0]?.objects[0]?.viewController[0]?.view[0];
+     if (mainView != null) {
+-        if (mainView.subviews[0] != null) {
++        if (mainView.subviews?.[0] != null) {
+             removeExisting(mainView.subviews[0].imageView, IMAGE_ID);
+         }
+         // Remove Constraints
+         getAbsoluteConstraints(IMAGE_ID, CONTAINER_ID).forEach((constraint) => {
+             // <constraint firstItem="EXPO-SplashScreen" firstAttribute="top" secondItem="EXPO-ContainerView" secondAttribute="top" id="2VS-Uz-0LU"/>
+-            if (mainView.constraints[0] != null) {
++            if (mainView.constraints?.[0] != null) {
+                 removeExisting(mainView.constraints[0].constraint, constraint);
+             }
+         });
+     }
+     // Remove resource
+-    if (xml.document.resources[0] != null) {
++    if (xml.document.resources?.[0] != null) {
+         xml.document.resources[0].image = xml.document.resources[0].image ?? [];
+         const imageSection = xml.document.resources[0].image;
+         const existingImageIndex = imageSection.findIndex((image) => image.$.name === imageName);
+@@ -102,15 +102,15 @@ function applyImageToSplashScreenXML(xml, { imageName, contentMode, backgroundCo
+     };
+     if (mainView != null) {
+         // Add ImageView
+-        if (mainView.subviews[0] != null) {
++        if (mainView.subviews?.[0] != null) {
+             ensureUniquePush(mainView.subviews[0].imageView, imageView);
+         }
+-        if (mainView.constraints[0] != null) {
++        if (mainView.constraints?.[0] != null) {
+             mainView.constraints[0].constraint = [];
+         }
+         // Add Constraints
+         getAbsoluteConstraints(IMAGE_ID, CONTAINER_ID, enableFullScreenImage).forEach((constraint) => {
+-            if (mainView.constraints[0] != null) {
++            if (mainView.constraints?.[0] != null) {
+                 ensureUniquePush(mainView.constraints[0].constraint, constraint);
+             }
+         });
+@@ -125,7 +125,7 @@ function applyImageToSplashScreenXML(xml, { imageName, contentMode, backgroundCo
+             },
+         });
+     }
+-    if (xml.document.resources[0] != null) {
++    if (xml.document.resources?.[0] != null) {
+         // Clear existing images
+         xml.document.resources[0].image = [];
+         // Add resource

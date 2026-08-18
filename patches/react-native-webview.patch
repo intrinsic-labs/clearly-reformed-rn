@@ -1,0 +1,45 @@
+diff --git a/apple/RNCWebViewImpl.m b/apple/RNCWebViewImpl.m
+index 7f5c24d6e2cfb26eddbc513bf17a81c24a7273e2..7d8850f0dc4f6f4d22f6403a9cc1c3adc7d21a59 100644
+--- a/apple/RNCWebViewImpl.m
++++ b/apple/RNCWebViewImpl.m
+@@ -98,6 +98,26 @@ - (void)buildMenuWithBuilder:(id<UIMenuBuilder>)builder API_AVAILABLE(ios(13.0))
+       if(self.menuItems){
+         [builder removeMenuForIdentifier:UIMenuLookup];
+       }
++      // Patched (Clearly Reformed): suppress the system text-selection edit menu
++      // entirely — the app provides its own selection actions, and the system
++      // menu cannot appear for selections in the continuation of a column-split
++      // paragraph anyway (WebKit places it a page off-screen), so consistency
++      // means no system menu at all. iOS 16+ builds this menu through the
++      // responder chain's buildMenuWithBuilder, which (unlike canPerformAction
++      // on this subclass) is reliably consulted. Do NOT use the `menuItems` prop
++      // for this: it installs a long-press recognizer with cancelsTouchesInView
++      // that corrupts WebKit's own selection gesture.
++      [builder removeMenuForIdentifier:UIMenuStandardEdit];
++      [builder removeMenuForIdentifier:UIMenuLookup];
++      [builder removeMenuForIdentifier:UIMenuFind];
++      [builder removeMenuForIdentifier:UIMenuShare];
++      [builder removeMenuForIdentifier:UIMenuTextStyle];
++      [builder removeMenuForIdentifier:UIMenuSpeech];
++      [builder removeMenuForIdentifier:UIMenuReplace];
++      [builder removeMenuForIdentifier:UIMenuLearn];
++      if (@available(iOS 17.0, *)) {
++        [builder removeMenuForIdentifier:UIMenuAutoFill];
++      }
+     }
+     [super buildMenuWithBuilder:builder];
+ }
+@@ -545,6 +565,13 @@ - (void)didMoveToWindow
+     }
+ 
+     _webView.scrollView.directionalLockEnabled = _directionalLockEnabled;
++
++    // Patched (Clearly Reformed): theme WebKit's native selection UI — grabber
++    // handles, selection highlight — to the app's gold accent so it matches the
++    // reader's fallback selection painting for column-split paragraphs. WKWebView
++    // follows UIKit tintColor for selection chrome, but react-native-webview
++    // exposes no prop for it.
++    _webView.tintColor = [UIColor colorWithRed:188.0/255.0 green:135.0/255.0 blue:26.0/255.0 alpha:1.0];
+ #endif // !TARGET_OS_OSX
+     _webView.allowsLinkPreview = _allowsLinkPreview;
+     [_webView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew context:nil];

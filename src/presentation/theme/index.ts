@@ -9,6 +9,8 @@
  * No third-party styling engine. Light-first; the Reader carries its own night mode.
  */
 
+import { Platform } from 'react-native';
+
 export const Colors = {
   /** App "paper" background. */
   background: '#F1EBDD',
@@ -88,6 +90,15 @@ export const Fonts = {
   serifBold: 'Flecha-Bold',
   /** Flecha Text — long-form serif body (Reader, blurbs). */
   serifText: 'FlechaText-Regular',
+  /**
+   * Serif italic. We only license three Flecha cuts (Regular, Bold, Text Regular)
+   * and neither iOS nor Android synthesises an oblique for a custom family — a
+   * `fontStyle: 'italic'` on Flecha silently renders upright. Until a `FlechaS-Italic`
+   * is licensed and bundled, italic runs borrow the platform's old-style serif,
+   * which sits close enough to Flecha in colour to read as emphasis rather than a
+   * bug. Swap this one token when the real cut arrives.
+   */
+  serifItalic: Platform.select({ ios: 'Georgia', default: 'serif' }) as string,
   /** IBM Plex Sans — UI. */
   sans: 'IBMPlexSans_400Regular',
   sansMedium: 'IBMPlexSans_500Medium',

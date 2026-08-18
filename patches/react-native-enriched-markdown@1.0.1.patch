@@ -1,0 +1,75 @@
+diff --git a/ios/input/ENRMInputFormatterStyle.mm b/ios/input/ENRMInputFormatterStyle.mm
+index fb3c73340289e196ec2471f33dbdf7cd6fc986c4..7289ae2651a64c96f679ce94b2f21d0a6ca3ca85 100644
+--- a/ios/input/ENRMInputFormatterStyle.mm
++++ b/ios/input/ENRMInputFormatterStyle.mm
+@@ -1,5 +1,6 @@
+ #import "ENRMInputFormatterStyle.h"
+ #import "FontUtils.h"
++#import <React/RCTFont.h>
+ 
+ @implementation ENRMInputLinkVariantStyle
+ @end
+@@ -103,8 +104,27 @@ - (UIFont *)headingFontForLevel:(NSInteger)level
+   }
+ 
+   NSString *weightString = _headingFontWeights[level];
+-  UIFont *font = weightString.length > 0 ? [UIFont systemFontOfSize:size weight:ENRMFontWeightFromString(weightString)]
+-                                         : [_baseFont fontWithSize:size];
++  UIFont *font = nil;
++  if (weightString.length > 0) {
++    // Keep the base font's custom family in headings instead of jumping to the
++    // system font; resolve through RCTFont so the family + weight are matched
++    // the same way React Native <Text> does it. Family names starting with a
++    // dot are the system font — those keep the stock behavior below.
++    if (![_baseFont.familyName hasPrefix:@"."]) {
++      font = [RCTFont updateFont:nil
++                      withFamily:_baseFont.familyName
++                            size:@(size)
++                          weight:weightString
++                           style:nil
++                         variant:nil
++                 scaleMultiplier:1.0];
++    }
++    if (font == nil) {
++      font = [UIFont systemFontOfSize:size weight:ENRMFontWeightFromString(weightString)];
++    }
++  } else {
++    font = [_baseFont fontWithSize:size];
++  }
+   _headingFontCache[level] = font;
+   return font;
+ }
+diff --git a/ios/input/InputStylePropsUtils.h b/ios/input/InputStylePropsUtils.h
+index 1d28946d1ec4e46fc0d502d35adec208645674ed..0472a6bd78bc97844621149f6458c3640107bad8 100644
+--- a/ios/input/InputStylePropsUtils.h
++++ b/ios/input/InputStylePropsUtils.h
+@@ -4,6 +4,7 @@
+ #import "ENRMUIKit.h"
+ #import "FontUtils.h"
+ #import <React/RCTConversions.h>
++#import <React/RCTFont.h>
+ 
+ #if !TARGET_OS_OSX
+ static inline UITextAutocapitalizationType ENRMAutocapitalizationTypeFromString(NSString *value)
+@@ -73,7 +74,20 @@ BOOL applyInputStyleProps(ENRMInputFormatterStyle *style, const InputProps &newP
+   if (newProps.fontFamily != oldProps.fontFamily) {
+     if (!newProps.fontFamily.empty()) {
+       NSString *familyName = [NSString stringWithUTF8String:newProps.fontFamily.c_str()];
+-      UIFont *customFont = [UIFont fontWithName:familyName size:style.baseFont.pointSize];
++      // Resolve through RCTFont first: it understands registered family
++      // aliases (e.g. expo-font's) and weight-suffixed names, matching how
++      // React Native <Text> resolves fontFamily. A raw UIFont lookup only
++      // works for fonts the system already knows by that exact name.
++      UIFont *customFont = [RCTFont updateFont:nil
++                                    withFamily:familyName
++                                          size:@(style.baseFont.pointSize)
++                                        weight:nil
++                                         style:nil
++                                       variant:nil
++                               scaleMultiplier:1.0];
++      if (customFont == nil) {
++        customFont = [UIFont fontWithName:familyName size:style.baseFont.pointSize];
++      }
+       if (customFont) {
+         style.baseFont = customFont;
+       }
