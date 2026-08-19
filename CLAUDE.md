@@ -58,3 +58,40 @@ MVP vs v2 split is in `project-info.md` §11.
 - Audio player is the Apache-2.0 fork `@javascriptcommon/react-native-track-player`
   (upstream v4 is frozen/broken on RN 0.85; official v5 `@rntp/player` is commercial —
   revisit licensing before launch).
+
+### Patched dependencies
+
+Four deps ship patched via `pnpm patch` — the patch files live in `patches/`, wired up
+by `patchedDependencies` in `pnpm-workspace.yaml`:
+
+- **`react-native-enriched-markdown@1.0.1`** (highest stakes) — routes the note
+  editor's iOS font resolution through `RCTFont` (`applyInputStyleProps`,
+  `headingFontForLevel`) instead of a bare `[UIFont fontWithName:]`. The app passes
+  **expo-font aliases** (`IBMPlexSans_400Regular`, see `theme/index.ts`), which UIKit
+  does not know by name — unpatched, the editor silently falls back to San Francisco
+  and headings jump to the system font. This is the one that fails *quietly*. Its
+  native assets also arrive via a postinstall download, permitted by `allowBuilds` in
+  the same file — a working install needs both entries.
+- **`react-native-webview`** — two Reader-specific iOS changes in `RNCWebViewImpl.m`:
+  `buildMenuWithBuilder` strips the system text-selection edit menu (the app owns
+  selection in paged mode, and the system menu lands off-screen on column-split
+  paragraphs), and `didMoveToWindow` tints WKWebView's native selection chrome gold to
+  match the reader's own selection painting. Neither is reachable through props — and
+  specifically **not** via the `menuItems` prop, whose long-press recognizer corrupts
+  WebKit's selection gesture.
+- **`expo-splash-screen`** — optional-chaining guards in the config plugin's
+  `InterfaceBuilder.js`. Our iOS splash is background-colour only (no image), so the
+  generated `SplashScreen.storyboard` has no `<subviews>`/`<constraints>` and the
+  plugin's `mainView.subviews[0]` throws during prebuild.
+- **`@javascriptcommon/react-native-track-player`** — adds the missing `Event` import
+  to `useTrackPlayerEvents` in both `src/` and `lib/src/` (Metro resolves `src/`). The
+  fork's `__DEV__` validation reads `Event` as a global, which throws on Hermes the
+  moment any track-player hook mounts. See `f910363`.
+
+**Rule: upgrading or reinstalling a patched dep means re-verifying its patch** —
+`pnpm patch <name>`, re-apply the change against the new source, `pnpm patch-commit`.
+Install fails loudly when hunks no longer apply, so a breaking upgrade is usually
+visible; what isn't is a patch that still applies but no longer covers code upstream
+moved or renamed. Three of the four are native/config-plugin code, so verifying one
+means a rebuild (`npx expo run:ios`), not a Metro reload — and none of them are
+reachable by `pnpm typecheck`/`pnpm test`.
