@@ -2,37 +2,55 @@ import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import type { FeedOrder } from '@/application/ports/resource-repository';
 import type { Resource } from '@/domain/resource';
 import { AppHeader } from '@/presentation/components/chrome/app-header';
+import { useBottomChromeInset } from '@/presentation/components/chrome/bottom-chrome';
 import { FeaturedCard } from '@/presentation/components/content/featured-card';
-import { type ContentFilter, FilterChips } from '@/presentation/components/content/filter-chips';
+import {
+  type ContentFilter,
+  TYPE_OPTIONS,
+  labelFor,
+  sortOptions,
+} from '@/presentation/components/content/library-filters';
 import { ResourceCard } from '@/presentation/components/content/resource-card';
-import { CONTENT_TYPE_LABEL } from '@/presentation/lib/content-type';
+import { DropdownMenu } from '@/presentation/components/menu/dropdown-menu';
 import { useResourceFeed } from '@/presentation/hooks/queries/use-resource-feed';
 import { useOpenResource } from '@/presentation/hooks/use-open-resource';
 import { Colors, Spacing, Type } from '@/presentation/theme';
 
+/**
+ * Library — the catalogue. A Featured hero (the newest piece) sits above the full
+ * list, which is filtered by a type menu and sorted by a sort menu (the Figma's
+ * "Sort ⌄ / All Resources ⌄" pills). Latest-first is the list itself, so there is
+ * no separate "Latest" section here.
+ */
 export default function LibraryScreen() {
   const [filter, setFilter] = useState<ContentFilter>('all');
+  const [order, setOrder] = useState<FeedOrder>('newest');
   const isAll = filter === 'all';
   const openResource = useOpenResource();
+  const chromeInset = useBottomChromeInset();
+
+  const onFilterChange = useCallback((next: ContentFilter) => {
+    setFilter(next);
+    // The unified feed can't be reversed; fall back to newest when leaving a type.
+    if (next === 'all') setOrder('newest');
+  }, []);
 
   // Each filter reads its own paginated endpoint, so the infinite scroll knows its end.
   const { data, isLoading, isError, refetch, isRefetching, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useResourceFeed(isAll ? undefined : filter);
+    useResourceFeed(isAll ? undefined : filter, order);
 
   const items = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data]);
-  const totalItems = data?.pages[0]?.totalItems ?? 0;
 
-  // On the unified feed, lift the newest item into the Featured hero.
-  const featured = isAll && items.length > 0 ? items[0] : null;
+  // On the unified, newest-first feed, lift the newest item into the Featured hero.
+  const featured = isAll && order === 'newest' && items.length > 0 ? items[0] : null;
   const listItems = featured ? items.slice(1) : items;
 
   const loadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  const sectionTitle = isAll ? 'All Resources' : `${CONTENT_TYPE_LABEL[filter]}s`;
 
   const keyExtractor = useCallback((item: Resource) => `${item.type}-${item.id}`, []);
   const renderItem = useCallback(
@@ -49,11 +67,16 @@ export default function LibraryScreen() {
         </View>
       ) : null}
       <View style={styles.sectionHeader}>
-        <Text style={styles.eyebrow}>{sectionTitle}</Text>
-        <Text style={styles.sortLabel}>
-          {totalItems > 0 ? `${totalItems} · ` : ''}
-          <Text style={styles.sortAccent}>Newest</Text>
-        </Text>
+        <Text style={styles.sectionTitle}>Library</Text>
+        <View style={styles.menus}>
+          <DropdownMenu label="Sort" value={order} options={sortOptions(filter)} onChange={setOrder} />
+          <DropdownMenu
+            label={labelFor(TYPE_OPTIONS, filter)}
+            value={filter}
+            options={TYPE_OPTIONS}
+            onChange={onFilterChange}
+          />
+        </View>
       </View>
     </View>
   );
@@ -61,9 +84,6 @@ export default function LibraryScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <AppHeader title="Library" />
-      <View style={styles.chips}>
-        <FilterChips value={filter} onChange={setFilter} />
-      </View>
 
       {isLoading ? (
         <View style={styles.center}>
@@ -82,12 +102,13 @@ export default function LibraryScreen() {
           keyExtractor={keyExtractor}
           renderItem={renderItem}
           ListHeaderComponent={header}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: Spacing.xxl + chromeInset }]}
           showsVerticalScrollIndicator={false}
           onEndReached={loadMore}
           onEndReachedThreshold={0.6}
           refreshing={isRefetching}
           onRefresh={refetch}
+          ListEmptyComponent={<Text style={styles.emptyText}>Nothing here yet.</Text>}
           ListFooterComponent={
             isFetchingNextPage ? <ActivityIndicator color={Colors.gold} style={styles.footer} /> : null
           }
@@ -102,36 +123,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  chips: {
-    paddingTop: Spacing.xs,
-    paddingBottom: Spacing.md,
-  },
   listContent: {
     paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xxl,
   },
   featuredSection: {
-    paddingTop: Spacing.xs,
+    paddingTop: Spacing.sm,
     gap: Spacing.md,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    marginTop: Spacing.xxl,
-    paddingBottom: Spacing.xs,
   },
   eyebrow: {
     ...Type.eyebrow,
-    color: Colors.textMuted,
+    color: Colors.ink,
   },
-  sortLabel: {
-    ...Type.meta,
-    color: Colors.textMuted,
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+    marginTop: Spacing.xxxl,
+    paddingBottom: Spacing.sm,
   },
-  sortAccent: {
-    color: Colors.goldDeep,
-    fontFamily: Type.label.fontFamily,
+  sectionTitle: {
+    ...Type.display,
+    color: Colors.ink,
+    flexShrink: 1,
+  },
+  menus: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    flexShrink: 0,
   },
   center: {
     flex: 1,
@@ -143,15 +162,20 @@ const styles = StyleSheet.create({
     ...Type.body,
     color: Colors.textMuted,
   },
+  emptyText: {
+    ...Type.body,
+    color: Colors.textMuted,
+    paddingVertical: Spacing.xxl,
+  },
   retry: {
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.sm,
     borderRadius: 999,
-    backgroundColor: Colors.green,
+    backgroundColor: Colors.ink,
   },
   retryLabel: {
     ...Type.label,
-    color: Colors.onGreen,
+    color: Colors.white,
   },
   footer: {
     paddingVertical: Spacing.xxl,

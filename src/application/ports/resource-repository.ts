@@ -8,12 +8,17 @@ export interface Page<T> {
   readonly totalPages: number;
 }
 
+/** Feed ordering. `oldest` is only honoured by per-type feeds (see the repository). */
+export type FeedOrder = 'newest' | 'oldest';
+
 /** Parameters for a feed request. */
 export interface ResourceFeedQuery {
   readonly page: number;
   readonly perPage?: number;
-  /** Optional filter by content type (the Library filter chips). */
+  /** Optional filter by content type (the Library type menu). */
   readonly type?: ContentType;
+  /** Sort order; defaults to newest first. */
+  readonly order?: FeedOrder;
 }
 
 /**
