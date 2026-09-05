@@ -7,7 +7,7 @@ import type { ContinueItem } from '@/domain/progress';
 import { AppHeader } from '@/presentation/components/chrome/app-header';
 import { ContinueCard } from '@/presentation/components/home/continue-card';
 import { SavedMiniCard } from '@/presentation/components/home/saved-mini-card';
-import { TodayCard } from '@/presentation/components/home/today-card';
+import { FeaturedCard } from '@/presentation/components/content/featured-card';
 import { ResourceCard } from '@/presentation/components/content/resource-card';
 import { useContinueList } from '@/presentation/hooks/queries/use-progress';
 import { useDailyPick } from '@/presentation/hooks/queries/use-daily-pick';
@@ -60,7 +60,7 @@ export default function HomeScreen() {
           <Text style={styles.dateEyebrow}>{today}</Text>
           <Text style={styles.heroTitle}>For your week ahead</Text>
           {daily.data ? (
-            <TodayCard resource={daily.data} onPress={() => daily.data && openResource(daily.data)} />
+            <FeaturedCard resource={daily.data} pill="Today’s Pick" onPress={() => daily.data && openResource(daily.data)} />
           ) : daily.isLoading ? (
             <View style={styles.loading}>
               <ActivityIndicator color={Colors.gold} />

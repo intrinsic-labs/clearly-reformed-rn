@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ResourceRef } from '@/domain/resource-ref';
-import { CONTENT_TYPE_LABEL } from '@/presentation/components/content-icons';
+import { CONTENT_TYPE_LABEL } from '@/presentation/lib/content-type';
 import { ChevronRightIcon } from '@/presentation/components/icons';
 import { Colors, Fonts, Radius } from '@/presentation/theme';
 

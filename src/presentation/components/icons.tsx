@@ -1,4 +1,4 @@
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
@@ -135,6 +135,31 @@ export function BookmarkIcon({ size = 19, color = Colors.ink, filled = false }: 
 /** X close. */
 export function CloseIcon({ size = 14, color = Colors.ink }: IconProps) {
   return <Feather name="x" size={size} color={color} />;
+}
+
+/** Highlighter marker (notebook highlight cards). */
+export function HighlightIcon({ size = 14, color = Colors.ink }: IconProps) {
+  return <MaterialCommunityIcons name="marker" size={size} color={color} />;
+}
+
+/** Scissors (notebook clip cards). */
+export function ClipIcon({ size = 14, color = Colors.ink }: IconProps) {
+  return <Feather name="scissors" size={size} color={color} />;
+}
+
+/** Person (account / settings entry in the header). */
+export function PersonIcon({ size = 19, color = Colors.ink }: IconProps) {
+  return <Feather name="user" size={size} color={color} />;
+}
+
+/** Small down chevron (menu triggers). */
+export function ChevronDownSmallIcon({ size = 14, color = Colors.ink }: IconProps) {
+  return <Feather name="chevron-down" size={size} color={color} />;
+}
+
+/** Arrow right (section title links). */
+export function ArrowRightIcon({ size = 20, color = Colors.ink }: IconProps) {
+  return <Feather name="arrow-right" size={size} color={color} />;
 }
 
 /** Pencil (new note). */

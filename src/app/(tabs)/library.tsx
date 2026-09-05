@@ -7,7 +7,7 @@ import { AppHeader } from '@/presentation/components/chrome/app-header';
 import { FeaturedCard } from '@/presentation/components/content/featured-card';
 import { type ContentFilter, FilterChips } from '@/presentation/components/content/filter-chips';
 import { ResourceCard } from '@/presentation/components/content/resource-card';
-import { CONTENT_TYPE_LABEL } from '@/presentation/components/content-icons';
+import { CONTENT_TYPE_LABEL } from '@/presentation/lib/content-type';
 import { useResourceFeed } from '@/presentation/hooks/queries/use-resource-feed';
 import { useOpenResource } from '@/presentation/hooks/use-open-resource';
 import { Colors, Spacing, Type } from '@/presentation/theme';

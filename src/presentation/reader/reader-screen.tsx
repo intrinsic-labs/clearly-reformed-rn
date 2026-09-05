@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ResourceDetail } from '@/domain/resource-detail';
 import { toResourceRef } from '@/domain/resource-ref';
-import { CONTENT_TYPE_LABEL } from '@/presentation/components/content-icons';
+import { CONTENT_TYPE_LABEL } from '@/presentation/lib/content-type';
 import { BookmarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@/presentation/components/icons';
 import { useHighlightsFor, useNotebookMutations } from '@/presentation/hooks/queries/use-notebook';
 import { useInvalidateProgress, useResourceProgress } from '@/presentation/hooks/queries/use-progress';

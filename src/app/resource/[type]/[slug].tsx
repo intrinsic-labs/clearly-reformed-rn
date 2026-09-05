@@ -18,7 +18,7 @@ import type { ContentType } from '@/domain/resource';
 import { toResourceRef } from '@/domain/resource-ref';
 import { ArticleBody } from '@/presentation/components/reader/article-body';
 import { InlineVideo } from '@/presentation/components/reader/inline-video';
-import { CONTENT_TYPE_LABEL } from '@/presentation/components/content-icons';
+import { CONTENT_TYPE_LABEL } from '@/presentation/lib/content-type';
 import { BookmarkIcon, ChevronLeftIcon, PlayIcon } from '@/presentation/components/icons';
 import { useResourceContent } from '@/presentation/hooks/queries/use-resource-content';
 import { useResolvedTrack } from '@/presentation/hooks/queries/use-resolved-track';

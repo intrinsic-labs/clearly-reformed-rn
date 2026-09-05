@@ -2,20 +2,29 @@ import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Resource } from '@/domain/resource';
-import { CONTENT_TYPE_LABEL, ContentTypeIcon } from '@/presentation/components/content-icons';
-import { PlayIcon } from '@/presentation/components/icons';
-import { Colors, Radius, Type } from '@/presentation/theme';
+import { CONTENT_TYPE_LABEL } from '@/presentation/lib/content-type';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/presentation/theme';
 
-function isPlayable(type: Resource['type']): boolean {
-  return type !== 'article' && type !== 'book';
-}
-
-/** The large "Featured" hero at the top of the Library. */
-export function FeaturedCard({ resource, onPress }: { resource: Resource; onPress?: () => void }) {
+/**
+ * The large hero card: a rounded image, then a plain type label, a Flecha headline,
+ * and the blurb — borderless on the white page, per the Figma. An optional `pill`
+ * ("Today's Pick") floats over the image's bottom-left corner; it replaces the old
+ * full-width "Today's pick from the Clearly Reformed library" sentence.
+ */
+export function FeaturedCard({
+  resource,
+  pill,
+  onPress,
+}: {
+  resource: Resource;
+  /** Short badge text drawn over the image, e.g. "Today's Pick". */
+  pill?: string;
+  onPress?: () => void;
+}) {
   const subtitle = resource.people[0];
 
   return (
-    <Pressable style={styles.card} onPress={onPress}>
+    <Pressable style={styles.card} onPress={onPress} accessibilityRole="button">
       <View style={styles.imageWrap}>
         <Image
           source={resource.imageUrl ? { uri: resource.imageUrl } : undefined}
@@ -23,29 +32,23 @@ export function FeaturedCard({ resource, onPress }: { resource: Resource; onPres
           contentFit="cover"
           transition={150}
         />
-        {isPlayable(resource.type) ? (
-          <View style={styles.playOverlay}>
-            <View style={styles.playCircle}>
-              <PlayIcon size={18} color={Colors.white} />
-            </View>
+        {pill ? (
+          <View style={styles.pill}>
+            <Text style={styles.pillLabel}>{pill}</Text>
           </View>
         ) : null}
       </View>
 
       <View style={styles.body}>
-        <View style={styles.badgeRow}>
-          <ContentTypeIcon type={resource.type} size={13} color={Colors.goldDeep} />
-          <Text style={styles.kicker} numberOfLines={1}>
-            {CONTENT_TYPE_LABEL[resource.type]}
-            {subtitle ? <Text style={styles.kickerSubtle}>{`  ·  ${subtitle}`}</Text> : null}
-          </Text>
-        </View>
-
+        <Text style={styles.kicker} numberOfLines={1}>
+          {CONTENT_TYPE_LABEL[resource.type]}
+          {subtitle ? `  ·  ${subtitle}` : ''}
+        </Text>
         <Text style={styles.title} numberOfLines={3}>
           {resource.title}
         </Text>
         {resource.excerpt ? (
-          <Text style={styles.blurb} numberOfLines={2}>
+          <Text style={styles.blurb} numberOfLines={3}>
             {resource.excerpt}
           </Text>
         ) : null}
@@ -56,56 +59,43 @@ export function FeaturedCard({ resource, onPress }: { resource: Resource; onPres
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.card,
-    borderRadius: Radius.xxl,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    overflow: 'hidden',
+    gap: Spacing.md,
   },
   imageWrap: {
     width: '100%',
-    height: 200,
-    backgroundColor: Colors.borderSoft,
+    aspectRatio: 16 / 9,
+    borderRadius: Radius.xl,
+    overflow: 'hidden',
+    backgroundColor: Colors.surface,
   },
   image: {
     width: '100%',
     height: '100%',
   },
-  playOverlay: {
+  pill: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  playCircle: {
-    width: 56,
-    height: 56,
+    left: 12,
+    bottom: 12,
+    backgroundColor: Colors.white,
     borderRadius: Radius.pill,
-    backgroundColor: 'rgba(26,32,28,0.42)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.78)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingLeft: 3,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  pillLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 12,
+    color: Colors.ink,
   },
   body: {
-    padding: 17,
-    gap: 9,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    paddingHorizontal: 6,
     gap: 6,
   },
   kicker: {
     ...Type.kicker,
-    color: Colors.textMuted,
-    flexShrink: 1,
-  },
-  kickerSubtle: {
     color: Colors.textMuted,
   },
   title: {
@@ -115,5 +105,6 @@ const styles = StyleSheet.create({
   blurb: {
     ...Type.body,
     color: Colors.bodyText,
+    marginTop: 2,
   },
 });

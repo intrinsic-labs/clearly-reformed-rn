@@ -1,8 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { HighlightEntry } from '@/domain/notebook';
-import { ContentTypeIcon } from '@/presentation/components/content-icons';
-import { NotebookIcon } from '@/presentation/components/icons';
+import { HighlightIcon, NotebookIcon } from '@/presentation/components/icons';
 import { cardShellStyles, NotebookCardShell } from '@/presentation/components/notebook/card-shell';
 import { SourceRow } from '@/presentation/components/notebook/source-row';
 import { relativeDate } from '@/presentation/lib/format';
@@ -20,7 +19,7 @@ export function HighlightCard({
 }) {
   return (
     <NotebookCardShell
-      icon={<ContentTypeIcon type={entry.resource.type} size={13} />}
+      icon={<HighlightIcon size={13} color={Colors.textMuted} />}
       label="Highlight"
       when={relativeDate(entry.createdAt)}
       onPress={onOpenSource}

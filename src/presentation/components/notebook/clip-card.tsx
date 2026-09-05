@@ -2,8 +2,8 @@ import { Image } from 'expo-image';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 
 import type { ClipEntry } from '@/domain/notebook';
-import { CONTENT_TYPE_LABEL, ContentTypeIcon } from '@/presentation/components/content-icons';
-import { PlayIcon } from '@/presentation/components/icons';
+import { CONTENT_TYPE_LABEL } from '@/presentation/lib/content-type';
+import { ClipIcon, PlayIcon } from '@/presentation/components/icons';
 import { cardShellStyles, NotebookCardShell } from '@/presentation/components/notebook/card-shell';
 import { SourceRow } from '@/presentation/components/notebook/source-row';
 import { formatTime, relativeDate } from '@/presentation/lib/format';
@@ -29,7 +29,7 @@ export function ClipCard({
 
   return (
     <NotebookCardShell
-      icon={<ContentTypeIcon type={entry.resource.type} size={13} />}
+      icon={<ClipIcon size={13} color={Colors.textMuted} />}
       label={label}
       when={relativeDate(entry.createdAt)}
       onPress={entry.mediaKind === 'audio' ? onPlay : onOpenSource}

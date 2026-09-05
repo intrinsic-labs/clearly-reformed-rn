@@ -2,10 +2,9 @@ import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ContinueItem } from '@/domain/progress';
-import { CONTENT_TYPE_LABEL, ContentTypeIcon } from '@/presentation/components/content-icons';
-import { PlayIcon } from '@/presentation/components/icons';
+import { CONTENT_TYPE_LABEL } from '@/presentation/lib/content-type';
 import { formatTime } from '@/presentation/lib/format';
-import { Colors, Type } from '@/presentation/theme';
+import { Colors, Radius, Type } from '@/presentation/theme';
 
 /** ~Reading speed for converting remaining characters to minutes (chars→words→200wpm). */
 const CHARS_PER_MINUTE = 6 * 200;
@@ -24,32 +23,20 @@ function progressLabel(item: ContinueItem): string {
   }
 }
 
-/** A card in Home's horizontal Continue rail. */
+/** A card in Home's horizontal Continue rail: image, type, title, and a gold progress bar. */
 export function ContinueCard({ item, onPress }: { item: ContinueItem; onPress: () => void }) {
-  const { resource, kind, fraction } = item.progress;
-  const playable = kind !== 'read';
+  const { resource, fraction } = item.progress;
 
   return (
-    <Pressable style={styles.card} onPress={onPress}>
-      <View>
-        {resource.thumbnailUrl ? (
-          <Image source={{ uri: resource.thumbnailUrl }} style={styles.image} contentFit="cover" transition={150} />
-        ) : (
-          <View style={[styles.image, { backgroundColor: Colors.borderSoft }]} />
-        )}
-        {playable ? (
-          <View style={styles.playOverlay}>
-            <View style={styles.playCircle}>
-              <PlayIcon size={12} color={Colors.white} />
-            </View>
-          </View>
-        ) : null}
-      </View>
+    <Pressable style={styles.card} onPress={onPress} accessibilityRole="button">
+      <Image
+        source={resource.thumbnailUrl ? { uri: resource.thumbnailUrl } : undefined}
+        style={styles.image}
+        contentFit="cover"
+        transition={150}
+      />
       <View style={styles.body}>
-        <View style={styles.kickerRow}>
-          <ContentTypeIcon type={resource.type} size={12} />
-          <Text style={styles.kicker}>{CONTENT_TYPE_LABEL[resource.type]}</Text>
-        </View>
+        <Text style={styles.kicker}>{CONTENT_TYPE_LABEL[resource.type]}</Text>
         <Text style={styles.title} numberOfLines={2}>
           {resource.title}
         </Text>
@@ -64,46 +51,17 @@ export function ContinueCard({ item, onPress }: { item: ContinueItem; onPress: (
 
 const styles = StyleSheet.create({
   card: {
-    width: 236,
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 16,
-    overflow: 'hidden',
+    width: 232,
+    gap: 10,
   },
   image: {
     width: '100%',
-    height: 120,
-  },
-  playOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  playCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(26,32,28,0.42)',
-    borderWidth: 1.4,
-    borderColor: 'rgba(255,255,255,0.78)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingLeft: 2,
+    height: 130,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.surface,
   },
   body: {
-    paddingHorizontal: 13,
-    paddingTop: 12,
-    paddingBottom: 13,
-  },
-  kickerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    paddingHorizontal: 2,
   },
   kicker: {
     ...Type.kicker,
@@ -112,9 +70,9 @@ const styles = StyleSheet.create({
   title: {
     ...Type.cardTitle,
     color: Colors.ink,
-    marginTop: 8,
-    marginBottom: 12,
-    minHeight: 38,
+    marginTop: 3,
+    marginBottom: 10,
+    minHeight: 42,
   },
   progressTrack: {
     height: 3,
@@ -130,7 +88,7 @@ const styles = StyleSheet.create({
   progressLabel: {
     ...Type.meta,
     color: Colors.textMuted,
-    marginTop: 7,
+    marginTop: 6,
     fontVariant: ['tabular-nums'],
   },
 });

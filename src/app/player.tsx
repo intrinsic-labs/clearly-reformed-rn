@@ -19,7 +19,7 @@ import {
   SkipForwardIcon,
   TranscriptIcon,
 } from '@/presentation/components/icons';
-import { CONTENT_TYPE_LABEL } from '@/presentation/components/content-icons';
+import { CONTENT_TYPE_LABEL } from '@/presentation/lib/content-type';
 import { useDownload, useDownloadMutations } from '@/presentation/hooks/queries/use-downloads';
 import { useNotebook, useNotebookMutations } from '@/presentation/hooks/queries/use-notebook';
 import { useIsSaved, useToggleSaved } from '@/presentation/hooks/queries/use-saved';
