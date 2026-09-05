@@ -12,7 +12,7 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const fonts = [
-  { name: 'FLECHA_BOLD_OTF', file: 'assets/fonts/FlechaM-Bold.otf' },
+  { name: 'FLECHA_DISPLAY_OTF', file: 'assets/fonts/FlechaM-Regular.otf' },
   { name: 'FLECHA_TEXT_OTF', file: 'assets/fonts/FlechaS-Regular.otf' },
   {
     name: 'PLEX_SANS_TTF',

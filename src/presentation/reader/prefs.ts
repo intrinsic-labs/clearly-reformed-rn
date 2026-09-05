@@ -26,7 +26,7 @@ export const FONT_SIZES_PX = [16, 17, 18, 20, 22] as const;
 export const LINE_HEIGHTS = [1.45, 1.62, 1.85] as const;
 
 export const DEFAULT_PREFS: ReaderPrefs = {
-  theme: 'paper',
+  theme: 'white',
   font: 'serif',
   sizeIndex: 2,
   lineIndex: 1,

@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
   },
   heading: {
     flex: 1,
-    fontFamily: Fonts.serifBold,
+    fontFamily: Fonts.serif,
     fontSize: 17,
     color: Colors.ink,
     textAlign: 'center',
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   sheetTitle: {
-    fontFamily: Fonts.serifBold,
+    fontFamily: Fonts.serif,
     fontSize: 19,
     color: Colors.ink,
   },

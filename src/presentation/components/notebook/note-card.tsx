@@ -74,7 +74,7 @@ function LinkGlyph() {
 
 const styles = StyleSheet.create({
   title: {
-    fontFamily: Fonts.serifBold,
+    fontFamily: Fonts.serif,
     fontSize: 17,
     lineHeight: 20.5,
     color: Colors.ink,
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   linkedTitle: {
-    fontFamily: Fonts.serifBold,
+    fontFamily: Fonts.serif,
     fontSize: 12.5,
     lineHeight: 15,
     color: Colors.ink,

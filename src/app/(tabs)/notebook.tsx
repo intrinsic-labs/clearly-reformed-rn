@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     gap: 11,
   },
   fabMenuLabel: {
-    fontFamily: Fonts.serifBold,
+    fontFamily: Fonts.serif,
     fontSize: 14,
     color: Colors.onGreen,
     backgroundColor: Colors.green,

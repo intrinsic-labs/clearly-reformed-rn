@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     color: Colors.goldDeep,
   },
   savedSubtitle: {
-    fontFamily: Fonts.serifBold,
+    fontFamily: Fonts.serif,
     fontSize: 18,
     color: Colors.ink,
     paddingHorizontal: Spacing.xl,

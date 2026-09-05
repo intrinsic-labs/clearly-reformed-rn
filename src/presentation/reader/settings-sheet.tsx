@@ -28,7 +28,7 @@ const THEMES: readonly { key: ReaderTheme; name: string }[] = [
 ];
 
 const FONT_OPTIONS: readonly { key: ReaderFont; label: string; family: string }[] = [
-  { key: 'serif', label: 'Flecha', family: Fonts.serifBold },
+  { key: 'serif', label: 'Flecha', family: Fonts.serif },
   { key: 'sans', label: 'Plex Sans', family: Fonts.sansSemiBold },
 ];
 
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   sheetTitle: {
-    fontFamily: Fonts.serifBold,
+    fontFamily: Fonts.serif,
     fontSize: 19,
   },
   closeButton: {
@@ -314,11 +314,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sizeGlyphSmall: {
-    fontFamily: Fonts.serifBold,
+    fontFamily: Fonts.serif,
     fontSize: 16,
   },
   sizeGlyphLarge: {
-    fontFamily: Fonts.serifBold,
+    fontFamily: Fonts.serif,
     fontSize: 24,
   },
   dotsRow: {

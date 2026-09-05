@@ -78,8 +78,8 @@ export const READER_PALETTES: Record<ReaderTheme, ReaderPalette> = {
 
 function lightSheet(): ReaderPalette['sheet'] {
   return {
-    bg: '#FBF7EC',
-    track: '#EFE9DA',
+    bg: '#F7F5F0',
+    track: '#ECE9E2',
     active: '#FFFFFF',
     fg: '#2A2419',
     sub: '#8E836F',

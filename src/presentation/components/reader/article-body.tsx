@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   h2: {
-    fontFamily: Fonts.serifBold,
+    fontFamily: Fonts.serif,
     fontSize: 21,
     lineHeight: 26,
     color: Reader.fg,
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   h3: {
-    fontFamily: Fonts.serifBold,
+    fontFamily: Fonts.serif,
     fontSize: 18,
     lineHeight: 23,
     color: Reader.fg,

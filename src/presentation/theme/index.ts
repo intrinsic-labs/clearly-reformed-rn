@@ -1,9 +1,12 @@
 /**
  * Clearly Reformed — design tokens.
  *
- * Extracted from the Claude Design mockups (design/clearly-reformed-app-mockup-2026).
- * The brand is a literary theological journal: cream paper, dark sage-green and
- * gold/ochre accents, an old-style serif (Flecha) paired with IBM Plex Sans for UI.
+ * Revised 2026-09 from the Chris Sullivan Figma pass (see the "Mobile App UI Call"
+ * notes in the vault): the app chrome runs on **white**, not cream — cream survives
+ * only as a sparing section tint. Headlines are **Flecha Regular** at larger sizes
+ * rather than Flecha Bold (bold's thick/thin contrast hurts legibility; size does
+ * the work instead). **Gold means "tappable"** — it is reserved for actions like
+ * "See all" and is no longer sprinkled on kickers, glyphs, or tab states.
  *
  * Styling approach (per SPEC §10): React Native StyleSheet + this typed theme.
  * No third-party styling engine. Light-first; the Reader carries its own night mode.
@@ -12,69 +15,73 @@
 import { Platform } from 'react-native';
 
 export const Colors = {
-  /** App "paper" background. */
-  background: '#F1EBDD',
-  /** Outer canvas / behind-paper tone (e.g. modal scrims, edges). */
-  canvas: '#E6E1D4',
-  /** Raised neutral surface — search field, tab bar, icon buttons. */
-  surface: '#FBF7EC',
+  /** App background. */
+  background: '#FFFFFF',
+  /** Outer canvas / behind-sheet tone (modal scrims, edges). */
+  canvas: '#F5F3EE',
+  /** Raised neutral surface — menus, pills, icon buttons, search field. */
+  surface: '#F3F1EC',
   /** Card background. */
   card: '#FFFFFF',
+  /** The brand cream — used sparingly as a section tint, never as the page. */
+  cream: '#F1EBDD',
 
   /** Primary ink. */
-  ink: '#221C13',
+  ink: '#1C1A17',
   /** Softer ink for secondary headings / strong labels. */
-  inkSoft: '#5C5343',
+  inkSoft: '#4E4840',
   /** Serif body copy. */
-  bodyText: '#6E6453',
-  /** Muted meta / captions / eyebrows. */
-  textMuted: '#9A8F7C',
+  bodyText: '#5C554B',
+  /** Muted meta / captions / type labels. */
+  textMuted: '#8A8378',
 
-  /** Gold/ochre accent. */
+  /** Gold/ochre accent — actions only. */
   gold: '#BC871A',
-  /** Deeper gold (eyebrows, active marks). */
+  /** Deeper gold (pressed / on light surfaces). */
   goldDeep: '#A8761A',
   /** Brightest gold (player accents, progress). */
   goldBright: '#C8941F',
 
-  /** Dark sage-green — bottom chrome, mini-player, dark surfaces. */
+  /** Dark sage-green — mini-player, video/"Explainer" surfaces. */
   green: '#2E3A33',
+  /** Darker green for the dark sections (Explainer Series band). */
+  greenDeep: '#1F2A24',
   /** Text/label on green surfaces. */
   onGreen: '#F4EFE2',
   /** Muted text on green surfaces. */
   onGreenMuted: '#A9B3A6',
 
   /** Hairlines / dividers. */
-  border: '#E7DFCC',
+  border: '#E8E5DF',
   /** Softer hairline (inside cards, progress tracks). */
-  borderSoft: '#ECE4D2',
-  /** Tab bar / chrome top border. */
-  borderChrome: '#E4DCC9',
+  borderSoft: '#EFEDE8',
+  /** Chrome border (bars, sheets). */
+  borderChrome: '#E3E0D9',
 
   /** "Booklet" badge. */
   badgeBg: '#E4E7DD',
   badgeText: '#2E3A33',
 
   white: '#FFFFFF',
-  black: '#221C13',
+  black: '#1C1A17',
 } as const;
 
 export type ColorToken = keyof typeof Colors;
 
 /**
- * Reader surface palette — the immersive reading view runs warmer and higher-contrast
- * than the app chrome. This is the "Paper" theme from the Reader mockup; the full
- * Reader slice will add the White/Sepia/Night variants on top of it.
+ * Reader surface palette — the immersive reading view. The default is now the
+ * "White" theme (see reader/prefs.ts); this token set backs the media detail screen
+ * and any chrome that sits on the reading surface.
  */
 export const Reader = {
-  /** Reading background ("paper"). */
-  bg: '#F4EFE3',
+  /** Reading background. */
+  bg: '#FFFFFF',
   /** Body + heading ink. */
-  fg: '#2A2419',
+  fg: '#1C1A17',
   /** Byline / caption / secondary. */
-  sub: '#857A67',
+  sub: '#8A8378',
   /** Hairline divider. */
-  hair: '#E1D8C5',
+  hair: '#ECE9E2',
   /** Gold accent (drop cap, rules, quote bar). */
   accent: Colors.gold,
 } as const;
@@ -87,6 +94,10 @@ export const Reader = {
 export const Fonts = {
   /** Flecha, headings and display. */
   serif: 'Flecha-Regular',
+  /**
+   * Flecha Bold — kept registered for the note editor's bold runs, but no longer
+   * used for headings (see the file header).
+   */
   serifBold: 'Flecha-Bold',
   /** Flecha Text — long-form serif body (Reader, blurbs). */
   serifText: 'FlechaText-Regular',
@@ -109,28 +120,33 @@ export const Fonts = {
 /**
  * Typographic scale. Each entry is a ready-to-spread TextStyle fragment
  * (fontFamily + size + line height + tracking). Color is applied at the call site.
+ *
+ * Headings are Flecha Regular throughout; legibility comes from size, not weight.
  */
 export const Type = {
-  /** Large screen titles — "Notebook", "Library". */
-  display: { fontFamily: Fonts.serifBold, fontSize: 28, lineHeight: 32, letterSpacing: 0.1 },
+  /** Large screen / section titles — "Library", "Latest", "Explainer Series". */
+  display: { fontFamily: Fonts.serif, fontSize: 30, lineHeight: 34, letterSpacing: 0 },
   /** Section hero — "For your week ahead". */
-  title1: { fontFamily: Fonts.serifBold, fontSize: 25, lineHeight: 28, letterSpacing: 0.1 },
+  title1: { fontFamily: Fonts.serif, fontSize: 26, lineHeight: 30, letterSpacing: 0 },
   /** Feature card headline. */
-  title2: { fontFamily: Fonts.serifBold, fontSize: 21, lineHeight: 24 },
+  title2: { fontFamily: Fonts.serif, fontSize: 22, lineHeight: 26 },
   /** List / row item title. */
-  title3: { fontFamily: Fonts.serifBold, fontSize: 16.5, lineHeight: 19.5 },
+  title3: { fontFamily: Fonts.serif, fontSize: 18, lineHeight: 22 },
   /** Compact card title. */
-  cardTitle: { fontFamily: Fonts.serifBold, fontSize: 15.5, lineHeight: 18.5 },
+  cardTitle: { fontFamily: Fonts.serif, fontSize: 17, lineHeight: 21 },
   /** Serif body / blurbs. */
-  body: { fontFamily: Fonts.serifText, fontSize: 14.5, lineHeight: 21.75 },
-  /** Eyebrow — uppercase, tracked (dates, "Featured"). */
-  eyebrow: { fontFamily: Fonts.sansSemiBold, fontSize: 11, lineHeight: 14, letterSpacing: 1.76, textTransform: 'uppercase' },
-  /** Type badge / kicker — uppercase, tracked, smaller. */
-  kicker: { fontFamily: Fonts.sansSemiBold, fontSize: 10, lineHeight: 12, letterSpacing: 1.3, textTransform: 'uppercase' },
+  body: { fontFamily: Fonts.serifText, fontSize: 15, lineHeight: 22.5 },
+  /** Eyebrow — uppercase, tracked, ink ("FEATURED"). */
+  eyebrow: { fontFamily: Fonts.sansSemiBold, fontSize: 11.5, lineHeight: 14, letterSpacing: 1.6, textTransform: 'uppercase' },
+  /**
+   * Content-type label — plain sentence case ("Podcast", "Lecture"). Replaces the
+   * old uppercase-tracked kicker + brand glyph pairing, which read as clutter.
+   */
+  kicker: { fontFamily: Fonts.sans, fontSize: 12.5, lineHeight: 16, letterSpacing: 0 },
   /** Standard UI label. */
-  label: { fontFamily: Fonts.sansMedium, fontSize: 12, lineHeight: 16 },
+  label: { fontFamily: Fonts.sansMedium, fontSize: 12.5, lineHeight: 16 },
   /** Meta / caption. */
-  meta: { fontFamily: Fonts.sans, fontSize: 11.5, lineHeight: 15 },
+  meta: { fontFamily: Fonts.sans, fontSize: 12, lineHeight: 16 },
   /** Tab bar label. */
   tab: { fontFamily: Fonts.sansMedium, fontSize: 10, lineHeight: 12 },
 } as const;

@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   title: {
-    fontFamily: Fonts.serifBold,
+    fontFamily: Fonts.serif,
     fontSize: 13,
     lineHeight: 15.5,
     color: Colors.ink,

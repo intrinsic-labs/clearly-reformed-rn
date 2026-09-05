@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
     color: Colors.goldBright,
   },
   title: {
-    fontFamily: Fonts.serifBold,
+    fontFamily: Fonts.serif,
     fontSize: 23,
     lineHeight: 26,
     color: P.fg,

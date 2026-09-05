@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   aaGlyph: {
-    fontFamily: Fonts.serifBold,
+    fontFamily: Fonts.serif,
     fontSize: 19,
   },
   bottomBar: {

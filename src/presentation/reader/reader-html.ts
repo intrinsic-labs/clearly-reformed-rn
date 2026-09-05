@@ -1,4 +1,4 @@
-import { FLECHA_BOLD_OTF, FLECHA_TEXT_OTF, PLEX_SANS_TTF } from '@/presentation/reader/fonts-base64';
+import { FLECHA_DISPLAY_OTF, FLECHA_TEXT_OTF, PLEX_SANS_TTF } from '@/presentation/reader/fonts-base64';
 
 /**
  * Builds the self-contained HTML document the Reader WebView renders (SPEC §8):
@@ -82,7 +82,7 @@ export function buildReaderHtml(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
-@font-face { font-family:'Flecha'; font-weight:700; src:url(data:font/otf;base64,${FLECHA_BOLD_OTF}) format('opentype'); }
+@font-face { font-family:'Flecha'; font-weight:400; src:url(data:font/otf;base64,${FLECHA_DISPLAY_OTF}) format('opentype'); }
 @font-face { font-family:'FlechaText'; font-weight:400; src:url(data:font/otf;base64,${FLECHA_TEXT_OTF}) format('opentype'); }
 @font-face { font-family:'PlexSans'; font-weight:400; src:url(data:font/ttf;base64,${PLEX_SANS_TTF}) format('truetype'); }
 
@@ -136,7 +136,7 @@ body { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent;
 
 /* --- article typography --- */
 #head .eyebrow { font-family:'PlexSans',sans-serif; font-size:.61em; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); }
-#head .title { font-family:'Flecha',serif; font-weight:700; font-size:1.78em; line-height:1.12; margin-top:.5em; letter-spacing:.004em; color:var(--fg); }
+#head .title { font-family:'Flecha',serif; font-weight:400; font-size:1.95em; line-height:1.12; margin-top:.5em; letter-spacing:.004em; color:var(--fg); }
 #head .byline { font-family:'PlexSans',sans-serif; font-size:.62em; letter-spacing:.05em; color:var(--sub); margin-top:1.1em; text-transform:uppercase; font-weight:500; }
 #head .scripture { font-family:'Flecha',serif; font-size:.86em; color:var(--accent); margin-top:.7em; }
 #head .rule { height:1px; background:var(--hair); margin:1.4em 0 1.5em; }
@@ -160,11 +160,11 @@ body { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent;
 
 #body p { margin: 0 0 1.1em; }
 #body > p:first-of-type::first-letter {
-  float:left; font-family:'Flecha',serif; font-weight:700;
+  float:left; font-family:'Flecha',serif; font-weight:400;
   font-size:3.3em; line-height:.78; padding:.05em .12em 0 0; color:var(--accent);
 }
 #body h1, #body h2, #body h3, #body h4, #body h5, #body h6 {
-  font-family:'Flecha',serif; font-weight:700; line-height:1.2; margin:1.6em 0 .6em; color:var(--fg);
+  font-family:'Flecha',serif; font-weight:400; line-height:1.2; margin:1.6em 0 .6em; color:var(--fg);
 }
 #body h1, #body h2 { font-size:1.18em; }
 #body h3, #body h4, #body h5, #body h6 { font-size:1.06em; }
