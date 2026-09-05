@@ -10,12 +10,13 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { NotebookFilter } from '@/application/ports/notebook-repository';
 import type { SavedItem } from '@/application/ports/saved-repository';
 import type { NotebookEntry } from '@/domain/notebook';
 import { AppHeader } from '@/presentation/components/chrome/app-header';
+import { useBottomChromeInset } from '@/presentation/components/chrome/bottom-chrome';
 import { CloseIcon, PencilIcon, PlusIcon, SearchIcon, ShareIcon } from '@/presentation/components/icons';
 import { ClipCard } from '@/presentation/components/notebook/clip-card';
 import { HighlightCard } from '@/presentation/components/notebook/highlight-card';
@@ -31,6 +32,7 @@ import {
 import { useSavedList, useToggleSaved } from '@/presentation/hooks/queries/use-saved';
 import { useOpenResource } from '@/presentation/hooks/use-open-resource';
 import { buildNotebookMarkdown } from '@/presentation/lib/notebook-export';
+import { nativeTabBarHeight } from '@/presentation/lib/platform';
 import { usePlayClip } from '@/presentation/playback/use-play-clip';
 import { useUseCases } from '@/presentation/providers/use-cases-context';
 import { Colors, Fonts, Spacing, Type } from '@/presentation/theme';
@@ -59,6 +61,10 @@ function feedTime(item: FeedItem): number {
  */
 export default function NotebookScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const chromeInset = useBottomChromeInset();
+  // The FAB sits above the native tab bar (and the floating mini-player when present).
+  const fabBottom = nativeTabBarHeight() + insets.bottom + chromeInset + 16;
   const [filter, setFilter] = useState<FeedFilter>('all');
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -224,13 +230,13 @@ export default function NotebookScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <AppHeader title="Notebook" showSearch={false} />
+      <AppHeader title="Notebook" />
       <FlatList
         data={entries}
         keyExtractor={(item) => (item.kind === 'saved' ? `saved-${item.saved.resource.key}` : item.id)}
         renderItem={renderEntry}
         ListHeaderComponent={header}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: 120 + chromeInset }]}
         ItemSeparatorComponent={Separator}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -259,7 +265,7 @@ export default function NotebookScreen() {
       {/* FAB + add menu */}
       {fabOpen ? (
         <Pressable style={styles.fabScrim} onPress={() => setFabOpen(false)}>
-          <View style={styles.fabMenu}>
+          <View style={[styles.fabMenu, { bottom: fabBottom + 70 }]}>
             <Pressable style={styles.fabMenuItem} onPress={onExport}>
               <Text style={styles.fabMenuLabel}>Export notebook</Text>
               <View style={styles.fabMenuIcon}>
@@ -275,7 +281,7 @@ export default function NotebookScreen() {
           </View>
         </Pressable>
       ) : null}
-      <Pressable style={styles.fab} onPress={() => setFabOpen((open) => !open)} accessibilityLabel="Add to your notebook">
+      <Pressable style={[styles.fab, { bottom: fabBottom }]} onPress={() => setFabOpen((open) => !open)} accessibilityLabel="Add to your notebook">
         <View style={{ transform: [{ rotate: fabOpen ? '45deg' : '0deg' }] }}>
           <PlusIcon size={24} color="#241F16" />
         </View>

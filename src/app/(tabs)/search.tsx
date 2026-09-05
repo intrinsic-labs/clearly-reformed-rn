@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -21,6 +22,14 @@ import { Colors, Fonts, Spacing, Type } from '@/presentation/theme';
  */
 export default function SearchScreen() {
   const [input, setInput] = useState('');
+  const inputRef = useRef<TextInput>(null);
+  // The search tab is the system's search entry: landing here should mean typing.
+  useFocusEffect(
+    useCallback(() => {
+      const id = setTimeout(() => inputRef.current?.focus(), 120);
+      return () => clearTimeout(id);
+    }, []),
+  );
   const term = useDebounced(input.trim());
   const active = term.length >= 2;
 
@@ -34,11 +43,12 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <AppHeader title="Search" showSearch={false} />
+      <AppHeader title="Search" />
       <View style={styles.header}>
         <View style={styles.field}>
           <SearchIcon size={17} color={Colors.textMuted} />
           <TextInput
+            ref={inputRef}
             style={styles.input}
             value={input}
             onChangeText={setInput}

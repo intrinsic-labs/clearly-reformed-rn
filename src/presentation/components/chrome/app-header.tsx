@@ -1,26 +1,17 @@
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { GearIcon, LogoMark, SearchIcon } from '@/presentation/components/icons';
+import { LogoMark, PersonIcon } from '@/presentation/components/icons';
 import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
 
 const ACTION_BUTTON_SIZE = 38;
-const ACTION_SLOT_WIDTH = ACTION_BUTTON_SIZE * 2 + Spacing.sm;
 
 /**
- * Shared top app bar used on every tab: the gold Clearly Reformed mark + a
- * wordmark in Flecha Regular, with a search affordance on the right. Only the
- * title text changes per tab ("Clearly Reformed" on Home, the tab name elsewhere).
+ * Shared top app bar on every tab: the gold mark + a Flecha wordmark on the left,
+ * and the account/settings entry (a person in a ring, per the Figma) on the right.
+ * Search no longer lives here — it is a tab, reachable from anywhere.
  */
-export function AppHeader({
-  title,
-  showSearch = true,
-  showSettings = false,
-}: {
-  title: string;
-  showSearch?: boolean;
-  showSettings?: boolean;
-}) {
+export function AppHeader({ title }: { title: string }) {
   const router = useRouter();
 
   return (
@@ -29,26 +20,14 @@ export function AppHeader({
         <LogoMark size={30} />
         <Text style={styles.wordmark}>{title}</Text>
       </View>
-      <View style={styles.actions}>
-        {showSettings ? (
-          <Pressable
-            style={styles.searchButton}
-            onPress={() => router.push('/settings')}
-            hitSlop={6}
-            accessibilityLabel="Settings">
-            <GearIcon size={18} color={Colors.inkSoft} />
-          </Pressable>
-        ) : null}
-        {showSearch ? (
-          <Pressable
-            style={styles.searchButton}
-            onPress={() => router.navigate('/search')}
-            hitSlop={6}
-            accessibilityLabel="Search">
-            <SearchIcon size={18} color={Colors.inkSoft} weight={1.8} />
-          </Pressable>
-        ) : null}
-      </View>
+      <Pressable
+        style={styles.actionButton}
+        onPress={() => router.push('/settings')}
+        hitSlop={6}
+        accessibilityRole="button"
+        accessibilityLabel="Account and settings">
+        <PersonIcon size={18} color={Colors.inkSoft} />
+      </Pressable>
     </View>
   );
 }
@@ -67,27 +46,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
   },
-  actions: {
-    width: ACTION_SLOT_WIDTH,
-    minHeight: ACTION_BUTTON_SIZE,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: Spacing.sm,
-  },
   wordmark: {
     fontFamily: Fonts.serif,
     fontSize: 21,
     color: Colors.ink,
     letterSpacing: 0.2,
   },
-  searchButton: {
+  actionButton: {
     width: ACTION_BUTTON_SIZE,
     height: ACTION_BUTTON_SIZE,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.white,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderChrome,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: Spacing.xl,
-    paddingBottom: 180,
+    paddingBottom: Spacing.xxl,
   },
   featuredSection: {
     paddingTop: Spacing.xs,

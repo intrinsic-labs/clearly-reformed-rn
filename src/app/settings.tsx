@@ -1,9 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { CloseIcon } from '@/presentation/components/icons';
+import { ChevronLeftIcon } from '@/presentation/components/icons';
 import { useDownloadsList } from '@/presentation/hooks/queries/use-downloads';
 import {
   setNotificationPref,
@@ -22,7 +22,6 @@ const CATEGORY_TOGGLES: readonly { key: keyof NotificationPrefs; label: string }
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const prefs = useNotificationPrefs();
   const downloads = useDownloadsList();
   const { downloads: downloadsUseCases } = useUseCases();
@@ -56,12 +55,12 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 14) }]}>
-        <Text style={styles.title}>Settings</Text>
-        <Pressable style={styles.closeButton} onPress={() => router.back()} hitSlop={8} accessibilityLabel="Close settings">
-          <CloseIcon size={13} color={Colors.inkSoft} />
+    <SafeAreaView style={styles.screen} edges={['top']}>
+      <View style={styles.header}>
+        <Pressable style={styles.backButton} onPress={() => router.back()} hitSlop={8} accessibilityLabel="Back">
+          <ChevronLeftIcon size={22} color={Colors.ink} />
         </Pressable>
+        <Text style={styles.title}>Settings</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -128,7 +127,7 @@ export default function SettingsScreen() {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -172,24 +171,20 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingTop: 6,
+    paddingBottom: 10,
   },
   title: {
     ...Type.display,
     fontSize: 24,
     color: Colors.ink,
   },
-  closeButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.borderChrome,
+  backButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -9,13 +9,20 @@ import { useNowPlaying } from '@/presentation/playback/use-now-playing';
 import { usePlayer } from '@/presentation/playback/use-player';
 import { Colors, Fonts, Radius, Spacing } from '@/presentation/theme';
 
+export type MiniPlayerVariant =
+  /** Inside the iOS 26 tab-bar accessory capsule (system supplies the glass). */
+  | 'accessory'
+  /** Same, but the tab bar is minimised and the capsule is narrow. */
+  | 'accessory-inline'
+  /** A self-contained floating pill above a regular tab bar (Android, iOS < 26). */
+  | 'floating';
+
 /**
- * Persistent mini-player above the tab bar — live playback state, tap to expand
- * into the Now Playing screen. Renders nothing until a session exists (first play
- * or a restored one from the last launch). Full-bleed width with rounded top
- * corners, sitting flush on the tab bar.
+ * Persistent mini-player — live playback state, tap to expand into Now Playing.
+ * Renders nothing until a session exists (first play, or one restored from the
+ * last launch). The host decides where it lives; see `BottomChrome`.
  */
-export function MiniPlayer() {
+export function MiniPlayer({ variant }: { variant: MiniPlayerVariant }) {
   const router = useRouter();
   const { playable, playing, position, duration } = useNowPlaying();
   const { toggle } = usePlayer();
@@ -23,35 +30,51 @@ export function MiniPlayer() {
   if (!playable) return null;
 
   const fraction = duration > 0 ? Math.min(1, position / duration) : 0;
+  const floating = variant === 'floating';
+  const inline = variant === 'accessory-inline';
+  const ink = floating ? Colors.onGreen : Colors.ink;
+  const inkMuted = floating ? Colors.onGreenMuted : Colors.textMuted;
 
   return (
-    <Pressable style={styles.container} onPress={() => router.push('/player')} accessibilityRole="button" accessibilityLabel="Open the player">
-      <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${fraction * 100}%` }]} />
-      </View>
+    <Pressable
+      style={[styles.container, floating ? styles.floating : styles.accessory, inline ? styles.inline : null]}
+      onPress={() => router.push('/player')}
+      accessibilityRole="button"
+      accessibilityLabel="Open the player">
+      {floating ? (
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${fraction * 100}%` }]} />
+        </View>
+      ) : null}
 
       <View style={styles.row}>
-        {playable.artworkUrl ? (
-          <Image source={{ uri: playable.artworkUrl }} style={styles.artwork} contentFit="cover" />
-        ) : (
-          <View style={styles.artwork} />
-        )}
+        {!inline ? (
+          playable.artworkUrl ? (
+            <Image source={{ uri: playable.artworkUrl }} style={styles.artwork} contentFit="cover" />
+          ) : (
+            <View style={[styles.artwork, styles.artworkFallback]} />
+          )
+        ) : null}
 
         <View style={styles.text}>
-          <Text style={styles.title} numberOfLines={1}>
+          <Text style={[styles.title, { color: ink }]} numberOfLines={1}>
             {playable.resource.title}
           </Text>
-          <Text style={styles.meta} numberOfLines={1}>
-            {formatTime(position)} · {playable.album}
-          </Text>
+          {!inline ? (
+            <Text style={[styles.meta, { color: inkMuted }]} numberOfLines={1}>
+              {formatTime(position)} · {playable.album}
+            </Text>
+          ) : null}
         </View>
 
         <View style={styles.controls}>
-          <Pressable hitSlop={8} style={styles.skip} onPress={() => TrackPlayer.seekBy(-15)}>
-            <SkipBackIcon size={20} color="#D8DAD0" />
-          </Pressable>
-          <Pressable hitSlop={8} style={styles.playButton} onPress={toggle}>
-            {playing ? <PauseIcon size={14} color={Colors.green} /> : <PlayIcon size={14} color={Colors.green} />}
+          {!inline ? (
+            <Pressable hitSlop={8} style={styles.skip} onPress={() => TrackPlayer.seekBy(-15)}>
+              <SkipBackIcon size={20} color={ink} />
+            </Pressable>
+          ) : null}
+          <Pressable hitSlop={8} style={[styles.playButton, floating ? styles.playButtonOnGreen : null]} onPress={toggle}>
+            {playing ? <PauseIcon size={14} color={floating ? Colors.green : Colors.white} /> : <PlayIcon size={14} color={floating ? Colors.green : Colors.white} />}
           </Pressable>
         </View>
       </View>
@@ -61,13 +84,27 @@ export function MiniPlayer() {
 
 const styles = StyleSheet.create({
   container: {
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  accessory: {
+    flex: 1,
+    paddingHorizontal: Spacing.md,
+  },
+  inline: {
+    paddingHorizontal: Spacing.sm,
+  },
+  floating: {
     backgroundColor: Colors.green,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
+    borderRadius: Radius.xl,
     paddingTop: 9,
     paddingBottom: 10,
     paddingHorizontal: Spacing.md,
-    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
   },
   progressTrack: {
     position: 'absolute',
@@ -87,10 +124,12 @@ const styles = StyleSheet.create({
     gap: 11,
   },
   artwork: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     borderRadius: Radius.sm,
-    backgroundColor: 'rgba(241,235,221,0.14)',
+  },
+  artworkFallback: {
+    backgroundColor: 'rgba(120,120,120,0.18)',
   },
   text: {
     flex: 1,
@@ -98,13 +137,11 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: Fonts.serif,
-    fontSize: 13.5,
-    color: Colors.onGreen,
+    fontSize: 14.5,
   },
   meta: {
     fontFamily: Fonts.sans,
     fontSize: 11,
-    color: Colors.onGreenMuted,
     marginTop: 1,
   },
   controls: {
@@ -119,11 +156,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   playButton: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.goldBright,
+    backgroundColor: Colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  playButtonOnGreen: {
+    backgroundColor: Colors.goldBright,
   },
 });

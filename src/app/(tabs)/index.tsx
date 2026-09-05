@@ -52,7 +52,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <AppHeader title="Clearly Reformed" showSettings />
+      <AppHeader title="Clearly Reformed" />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {/* Today */}
