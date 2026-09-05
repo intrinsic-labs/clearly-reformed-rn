@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AccessoryMiniPlayer, FloatingMiniPlayer } from '@/presentation/components/chrome/bottom-chrome';
 import { supportsTabBarAccessory } from '@/presentation/lib/platform';
+import { useNowPlaying } from '@/presentation/playback/use-now-playing';
 import { Colors, Fonts } from '@/presentation/theme';
 
 const { Trigger } = NativeTabs;
@@ -14,8 +15,12 @@ const { Icon, Label } = Trigger;
  * like it belongs wherever it is installed. Selection is filled-vs-outline, in ink:
  * gold is reserved for actions. The mini-player rides in the tab-bar accessory on
  * iOS 26 and floats above the bar elsewhere.
+ *
+ * The accessory is only mounted while something is playing: iOS draws its glass
+ * capsule for any mounted accessory, even one whose content renders nothing.
  */
 export default function TabsLayout() {
+  const { playable } = useNowPlaying();
   return (
     <View style={styles.root}>
       <NativeTabs
@@ -26,7 +31,7 @@ export default function TabsLayout() {
         indicatorColor={Colors.surface}
         rippleColor={Colors.surface}
         minimizeBehavior="onScrollDown">
-        {supportsTabBarAccessory() ? (
+        {playable && supportsTabBarAccessory() ? (
           <NativeTabs.BottomAccessory>
             <AccessoryMiniPlayer />
           </NativeTabs.BottomAccessory>
