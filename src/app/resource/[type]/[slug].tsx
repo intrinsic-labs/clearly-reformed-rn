@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 1.7,
     textTransform: 'uppercase',
-    color: Colors.gold,
+    color: Colors.textMuted,
   },
   title: {
     fontFamily: Fonts.serif,

@@ -126,7 +126,7 @@ export const Fonts = {
 export const Type = {
   /** Large screen / section titles — "Library", "Latest", "Explainer Series". */
   display: { fontFamily: Fonts.serif, fontSize: 30, lineHeight: 34, letterSpacing: 0 },
-  /** Section hero — "For your week ahead". */
+  /** Section hero — Home section titles ("Explainer Series"). */
   title1: { fontFamily: Fonts.serif, fontSize: 26, lineHeight: 30, letterSpacing: 0 },
   /** Feature card headline. */
   title2: { fontFamily: Fonts.serif, fontSize: 22, lineHeight: 26 },
