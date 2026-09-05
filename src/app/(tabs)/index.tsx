@@ -1,44 +1,58 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ContinueItem } from '@/domain/progress';
+import { resourceKey } from '@/domain/resource-ref';
 import { AppHeader } from '@/presentation/components/chrome/app-header';
-import { ContinueCard } from '@/presentation/components/home/continue-card';
-import { SavedMiniCard } from '@/presentation/components/home/saved-mini-card';
+import { useBottomChromeInset } from '@/presentation/components/chrome/bottom-chrome';
 import { FeaturedCard } from '@/presentation/components/content/featured-card';
 import { ResourceCard } from '@/presentation/components/content/resource-card';
-import { useContinueList } from '@/presentation/hooks/queries/use-progress';
+import { ContinueCard } from '@/presentation/components/home/continue-card';
+import { SavedMiniCard } from '@/presentation/components/home/saved-mini-card';
+import { SectionHeader } from '@/presentation/components/home/section-header';
+import { SeriesRail } from '@/presentation/components/home/series-rail';
 import { useDailyPick } from '@/presentation/hooks/queries/use-daily-pick';
+import { useNewForYou, useRecommendations } from '@/presentation/hooks/queries/use-home';
+import { useContinueList } from '@/presentation/hooks/queries/use-progress';
 import { useResourceFeed } from '@/presentation/hooks/queries/use-resource-feed';
 import { useSavedList } from '@/presentation/hooks/queries/use-saved';
 import { useOpenResource } from '@/presentation/hooks/use-open-resource';
 import { usePlayer } from '@/presentation/playback/use-player';
 import { Colors, Fonts, Spacing, Type } from '@/presentation/theme';
 
-const LATEST_COUNT = 5;
+const RAIL_COUNT = 8;
+const EMPTY_KEYS: readonly string[] = [];
 
 /**
- * Home — the daily surface: date + "Today" hero (deterministic daily pick),
- * cross-content Continue rail, Latest from the unified feed, and recently saved.
+ * Home — the personal daily surface, not a copy of the website's front page.
+ * It knows what the user has read, saved, and studied, and uses that lightly:
+ *
+ *   Featured (today's pick)  →  Continue  →  New for you (unseen latest)
+ *   →  Explainer Series  →  Coram Deo  →  Picked for you  →  Recently saved
+ *
+ * The chronological catalogue lives in the Library tab.
  */
 export default function HomeScreen() {
   const router = useRouter();
   const openResource = useOpenResource();
   const { play } = usePlayer();
-
-  // Lazy state: today's date is fixed for the mounted session (impure in render).
-  const [today] = useState(() =>
-    new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
-  );
+  const chromeInset = useBottomChromeInset();
 
   const daily = useDailyPick();
+  const dailyKey = daily.data ? resourceKey(daily.data.type, daily.data.id) : null;
+  const excludeKeys = useMemo(() => (dailyKey ? [dailyKey] : EMPTY_KEYS), [dailyKey]);
+
   const continueList = useContinueList(8);
-  const feed = useResourceFeed();
+  const newForYou = useNewForYou(excludeKeys);
+  const recommendations = useRecommendations(excludeKeys);
+  const videos = useResourceFeed('video');
+  const conference = useResourceFeed('conference');
   const saved = useSavedList();
 
-  const latest = (feed.data?.pages[0]?.items ?? []).slice(0, LATEST_COUNT);
+  const explainers = (videos.data?.pages[0]?.items ?? []).slice(0, RAIL_COUNT);
+  const coramDeo = (conference.data?.pages[0]?.items ?? []).slice(0, RAIL_COUNT);
   const savedItems = (saved.data ?? []).slice(0, 8);
 
   const onContinue = async (item: ContinueItem) => {
@@ -54,11 +68,10 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <AppHeader title="Clearly Reformed" />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {/* Today */}
-        <View style={styles.todaySection}>
-          <Text style={styles.dateEyebrow}>{today}</Text>
-          <Text style={styles.heroTitle}>For your week ahead</Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { paddingBottom: Spacing.xxl + chromeInset }]}>
+        {/* Featured — today's pick */}
+        <View style={styles.featured}>
+          <Text style={styles.eyebrow}>Featured</Text>
           {daily.data ? (
             <FeaturedCard resource={daily.data} pill="Today’s Pick" onPress={() => daily.data && openResource(daily.data)} />
           ) : daily.isLoading ? (
@@ -71,10 +84,8 @@ export default function HomeScreen() {
         {/* Continue */}
         {(continueList.data?.length ?? 0) > 0 ? (
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionLabel}>Continue</Text>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.railContent}>
+            <SectionHeader title="Continue" />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
               {(continueList.data ?? []).map((item) => (
                 <ContinueCard key={item.progress.resource.key} item={item} onPress={() => onContinue(item)} />
               ))}
@@ -82,48 +93,67 @@ export default function HomeScreen() {
           </View>
         ) : null}
 
-        {/* Latest */}
-        <View style={[styles.section, styles.latestSection]}>
-          <View style={[styles.sectionHeader, { paddingHorizontal: 0 }]}>
-            <Text style={styles.sectionLabel}>Latest</Text>
-            <Pressable onPress={() => router.navigate('/library')} hitSlop={6}>
-              <Text style={styles.seeAll}>See all</Text>
-            </Pressable>
-          </View>
-          {feed.isLoading ? (
-            <View style={styles.loading}>
-              <ActivityIndicator color={Colors.gold} />
-            </View>
-          ) : (
-            latest.map((item) => (
-              <ResourceCard key={`${item.type}-${item.id}`} resource={item} onPress={() => openResource(item)} />
-            ))
-          )}
-        </View>
-
-        {/* From your notebook */}
-        {savedItems.length > 0 ? (
+        {/* New for you — the newest things this user hasn't opened */}
+        {(newForYou.data?.length ?? 0) > 0 ? (
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionLabel}>From your notebook</Text>
-              <Pressable onPress={() => router.navigate('/notebook')} hitSlop={6}>
-                <Text style={styles.seeAll}>Open</Text>
+            <View style={styles.titleWithLink}>
+              <SectionHeader title="New for you" />
+              <Pressable onPress={() => router.navigate('/library')} hitSlop={6} accessibilityRole="link">
+                <Text style={styles.seeAll}>See all</Text>
               </Pressable>
             </View>
-            <Text style={styles.savedSubtitle}>Recently saved</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.railContent}>
+            <View style={styles.list}>
+              {(newForYou.data ?? []).map((item) => (
+                <ResourceCard key={`${item.type}-${item.id}`} resource={item} onPress={() => openResource(item)} />
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        {/* Explainer Series — dark band */}
+        <SeriesRail
+          title="Explainer Series"
+          blurb="Theological truths, five minutes at a time."
+          items={explainers}
+          kind="video"
+          dark
+          onPressTitle={() => router.navigate('/library')}
+          onPressItem={openResource}
+        />
+
+        {/* Coram Deo */}
+        <SeriesRail
+          title="Coram Deo"
+          blurb="Listen in on sermons, discussions, and more."
+          items={coramDeo}
+          kind="conference"
+          onPressTitle={() => router.navigate('/library')}
+          onPressItem={openResource}
+        />
+
+        {/* Picked for you — light taste-weighted backfill */}
+        {(recommendations.data?.length ?? 0) > 0 ? (
+          <View style={styles.section}>
+            <SectionHeader title="Picked for you" blurb="Because of what you’ve saved and studied." />
+            <View style={styles.list}>
+              {(recommendations.data ?? []).map((item) => (
+                <ResourceCard key={`${item.type}-${item.id}`} resource={item} onPress={() => openResource(item)} />
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        {/* Recently saved */}
+        {savedItems.length > 0 ? (
+          <View style={styles.section}>
+            <SectionHeader title="Recently saved" onPress={() => router.navigate('/notebook')} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
               {savedItems.map((item) => (
-                <SavedMiniCard
-                  key={item.resource.key}
-                  resource={item.resource}
-                  onPress={() => openResource(item.resource)}
-                />
+                <SavedMiniCard key={item.resource.key} resource={item.resource} onPress={() => openResource(item.resource)} />
               ))}
             </ScrollView>
           </View>
         ) : null}
-
-        <View style={{ height: 28 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -135,58 +165,41 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   content: {
-    paddingBottom: Spacing.md,
+    paddingTop: Spacing.sm,
   },
-  todaySection: {
+  featured: {
     paddingHorizontal: Spacing.xl,
-    paddingTop: 8,
+    gap: Spacing.md,
   },
-  dateEyebrow: {
+  eyebrow: {
     ...Type.eyebrow,
-    color: Colors.goldDeep,
-  },
-  heroTitle: {
-    ...Type.title1,
     color: Colors.ink,
-    marginTop: 7,
-    marginBottom: 16,
   },
   loading: {
     paddingVertical: 60,
     alignItems: 'center',
   },
   section: {
-    marginTop: 30,
+    paddingTop: Spacing.xxxl,
+    gap: Spacing.lg,
   },
-  latestSection: {
-    paddingHorizontal: Spacing.xl,
-  },
-  sectionHeader: {
+  titleWithLink: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'flex-end',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: 13,
-  },
-  sectionLabel: {
-    ...Type.eyebrow,
-    color: Colors.textMuted,
+    paddingRight: Spacing.xl,
   },
   seeAll: {
     fontFamily: Fonts.sansMedium,
-    fontSize: 12,
-    color: Colors.goldDeep,
+    fontSize: 13,
+    color: Colors.gold,
+    paddingBottom: 6,
   },
-  savedSubtitle: {
-    fontFamily: Fonts.serif,
-    fontSize: 18,
-    color: Colors.ink,
+  list: {
     paddingHorizontal: Spacing.xl,
-    marginTop: -6,
-    marginBottom: 13,
   },
-  railContent: {
+  rail: {
     paddingHorizontal: Spacing.xl,
-    gap: 13,
+    gap: Spacing.md,
   },
 });

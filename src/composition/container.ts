@@ -2,6 +2,7 @@ import type { UseCases } from '@/application/use-cases';
 import { makeContentUseCases } from '@/application/use-cases/content';
 import { makeDailyUseCases } from '@/application/use-cases/daily';
 import { makeDownloadsUseCases } from '@/application/use-cases/downloads';
+import { makeHomeUseCases } from '@/application/use-cases/home';
 import { makeNotebookUseCases } from '@/application/use-cases/notebook';
 import { makePodcastUseCases } from '@/application/use-cases/podcast';
 import { makeProgressUseCases } from '@/application/use-cases/progress';
@@ -43,6 +44,7 @@ export function createContainer(): { useCases: UseCases } {
     search: makeSearchUseCases(searchRepository, contentCache),
     daily: makeDailyUseCases(resourceRepository),
     downloads: makeDownloadsUseCases(downloadsRepository),
+    home: makeHomeUseCases(resourceRepository, progressRepository, savedRepository, notebookRepository),
   };
 
   return { useCases };

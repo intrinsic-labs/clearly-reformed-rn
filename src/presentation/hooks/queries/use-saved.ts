@@ -29,6 +29,8 @@ export function useToggleSaved() {
     onSuccess: (nowSaved, resource) => {
       queryClient.setQueryData(['saved', 'is', resource.key], nowSaved);
       queryClient.invalidateQueries({ queryKey: ['saved', 'list'] });
+      // Saved items are both a Home taste signal and part of its "seen" set.
+      queryClient.invalidateQueries({ queryKey: ['home'] });
     },
   });
 }

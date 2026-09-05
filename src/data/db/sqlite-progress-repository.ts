@@ -73,6 +73,15 @@ export function createSqliteProgressRepository(): ProgressRepository {
       );
       return row ? { progress: mapProgress(row), playable: mapPlayable(row) } : null;
     },
+
+    async listTouchedKeys(limit: number): Promise<readonly string[]> {
+      const db = await getDatabase();
+      const rows = await db.getAllAsync<{ resource_key: string }>(
+        'SELECT resource_key FROM progress WHERE deleted = 0 ORDER BY updated_at DESC LIMIT ?',
+        [limit],
+      );
+      return rows.map((row) => row.resource_key);
+    },
   };
 }
 

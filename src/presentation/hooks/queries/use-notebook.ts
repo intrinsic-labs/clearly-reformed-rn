@@ -53,7 +53,11 @@ export function useHighlightsFor(resourceKey: string | undefined) {
 export function useNotebookMutations() {
   const { notebook } = useUseCases();
   const queryClient = useQueryClient();
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['notebook'] });
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['notebook'] });
+    // Notebook entries feed Home's taste signals.
+    queryClient.invalidateQueries({ queryKey: ['home'] });
+  };
 
   const addHighlight = useMutation({
     mutationFn: (input: NewHighlight) => notebook.addHighlight(input),

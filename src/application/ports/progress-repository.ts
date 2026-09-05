@@ -24,4 +24,9 @@ export interface ProgressRepository {
   listContinue(limit: number): Promise<readonly ContinueItem[]>;
   /** The most recently touched audio session (finished or not) — mini-player restore. */
   latestListen(): Promise<ContinueItem | null>;
+  /**
+   * Keys of every resource the user has opened far enough to record a position,
+   * finished or not, most recent first. Home uses these as its "already seen" set.
+   */
+  listTouchedKeys(limit: number): Promise<readonly string[]>;
 }

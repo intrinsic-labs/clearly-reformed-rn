@@ -27,5 +27,9 @@ export function useResourceProgress(resourceKey: string | undefined) {
  */
 export function useInvalidateProgress() {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: ['progress'] });
+  return () => {
+    queryClient.invalidateQueries({ queryKey: ['progress'] });
+    // Home's "seen" set derives from progress rows.
+    queryClient.invalidateQueries({ queryKey: ['home'] });
+  };
 }
