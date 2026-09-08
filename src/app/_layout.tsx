@@ -2,6 +2,7 @@ import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -15,6 +16,14 @@ SplashScreen.preventAutoHideAsync();
 
 // Composition root: wire concrete implementations once at app startup.
 const container = createContainer();
+
+/**
+ * Push animation for detail-style screens. On Android, react-native-screens renders
+ * `slide_from_right` as a 400ms *linear* full-width slide (config_mediumAnimTime),
+ * which reads as sluggish next to the platform's own transitions. `ios_from_right`
+ * is the 200ms eased slide with background parallax — same metaphor, snappy.
+ */
+const PUSH_ANIMATION = Platform.OS === 'android' ? 'ios_from_right' : 'slide_from_right';
 
 /** Light-first navigation theme keyed to the cream palette (no white flash on transitions). */
 const AppTheme = {
@@ -60,10 +69,10 @@ export default function RootLayout() {
             <PlaybackBootstrap />
             <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
               <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="resource/[type]/[slug]" options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="resource/[type]/[slug]" options={{ animation: PUSH_ANIMATION }} />
               <Stack.Screen name="player" options={{ presentation: 'modal', contentStyle: { backgroundColor: '#1E2620' } }} />
-              <Stack.Screen name="note-editor" options={{ animation: 'slide_from_right' }} />
-              <Stack.Screen name="settings" options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="note-editor" options={{ animation: PUSH_ANIMATION }} />
+              <Stack.Screen name="settings" options={{ animation: PUSH_ANIMATION }} />
             </Stack>
           </ThemeProvider>
         </AppProviders>
