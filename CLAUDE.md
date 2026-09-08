@@ -53,11 +53,13 @@ MVP vs v2 split is in `project-info.md` §11.
 - Dev build required (track-player, sqlite, etc. don't run in Expo Go). After native
   dep changes run `npx expo run:ios` (rebuilds the dev client + pods); day-to-day is
   `pnpm start`.
-- **Remote Android device** (phone on Tailscale, not on this LAN): with Metro running,
-  `pnpm android:remote <device-tailscale-ip> [--pair PORT CODE] [--build]` — see
-  `scripts/android-remote.sh`. It finds the wireless-debugging port, connects adb,
-  optionally builds/installs, and tunnels Metro to the phone via a relay port
-  (plain `adb reverse` can hit whatever else is on loopback:8081).
+- **Remote Android device** (phone on Tailscale, not on this LAN):
+  `pnpm android:remote <device-tailscale-ip> [--pair PORT CODE] [--metro] [--no-build]`
+  — see `scripts/android-remote.sh`. **Default is a release build** — when working
+  remotely, always build release to the Pixel unless Asher asks for Metro; a debug
+  build over a relayed link feels sluggish for reasons unrelated to the app.
+  `--metro` builds the debug dev client and tunnels Metro via a relay port (plain
+  `adb reverse` can hit whatever else is on loopback:8081).
 - Verify with: `pnpm typecheck`, `pnpm lint`, `pnpm test` (jest-expo; pure-logic units).
 - Use SDK/library types; don't redefine API shapes.
 - Audio player is the Apache-2.0 fork `@javascriptcommon/react-native-track-player`

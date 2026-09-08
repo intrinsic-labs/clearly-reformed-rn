@@ -1,20 +1,28 @@
 #!/bin/zsh
-# Connect a remote Android device over Tailscale/ZeroTier, tunnel Metro to it, and
-# open the dev client — without the phone sharing a LAN with this Mac.
+# Reach an Android device over Tailscale/ZeroTier (not on this LAN) and put a build
+# on it.
 #
-#   pnpm android:remote <device-ip> [--pair PORT CODE] [--build]
+#   pnpm android:remote <device-ip> [--pair PORT CODE] [--metro] [--no-build]
 #
-# Flow: (1) pair if asked, (2) find the wireless-debugging port by scanning the
-# device (mDNS doesn't cross an overlay network), (3) adb connect, (4) optionally
-# `expo run:android`, (5) relay a spare local port to Metro and `adb reverse`
-# the phone's 8081 onto it, (6) launch the dev client at localhost:8081.
+# DEFAULT IS A RELEASE BUILD. Asher's standing rule (2026-09-08): when working
+# remotely like this, always build release to the Pixel unless he asks for Metro.
+# Debug builds over a relayed adb link feel sluggish for reasons that have nothing
+# to do with the app, so they give misleading feedback.
 #
-# Why the relay: `adb reverse` targets 127.0.0.1 on the Mac, and anything else
-# bound to IPv4 loopback:8081 (a local LLM server, another Metro) wins over
-# Metro's dual-stack socket. Relaying through a free port sidesteps that.
+#   (default)   build the release variant, install, launch. No Metro, no tunnel.
+#   --metro     build the debug dev client, relay Metro to the phone, launch it
+#               against localhost:8081. Metro must already be running (`pnpm start`).
+#   --no-build  skip the build; just (re)connect and launch what's installed.
+#   --pair      first time with a new device: the pairing port + six-digit code
+#               from "Pair device with pairing code" on the phone.
 #
-# Metro must already be running (`pnpm start`). The relay's upstream is this
-# Mac's Tailscale IPv4 so the loopback collision can't recur.
+# Flow: pair if asked → find the wireless-debugging port by scanning the device
+# (mDNS doesn't cross an overlay network) → adb connect → build/install → launch.
+#
+# Why the Metro relay: `adb reverse` targets 127.0.0.1 on the Mac, and anything else
+# bound to IPv4 loopback:8081 (a local LLM server, another Metro) shadows Metro's
+# dual-stack socket. Relaying through a spare port to this Mac's Tailscale IP
+# sidesteps that.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -28,19 +36,21 @@ PACKAGE=$(node -p "require('./app.json').expo.android.package")
 METRO_PORT=8081
 RELAY_PORT=${RELAY_PORT:-8082}
 
-DEVICE_IP=${1:?usage: android-remote.sh <device-ip> [--pair PORT CODE] [--build]}
+DEVICE_IP=${1:?usage: android-remote.sh <device-ip> [--pair PORT CODE] [--metro] [--no-build]}
 shift
-PAIR_PORT="" PAIR_CODE="" BUILD=0
+PAIR_PORT="" PAIR_CODE="" MODE=release BUILD=1
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --pair) PAIR_PORT=$2; PAIR_CODE=$3; shift 3 ;;
-    --build) BUILD=1; shift ;;
+    --metro) MODE=metro; shift ;;
+    --no-build) BUILD=0; shift ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
 done
 
 log() { print -P "%F{green}▸%f $*"; }
 
+# ── connect ──────────────────────────────────────────────────────────────────
 if [[ -n "$PAIR_PORT" ]]; then
   log "pairing with $DEVICE_IP:$PAIR_PORT"
   adb pair "$DEVICE_IP:$PAIR_PORT" "$PAIR_CODE"
@@ -72,8 +82,22 @@ SERIAL=$(adb devices | awk -v ip="$DEVICE_IP" '$1 ~ "^"ip {print $1}')
 [[ -n "$SERIAL" ]] || { echo "device not attached" >&2; exit 1; }
 export ANDROID_SERIAL=$SERIAL
 
+# ── release (default) ────────────────────────────────────────────────────────
+if [[ $MODE == release ]]; then
+  if [[ $BUILD -eq 1 ]]; then
+    log "building + installing RELEASE (expo run:android --variant release)"
+    CI=1 npx expo run:android --no-bundler --variant release
+  else
+    log "launching installed build"
+    adb shell monkey -p "$PACKAGE" -c android.intent.category.LAUNCHER 1 >/dev/null
+  fi
+  log "done — release build running on the device (no Metro)."
+  exit 0
+fi
+
+# ── metro (on request) ───────────────────────────────────────────────────────
 if [[ $BUILD -eq 1 ]]; then
-  log "building + installing dev client (expo run:android)"
+  log "building + installing DEBUG dev client (expo run:android)"
   CI=1 npx expo run:android --no-bundler
 fi
 
