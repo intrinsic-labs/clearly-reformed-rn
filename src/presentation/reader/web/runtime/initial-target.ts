@@ -13,11 +13,20 @@ export const INITIAL_TARGET = `  /* ---------- initial target (restore position 
   function goToHighlight(id) {
     var mark = document.querySelector('mark[data-id="' + id + '"]');
     if (!mark) return false;
-    var rect = mark.getBoundingClientRect();
+    // getBoundingClientRect() unions every line of a wrapped highlight. A highlight
+    // rarely starts flush at the column's left edge (it usually opens mid-line),
+    // but its second and later lines wrap to the FULL column width and so DO start
+    // flush at that edge -- pulling the union's left back to whichever column hosts
+    // the flush-left line, independent of the page the highlight actually starts
+    // on. The first fragment (getClientRects()[0]) is the highlight's true opening
+    // position; its top is identical to the union's either way, so use it for both
+    // branches. (Reproduced live on Android: a multi-line highlight's union-left
+    // consistently measured near the column padding of a later page, landing the
+    // reader exactly one page early.)
+    var rects = mark.getClientRects();
+    var rect = rects.length ? rects[0] : mark.getBoundingClientRect();
     if (paged) {
-      var absLeft = rect.left + root.scrollLeft;
-      var page = Math.max(0, Math.floor((absLeft - 30) / pageStep));
-      root.scrollLeft = Math.min(page, state.pageCount - 1) * pageStep;
+      root.scrollLeft = pageForRect(rect) * pageStep;
     } else {
       var vpadTop = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vpad-top')) || 80;
       root.scrollTop = Math.max(0, rect.top + root.scrollTop - vpadTop - 12);
