@@ -243,7 +243,9 @@ mark.hl {
   var paged = ${initial.paged};
   var curlShade = ${initial.curlShade};
   var pageStep = window.innerWidth;
-  var state = { totalChars: 0, pageCount: 1, page: 0, ready: false };
+  // lastOffset: the most recently reported reading position — the anchor a
+  // viewport resize restores to once the initial target has been consumed.
+  var state = { totalChars: 0, pageCount: 1, page: 0, ready: false, lastOffset: 0 };
 
   function post(type, payload) {
     var msg = Object.assign({ type: type }, payload || {});
@@ -283,6 +285,17 @@ mark.hl {
   function offsetRect(offset) {
     var point = offsetToPoint(offset);
     if (!point) return null;
+    // offsetToPoint resolves a boundary offset to the END of the preceding text
+    // node (right for range ends). For the character AT the offset that gives a
+    // collapsed probe with no rect — and a highlight's charOffset is exactly such
+    // a boundary once its mark has split the node — so step to the next node.
+    if (point.offset >= point.node.data.length) {
+      var w = walker(); var n; var found = false;
+      while ((n = w.nextNode())) {
+        if (found) { point = { node: n, offset: 0 }; break; }
+        if (n === point.node) found = true;
+      }
+    }
     var range = document.createRange();
     try {
       range.setStart(point.node, point.offset);
@@ -334,6 +347,7 @@ mark.hl {
       charOffset = firstVisibleOffset();
     }
     if (charOffset == null) charOffset = Math.round(fraction * state.totalChars);
+    state.lastOffset = charOffset;
     post('progress', { fraction: fraction, charOffset: charOffset, page: state.page + 1, pageCount: state.pageCount });
   }
   root.addEventListener('scroll', scheduleReport, { passive: true });
@@ -412,6 +426,21 @@ mark.hl {
     });
   }
   document.addEventListener('touchstart', function () { initialTarget = null; }, { passive: true, capture: true });
+
+  /* The viewport can change size after init: on Android the native stack screen
+     reports its final frame from its own layout pass (react-native-screens'
+     Screen.onLayout -> updateShadowNodeScreenSize), so the WebView is laid out
+     once provisionally and again at the real size — after RN has already sent
+     init. A different height re-fills the columns, a different width changes
+     every line; either way the scroll position set for the old geometry now
+     points somewhere else (or past the end, if page count shrank). Treat it like
+     any other late layout shift: re-apply the pending target, or hold the last
+     reported reading position. */
+  window.addEventListener('resize', function () {
+    if (!state.ready) return; // init lays out from scratch anyway
+    if (initialTarget) reapplyTargetAfterShift();
+    else relayout(state.lastOffset);
+  });
 
   /* ---------- paged-mode gestures (finger-tracking slide + snap) ---------- */
   var drag = null;
