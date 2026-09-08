@@ -127,9 +127,13 @@ body { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent;
 
 /* --- paged mode (CSS multicolumn: one column per page, gap jumps the padding) --- */
 #root.paged { overflow: hidden; }
+/* The column stride must equal the JS page step exactly. 100vw is fractional on
+   Android (e.g. 1080px / 2.625 = 411.43) while window.innerWidth is 411; forcing the
+   content box to pageCount * innerWidth then makes multicol re-fit the columns and
+   every page drifts a little further than the last. --page-w is set from JS. */
 #root.paged #content {
   height: 100vh;
-  column-width: calc(100vw - 2 * var(--hpad));
+  column-width: calc(var(--page-w, 100vw) - 2 * var(--hpad));
   column-gap: calc(2 * var(--hpad));
   column-fill: auto;
 }
@@ -343,6 +347,7 @@ mark.hl {
       return;
     }
     pageStep = window.innerWidth;
+    document.documentElement.style.setProperty('--page-w', pageStep + 'px');
     // Measure the natural column extent, then force the content box to an exact
     // page multiple: WebKit drops trailing padding in horizontal overflow, which
     // otherwise leaves the last snap position short and the final page shifted.
