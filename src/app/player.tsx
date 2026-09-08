@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, Share, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
+import { Alert, Platform, Pressable, Share, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -143,9 +143,9 @@ export default function PlayerScreen() {
     <View style={styles.screen}>
       <LinearGradient colors={['#2A352E', '#202821', '#1A211C']} locations={[0, 0.46, 1]} style={StyleSheet.absoluteFill} />
 
-      {/* Modal sheets already sit below the status bar — a small fixed top pad
-          reads tighter than the full safe-area inset. */}
-      <View style={[styles.content, { paddingTop: 14, paddingBottom: insets.bottom + 18 }]}>
+      {/* iOS modal sheets already sit below the status bar, so a small fixed top pad
+          reads tighter than the full inset. Android draws the screen edge-to-edge. */}
+      <View style={[styles.content, { paddingTop: (Platform.OS === 'android' ? insets.top : 0) + 14, paddingBottom: insets.bottom + 18 }]}>
         {/* Header */}
         <View style={styles.header}>
           <Pressable style={styles.headerButton} onPress={() => router.back()} hitSlop={8} accessibilityLabel="Close player">

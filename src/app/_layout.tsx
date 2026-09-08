@@ -20,10 +20,17 @@ const container = createContainer();
 /**
  * Push animation for detail-style screens. On Android, react-native-screens renders
  * `slide_from_right` as a 400ms *linear* full-width slide (config_mediumAnimTime),
- * which reads as sluggish next to the platform's own transitions. `ios_from_right`
- * is the 200ms eased slide with background parallax — same metaphor, snappy.
+ * which reads as sluggish next to the platform's own transitions. `default` is the
+ * platform's own 200ms fade-and-scale (Android 13+); `ios_from_right` is the 200ms
+ * eased slide with parallax if we want to keep the lateral metaphor.
  */
-const PUSH_ANIMATION = Platform.OS === 'android' ? 'ios_from_right' : 'slide_from_right';
+const PUSH_ANIMATION = Platform.OS === 'android' ? 'default' : 'slide_from_right';
+
+/**
+ * The Now Playing sheet. `presentation: 'modal'` is a real sheet on iOS; on Android
+ * it is just a push, so we give it the slide-up explicitly.
+ */
+const MODAL_ANIMATION = Platform.OS === 'android' ? 'slide_from_bottom' : undefined;
 
 /** Light-first navigation theme keyed to the cream palette (no white flash on transitions). */
 const AppTheme = {
@@ -70,7 +77,10 @@ export default function RootLayout() {
             <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="resource/[type]/[slug]" options={{ animation: PUSH_ANIMATION }} />
-              <Stack.Screen name="player" options={{ presentation: 'modal', contentStyle: { backgroundColor: '#1E2620' } }} />
+              <Stack.Screen
+                name="player"
+                options={{ presentation: 'modal', animation: MODAL_ANIMATION, contentStyle: { backgroundColor: '#1E2620' } }}
+              />
               <Stack.Screen name="note-editor" options={{ animation: PUSH_ANIMATION }} />
               <Stack.Screen name="settings" options={{ animation: PUSH_ANIMATION }} />
             </Stack>

@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
 import type { HighlightEntry } from '@/domain/notebook';
@@ -188,7 +188,9 @@ export const ReaderWebView = forwardRef<ReaderWebViewHandle, Props>(function Rea
       // via the `menuItems` prop: setting it installs a long-press recognizer
       // with cancelsTouchesInView that corrupts WebKit's own selection gesture,
       // and its canPerformAction path isn't consulted by iOS 16+ menus anyway.
-      dataDetectorTypes="none"
+      // iOS-only prop. On Android the new-architecture prop parser asserts on the
+      // string form (RNCWebViewDataDetectorTypesMask expects an array) and aborts.
+      dataDetectorTypes={Platform.OS === 'ios' ? 'none' : undefined}
       hideKeyboardAccessoryView
       webviewDebuggingEnabled={__DEV__}
       allowsInlineMediaPlayback
