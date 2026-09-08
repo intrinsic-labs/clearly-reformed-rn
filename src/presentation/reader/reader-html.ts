@@ -96,7 +96,7 @@ export function buildReaderHtml(
   --fsize: ${initial.fontSizePx}px;
   --lheight: ${initial.lineHeight};
   --hpad: 30px;
-  --vpad-top: ${Math.round(insets.top + 36)}px;
+  --vpad-top: ${Math.round(insets.top + 58)}px; /* clears the 46px top bar */
   --vpad-bottom: ${Math.round(insets.bottom + 44)}px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
