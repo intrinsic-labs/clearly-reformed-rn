@@ -593,7 +593,7 @@ mark.hl {
     if (!WORD_CHAR.test(text[i])) {
       if (i > 0 && WORD_CHAR.test(text[i - 1])) i -= 1;
       else if (i + 1 < text.length && WORD_CHAR.test(text[i + 1])) i += 1;
-      else return /s/.test(text[i]) ? null : { start: i, end: i + 1 };
+      else return /\\s/.test(text[i]) ? null : { start: i, end: i + 1 };
     }
     var start = i;
     var end = i + 1;
@@ -846,7 +846,7 @@ mark.hl {
   function squeeze(text) {
     var out = ''; var map = [];
     for (var i = 0; i < text.length; i += 1) {
-      if (/s/.test(text[i])) continue;
+      if (/\\s/.test(text[i])) continue;
       out += text[i];
       map.push(i);
     }
@@ -1568,7 +1568,7 @@ mark.hl {
     if (!WORD_CHAR.test(text[i])) {
       if (i > 0 && WORD_CHAR.test(text[i - 1])) i -= 1;
       else if (i + 1 < text.length && WORD_CHAR.test(text[i + 1])) i += 1;
-      else return /s/.test(text[i]) ? null : { start: i, end: i + 1 };
+      else return /\\s/.test(text[i]) ? null : { start: i, end: i + 1 };
     }
     var start = i;
     var end = i + 1;
@@ -1821,7 +1821,7 @@ mark.hl {
   function squeeze(text) {
     var out = ''; var map = [];
     for (var i = 0; i < text.length; i += 1) {
-      if (/s/.test(text[i])) continue;
+      if (/\\s/.test(text[i])) continue;
       out += text[i];
       map.push(i);
     }
@@ -2548,7 +2548,7 @@ mark.hl {
     if (!WORD_CHAR.test(text[i])) {
       if (i > 0 && WORD_CHAR.test(text[i - 1])) i -= 1;
       else if (i + 1 < text.length && WORD_CHAR.test(text[i + 1])) i += 1;
-      else return /s/.test(text[i]) ? null : { start: i, end: i + 1 };
+      else return /\\s/.test(text[i]) ? null : { start: i, end: i + 1 };
     }
     var start = i;
     var end = i + 1;
@@ -2801,7 +2801,7 @@ mark.hl {
   function squeeze(text) {
     var out = ''; var map = [];
     for (var i = 0; i < text.length; i += 1) {
-      if (/s/.test(text[i])) continue;
+      if (/\\s/.test(text[i])) continue;
       out += text[i];
       map.push(i);
     }

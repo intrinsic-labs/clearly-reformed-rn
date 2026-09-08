@@ -52,7 +52,7 @@ export const HIGHLIGHTS = `  /* ---------- highlights ---------- */
   function squeeze(text) {
     var out = ''; var map = [];
     for (var i = 0; i < text.length; i += 1) {
-      if (/\s/.test(text[i])) continue;
+      if (/\\s/.test(text[i])) continue;
       out += text[i];
       map.push(i);
     }

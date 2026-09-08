@@ -84,7 +84,7 @@ export const PAGED_SELECTION = `  /* ---------- paged-mode selection (fully app-
     if (!WORD_CHAR.test(text[i])) {
       if (i > 0 && WORD_CHAR.test(text[i - 1])) i -= 1;
       else if (i + 1 < text.length && WORD_CHAR.test(text[i + 1])) i += 1;
-      else return /\s/.test(text[i]) ? null : { start: i, end: i + 1 };
+      else return /\\s/.test(text[i]) ? null : { start: i, end: i + 1 };
     }
     var start = i;
     var end = i + 1;
