@@ -39,14 +39,25 @@ export function FloatingMiniPlayer() {
 }
 
 /**
- * Extra bottom padding a scrolling tab screen needs so its last row clears the
- * floating mini-player. Zero when the accessory handles it (iOS 26) or nothing is
- * playing.
+ * Extra bottom padding for the floating mini-player only. Zero when the accessory
+ * handles it (iOS 26) or nothing is playing.
  */
 export function useBottomChromeInset(): number {
   const { playable } = useNowPlaying();
   if (!playable || supportsTabBarAccessory()) return 0;
   return FLOATING_MINI_PLAYER_HEIGHT;
+}
+
+/**
+ * Bottom padding a scrolling tab screen needs so its last row clears the floating
+ * tab bar (plus safe-area) and the floating mini-player when present. NativeTabs
+ * with a floating/minimizing bar does not inset ScrollView/FlatList content on its
+ * own, so every tab screen should use this for contentContainerStyle.paddingBottom.
+ */
+export function useTabScreenBottomInset(): number {
+  const insets = useSafeAreaInsets();
+  const chrome = useBottomChromeInset();
+  return nativeTabBarHeight() + insets.bottom + Spacing.xxl + chrome;
 }
 
 const styles = StyleSheet.create({

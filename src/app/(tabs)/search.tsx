@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { Resource } from '@/domain/resource';
 import { AppHeader } from '@/presentation/components/chrome/app-header';
+import { useTabScreenBottomInset } from '@/presentation/components/chrome/bottom-chrome';
 import { SearchIcon } from '@/presentation/components/icons';
 import { ResourceCard } from '@/presentation/components/content/resource-card';
 import {
@@ -36,6 +37,7 @@ export default function SearchScreen() {
   const remote = useSearchResults(term);
   const offline = useOfflineSearchResults(term, remote.isError);
   const openResource = useOpenResource();
+  const bottomInset = useTabScreenBottomInset();
 
   const results: readonly Resource[] = remote.data ?? offline.data ?? [];
   const searching = active && (remote.isLoading || (remote.isError && offline.isLoading));
@@ -66,7 +68,7 @@ export default function SearchScreen() {
         data={active ? results : []}
         keyExtractor={(item) => `${item.type}-${item.id}`}
         renderItem={({ item }) => <ResourceCard resource={item} onPress={() => openResource(item)} />}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: bottomInset }]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
@@ -133,7 +135,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: Spacing.xl,
-    paddingBottom: 40,
   },
   emptyWrap: {
     paddingTop: 70,

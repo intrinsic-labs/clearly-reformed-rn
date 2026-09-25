@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { FeedOrder } from '@/application/ports/resource-repository';
 import type { Resource } from '@/domain/resource';
 import { AppHeader } from '@/presentation/components/chrome/app-header';
-import { useBottomChromeInset } from '@/presentation/components/chrome/bottom-chrome';
+import { useTabScreenBottomInset } from '@/presentation/components/chrome/bottom-chrome';
 import { FeaturedCard } from '@/presentation/components/content/featured-card';
 import {
   type ContentFilter,
@@ -30,7 +30,7 @@ export default function LibraryScreen() {
   const [order, setOrder] = useState<FeedOrder>('newest');
   const isAll = filter === 'all';
   const openResource = useOpenResource();
-  const chromeInset = useBottomChromeInset();
+  const bottomInset = useTabScreenBottomInset();
 
   const onFilterChange = useCallback((next: ContentFilter) => {
     setFilter(next);
@@ -102,7 +102,7 @@ export default function LibraryScreen() {
           keyExtractor={keyExtractor}
           renderItem={renderItem}
           ListHeaderComponent={header}
-          contentContainerStyle={[styles.listContent, { paddingBottom: Spacing.xxl + chromeInset }]}
+          contentContainerStyle={[styles.listContent, { paddingBottom: bottomInset }]}
           showsVerticalScrollIndicator={false}
           onEndReached={loadMore}
           onEndReachedThreshold={0.6}

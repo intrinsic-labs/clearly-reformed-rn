@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { Pressable } from 'react-native-gesture-handler';
 
 import type { ClipEntry } from '@/domain/notebook';
 import { CONTENT_TYPE_LABEL } from '@/presentation/lib/content-type';

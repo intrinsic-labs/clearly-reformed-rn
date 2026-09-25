@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ContinueItem } from '@/domain/progress';
 import { resourceKey } from '@/domain/resource-ref';
 import { AppHeader } from '@/presentation/components/chrome/app-header';
-import { useBottomChromeInset } from '@/presentation/components/chrome/bottom-chrome';
+import { useTabScreenBottomInset } from '@/presentation/components/chrome/bottom-chrome';
 import { FeaturedCard } from '@/presentation/components/content/featured-card';
 import { ResourceCard } from '@/presentation/components/content/resource-card';
 import { ContinueCard } from '@/presentation/components/home/continue-card';
@@ -38,7 +38,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const openResource = useOpenResource();
   const { play } = usePlayer();
-  const chromeInset = useBottomChromeInset();
+  const bottomInset = useTabScreenBottomInset();
 
   const daily = useDailyPick();
   const dailyKey = daily.data ? resourceKey(daily.data.type, daily.data.id) : null;
@@ -68,7 +68,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <AppHeader title="Clearly Reformed" />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { paddingBottom: Spacing.xxl + chromeInset }]}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { paddingBottom: bottomInset }]}>
         {/* Featured — today's pick */}
         <View style={styles.featured}>
           <Text style={styles.eyebrow}>Featured</Text>

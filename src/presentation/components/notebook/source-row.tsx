@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { Pressable } from 'react-native-gesture-handler';
 
 import type { ResourceRef } from '@/domain/resource-ref';
 import { CONTENT_TYPE_LABEL } from '@/presentation/lib/content-type';

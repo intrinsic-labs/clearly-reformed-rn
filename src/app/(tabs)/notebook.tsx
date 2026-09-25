@@ -236,7 +236,7 @@ export default function NotebookScreen() {
         keyExtractor={(item) => (item.kind === 'saved' ? `saved-${item.saved.resource.key}` : item.id)}
         renderItem={renderEntry}
         ListHeaderComponent={header}
-        contentContainerStyle={[styles.listContent, { paddingBottom: 120 + chromeInset }]}
+        contentContainerStyle={[styles.listContent, { paddingBottom: fabBottom + 56 + Spacing.md }]}
         ItemSeparatorComponent={Separator}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -301,7 +301,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: Spacing.xl,
-    paddingBottom: 120,
   },
   countsRow: {
     flexDirection: 'row',
