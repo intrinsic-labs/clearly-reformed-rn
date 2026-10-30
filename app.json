@@ -27,6 +27,7 @@
     },
     "plugins": [
       "expo-router",
+      "./plugins/withPodDeploymentTargetFloor",
       [
         "expo-splash-screen",
         {

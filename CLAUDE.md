@@ -53,7 +53,10 @@ MVP vs v2 split is in `project-info.md` §11.
 - TypeScript strict; ESLint (with clean-architecture boundaries) + Prettier.
 - Dev build required (track-player, sqlite, etc. don't run in Expo Go). After native
   dep changes run `npx expo run:ios` (rebuilds the dev client + pods); day-to-day is
-  `pnpm start`.
+  `pnpm start`. On Xcode 27.x, `plugins/withPodDeploymentTargetFloor.js` (registered in
+  `app.json`) lifts pods that declare an iOS target below 15.1 on every prebuild; the app's own
+  target stays 16.4. Don't pass `IPHONEOS_DEPLOYMENT_TARGET` by hand. Needs
+  `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` on this Mac (VERIFY.md).
 - **Remote Android device** (phone on Tailscale, not on this LAN):
   `pnpm android:remote <device-tailscale-ip> [--pair PORT CODE] [--metro] [--no-build]`
   — see `scripts/android-remote.sh`. **Default is a release build** — when working

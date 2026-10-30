@@ -2,9 +2,8 @@
 
 This guide takes a cold agent from a clean checkout to the app running on the **iOS Simulator** and the **Android Emulator**, driven by Maestro with screenshots, without asking anyone. [FEATURE_MAP.md](FEATURE_MAP.md) says where every feature lives once you're in. [CLAUDE.md](CLAUDE.md) is the project orientation; this guide doesn't repeat it.
 
-**Last proven:** 2026-10-29 at `844ab51` plus this guide's testIDs, then re-proven cold by a separate agent from a fresh clone using only this guide (both platforms, every flow below; its gaps are fixed here), on Asher's Mac (macOS 27, Xcode 27.1, iOS 26.5 Simulator, Android 37.1 `google_apis_playstore_ps16k` arm64 image). Both platforms were walked end to end: Library → Reader → highlight → Save → Notebook, Podcast → Play → Now Playing → Clip moment, Search (online, and offline on Android), Settings, the note editor and the Reader text sheet. Limits are in [What this guide can't prove](#what-this-guide-cant-prove).
+**Last proven:** 2026-10-30 (iOS build path: fresh `prebuild --clean` and `npx expo run:ios` on Xcode 27.1 / iOS 26.5 Simulator, no overrides; Reader selection, Notebook, note editor and audio walked; Android debug build and launch re-checked). The full flows below were last walked end to end on 2026-10-29 by a separate agent from a fresh clone, on Asher's Mac (macOS 27, Xcode 27.1, iOS 26.5 Simulator, Android 37.1 `google_apis_playstore_ps16k` arm64 image). Limits are in [What this guide can't prove](#what-this-guide-cant-prove).
 
-> **iOS needs a local-only fix today.** On Xcode 27.1 the committed `expo-modules-jsi@56.0.10` doesn't compile, so iOS can't build from `main` unchanged. Apply the override in [iOS step 1](#1-local-only-expo-modules-jsi-override-xcode-271) and **never commit it**; it goes away once the dependency bump lands in its own PR.
 
 ## Facts you need first
 
@@ -40,8 +39,8 @@ export ANDROID_HOME=~/Library/Android/sdk
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"   # gradle and maestro
 export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
 mkdir -p $P/logs $P/shots $P/flows
-sc() { perl -e 'alarm 60; exec @ARGV' xcrun simctl "$@"; }   # simctl with a 60 s limit (gotcha 9)
-[ -f $P/sim-udid ] && U=$(cat $P/sim-udid)                    # set by iOS step 3
+sc() { perl -e 'alarm 60; exec @ARGV' xcrun simctl "$@"; }   # simctl with a 60 s limit (gotcha 6)
+[ -f $P/sim-udid ] && U=$(cat $P/sim-udid)                    # set by iOS step 2
 [ -f $P/emulator-serial ] && S=$(cat $P/emulator-serial)      # set by Android step 1
 B=com.asherpope.clearly-reformed-swift; PKG=co.intrinsiclabs.clearlyreformed
 DEV=cr-verify-$(basename $P)                                 # your device names; unique per session so you never select or delete another session's
@@ -73,20 +72,7 @@ lsof -t -nP -iTCP:8083 -sTCP:LISTEN > $P/metro.pid    # the listener (a child of
 
 ## iOS Simulator
 
-### 1. Local-only `expo-modules-jsi` override (Xcode 27.1)
-
-`expo-modules-jsi@56.0.10` fails in Swift with `JavaScriptRuntime.swift:219: a C function pointer can only be formed from a reference to a 'func' or a literal closure`. Upstream fixed it in 56.0.13, and 56.0.14 also fixes pod install when the Command Line Tools SDK is newer than Xcode (gotcha 3). Until the bump lands:
-
-```sh
-cd $W
-perl -0pi -e 's/overrides:\n/overrides:\n  "expo-modules-jsi": 56.0.14\n/' pnpm-workspace.yaml
-pnpm install                       # updates pnpm-lock.yaml locally
-git diff --stat                    # pnpm-workspace.yaml + pnpm-lock.yaml: DO NOT COMMIT
-```
-
-Revert it in [Clean up](#clean-up). If `main` already pins `expo-modules-jsi` ≥ 56.0.13, skip this step and delete it from this guide.
-
-### 2. Generate the native project and pods
+### 1. Generate the native project and pods
 
 `ios/` and `android/` are generated (continuous native generation) and gitignored. Change native config only through `app.json` and config plugins.
 
@@ -96,7 +82,7 @@ cd $W && CI=1 npx expo prebuild --platform ios      # runs pod install
 cd $W/ios && pod install
 ```
 
-### 3. Your own simulator
+### 2. Your own simulator
 
 Other sessions keep simulators booted; create and use your own:
 
@@ -105,25 +91,22 @@ U=$(sc create $DEV "iPhone 17 Pro" com.apple.CoreSimulator.SimRuntime.iOS-26-5)
 echo $U > $P/sim-udid && sc boot $U
 ```
 
-### 4. Build (Debug) with xcodebuild
+### 3. Build and install (Debug)
 
-`npx expo run:ios` can't pass the deployment-target override and rejects `--port` together with `--no-bundler`, so build directly. A cold build takes about 15 minutes on a loaded machine; run it detached and poll the log:
+The standard path works as is: pods come out of `prebuild` already clean (`plugins/withPodDeploymentTargetFloor.js` lifts pods below iOS 15.1 and `expo-modules-jsi` ≥ 56.0.14 builds on Xcode 27.1), so no deployment-target override is needed. A cold build takes about 15 minutes on a loaded machine (about 4 on a quiet one); run it detached and poll the log:
 
 ```sh
-cd $W/ios && nohup xcodebuild -workspace ClearlyReformed.xcworkspace -scheme ClearlyReformed \
-  -configuration Debug -destination "id=$U" -derivedDataPath $P/DerivedData \
-  IPHONEOS_DEPLOYMENT_TARGET=16.4 build > $P/logs/ios-build.log 2>&1 & echo $! > $P/ios-build.pid
-grep -E "\*\* BUILD (SUCCEEDED|FAILED)" $P/logs/ios-build.log    # then, on failure: grep -E "error: [A-Z]" …
+cd $W && CI=1 nohup npx expo run:ios --port 8083 --device $U > $P/logs/run-ios.log 2>&1 & echo $! > $P/run-ios.pid
+grep -E "Build Succeeded|CommandError|❌" $P/logs/run-ios.log
 ```
 
-`IPHONEOS_DEPLOYMENT_TARGET=16.4` is the app's own target (`ios/Podfile`). Xcode 27.1 treats pods declaring a target below 15 (RNSVG, Reanimated, WebView and others) as errors, so this setting raises them all to 16.4.
+`run:ios` also starts Metro on 8083 (so skip the separate Metro section for iOS-only work), builds, installs and launches. Ignore the two `❌ error: the following command failed with exit code 0 but produced no further output` lines from the ExpoModulesJSI script phase; the build still reports `Build Succeeded`. The first launch shows "No script URL provided" until step 4 points it at Metro.
 
-### 5. Install, point at Metro, launch
+### 4. Point at Metro, launch
 
 ```sh
-sc install $U $P/DerivedData/Build/Products/Debug-iphonesimulator/ClearlyReformed.app
 sc spawn $U defaults write $B RCT_jsLocation "localhost:8083"   # once per install
-sc launch $U $B
+sc terminate $U $B; sc launch $U $B
 ```
 
 The simulator shares the Mac's loopback, so without `RCT_jsLocation` the app asks `localhost:8081` (llama-server) for its bundle.
@@ -280,8 +263,7 @@ Stop only what you started, by the PID you recorded, after checking it is what h
 adb -s $S emu kill && rm -rf ~/.android/avd/$DEV.avd ~/.android/avd/$DEV.ini
 sc shutdown $U; sc delete $U
 rm -rf ~/.maestro/tests/<your run folders>   # takeScreenshot output and logs
-rm -rf $P/DerivedData                     # several GB
-cd $W && git checkout pnpm-workspace.yaml pnpm-lock.yaml && pnpm install   # drop the iOS override (skip pnpm install if you're deleting node_modules)
+rm -rf ~/Library/Developer/Xcode/DerivedData/ClearlyReformed-*   # several GB (run:ios builds there)
 git status --short                        # only your intended changes
 ```
 
@@ -289,23 +271,19 @@ git status --short                        # only your intended changes
 
 ## Gotchas (all hit while writing this guide)
 
-1. **`expo-modules-jsi@56.0.10` vs Xcode 27.1:** a Swift compile error. Use the local override (iOS step 1).
-2. **Pods with old deployment targets fail on Xcode 27.1:** pass `IPHONEOS_DEPLOYMENT_TARGET=16.4` to xcodebuild.
-3. **`pod install` → `ld: library 'System' not found`** in `expo-modules-jsi`'s `create-stub-xcframework.sh`: the login PATH puts `/Library/Developer/CommandLineTools/usr/bin` first, so a bare `clang` has no SDK. jsi ≥ 56.0.14 fixes it; on 56.0.10, run pod install with `PATH=/usr/bin:$PATH`.
-4. **CocoaPods `Unicode Normalization not appropriate for ASCII-8BIT`:** set `LANG`/`LC_ALL` to `en_US.UTF-8`.
-5. **`xcrun: unable to find utility "simctl"`:** set `DEVELOPER_DIR`.
-6. **`Unable to locate a Java Runtime`** from gradle or **maestro**: set `JAVA_HOME` to Android Studio's JBR.
-7. **The debug app loads from 8081 = llama-server:** set `RCT_jsLocation` (iOS) or `debug_http_host` + `adb reverse` (Android).
-8. **`expo run:android` crashes on another session's emulator; `expo run:ios` rejects `--port` with `--no-bundler`:** build with gradle or xcodebuild directly.
-9. **The shared CoreSimulator service can wedge** (every `simctl` call hangs for minutes, for every session). Don't kill it, because other owners' simulators depend on it. Use the `sc` wrapper from the setup block, do Android work meanwhile, and retry; it recovered by itself after about 10 minutes.
-10. **The emulator serial isn't stable;** resolve it by AVD name every session.
-11. **The machine is shared and often heavily loaded** (load average 300–800 on 10 cores while writing this). Cold builds took 10–15 minutes and the first bundle on the emulator up to a minute. Use long `extendedWaitUntil` timeouts.
-12. **Home keeps its scroll position** between visits; a `scrollUntilVisible` toward an element already passed needs `direction: UP`.
+1. **CocoaPods `Unicode Normalization not appropriate for ASCII-8BIT`:** set `LANG`/`LC_ALL` to `en_US.UTF-8`.
+2. **`xcrun: unable to find utility "simctl"`:** set `DEVELOPER_DIR`.
+3. **`Unable to locate a Java Runtime`** from gradle or **maestro**: set `JAVA_HOME` to Android Studio's JBR.
+4. **The debug app loads from 8081 = llama-server:** set `RCT_jsLocation` (iOS) or `debug_http_host` + `adb reverse` (Android).
+5. **`expo run:android` crashes on another session's emulator:** build with gradle directly (Android step 2). `expo run:ios --device $U` is fine because it targets your own simulator.
+6. **The shared CoreSimulator service can wedge** (every `simctl` call hangs for minutes, for every session). Don't kill it, because other owners' simulators depend on it. Use the `sc` wrapper from the setup block, do Android work meanwhile, and retry; it recovered by itself after about 10 minutes.
+7. **The emulator serial isn't stable;** resolve it by AVD name every session.
+8. **The machine is shared and often heavily loaded** (load average 300–800 on 10 cores while writing this). Cold builds took 10–15 minutes and the first bundle on the emulator up to a minute. Use long `extendedWaitUntil` timeouts.
+9. **Home keeps its scroll position** between visits; a `scrollUntilVisible` toward an element already passed needs `direction: UP`.
 
 ## What this guide can't prove
 
 - **Signed-in state and sync:** not built. Unavailable, not skipped.
-- **iOS from `main` unchanged:** blocked on Xcode 27.1 until the `expo-modules-jsi` bump lands (iOS step 1).
 - **iOS offline behavior:** not reproducible per simulator (above).
 - **Physical-device feel, background and lock-screen audio, CarPlay and Android Auto, notification delivery:** need hardware or production push and are out of scope here. The remote Pixel path is `pnpm android:remote` (CLAUDE.md).
 - **Release builds:** this guide proves Debug + Metro. Release and TestFlight builds go through EAS and the project's release procedure.

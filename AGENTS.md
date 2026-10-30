@@ -13,5 +13,5 @@ Read [CLAUDE.md](CLAUDE.md) first. It is the project orientation (product, locke
 - **Bump the map's `revision:`** only after re-reading every entry the check's drift warnings name. Bump `reconciled:` only after walking every entry in the running app.
 - **Selectors are `testID`s on host elements,** named after the map ID (`library.feed` → `library-feed`). A selector is `working` only once you've seen it in a rendered `maestro hierarchy`. Note platform gaps in the entry: on iOS, an accessible parent can hide a child's ID.
 - **When a VERIFY.md step fails or you had to improvise, fix the guide in the same change,** and add the failure to its Gotchas if it cost real time. Update "Last proven" only after a real end-to-end run.
-- **Never commit the guide's local-only workarounds** (the iOS `expo-modules-jsi` override) or anything under `ios/`, `android/` or your scratch directory.
+- **Never commit** anything under `ios/`, `android/` or your scratch directory.
 - **Product defects you find while mapping or verifying** get reported separately, not quietly fixed inside a docs change.
