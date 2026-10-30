@@ -44,6 +44,7 @@ sc() { perl -e 'alarm 60; exec @ARGV' xcrun simctl "$@"; }   # simctl with a 60 
 [ -f $P/sim-udid ] && U=$(cat $P/sim-udid)                    # set by iOS step 3
 [ -f $P/emulator-serial ] && S=$(cat $P/emulator-serial)      # set by Android step 1
 B=com.asherpope.clearly-reformed-swift; PKG=co.intrinsiclabs.clearlyreformed
+DEV=cr-verify-$(basename $P)                                 # your device names; unique per session so you never select or delete another session's
 ```
 
 Keep every wait bounded (`for i in $(seq 1 60); do …; sleep 5; done`, not a bare `until`), and keep each command under 10 minutes; poll detached jobs' logs instead.
@@ -100,7 +101,7 @@ cd $W/ios && pod install
 Other sessions keep simulators booted; create and use your own:
 
 ```sh
-U=$(sc create cr-verify "iPhone 17 Pro" com.apple.CoreSimulator.SimRuntime.iOS-26-5)
+U=$(sc create $DEV "iPhone 17 Pro" com.apple.CoreSimulator.SimRuntime.iOS-26-5)
 echo $U > $P/sim-udid && sc boot $U
 ```
 
@@ -134,11 +135,11 @@ The simulator shares the Mac's loopback, so without `RCT_jsLocation` the app ask
 The shared `Pixel_10` AVD is often running for another session, and a second instance of the same AVD refuses to start. With no `cmdline-tools` installed, clone its config (not its data):
 
 ```sh
-A=~/.android/avd; mkdir -p $A/cr-verify.avd
-sed -e 's/^AvdId=.*/AvdId=cr-verify/' -e 's/^avd.ini.displayname=.*/avd.ini.displayname=cr-verify/' \
-  $A/Pixel_10.avd/config.ini > $A/cr-verify.avd/config.ini
-sed 's#Pixel_10.avd#cr-verify.avd#' $A/Pixel_10.ini > $A/cr-verify.ini
-nohup emulator -avd cr-verify -no-snapshot -no-boot-anim -no-audio -no-window > $P/logs/emulator.log 2>&1 &
+A=~/.android/avd; mkdir -p $A/$DEV.avd
+sed -e "s/^AvdId=.*/AvdId=$DEV/" -e "s/^avd.ini.displayname=.*/avd.ini.displayname=$DEV/" \
+  $A/Pixel_10.avd/config.ini > $A/$DEV.avd/config.ini
+sed "s#Pixel_10.avd#$DEV.avd#" $A/Pixel_10.ini > $A/$DEV.ini
+nohup emulator -avd $DEV -no-snapshot -no-boot-anim -no-audio -no-window > $P/logs/emulator.log 2>&1 &
 echo $! > $P/emulator.pid
 ```
 
@@ -147,7 +148,7 @@ The serial (`emulator-5554`, `-5556`, …) depends on what else is running, so r
 ```sh
 for i in $(seq 1 60); do
   S=$(adb devices | awk '/^emulator-/{print $1}' | while read s; do
-    [ "$(adb -s $s emu avd name 2>/dev/null | head -1 | tr -d '\r')" = cr-verify ] && echo $s; done)
+    [ "$(adb -s $s emu avd name 2>/dev/null | head -1 | tr -d '\r')" = $DEV ] && echo $s; done)
   [ -n "$S" ] && [ "$(adb -s $S shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ] && break; sleep 5; done
 echo $S > $P/emulator-serial
 ```
@@ -276,7 +277,7 @@ Stop only what you started, by the PID you recorded, after checking it is what h
 
 ```sh
 [ "$(lsof -t -nP -iTCP:8083 -sTCP:LISTEN)" = "$(cat $P/metro.pid)" ] && kill $(cat $P/metro.pid)   # also ends its npx wrapper
-adb -s $S emu kill && rm -rf ~/.android/avd/cr-verify.avd ~/.android/avd/cr-verify.ini
+adb -s $S emu kill && rm -rf ~/.android/avd/$DEV.avd ~/.android/avd/$DEV.ini
 sc shutdown $U; sc delete $U
 rm -rf ~/.maestro/tests/<your run folders>   # takeScreenshot output and logs
 rm -rf $P/DerivedData                     # several GB
