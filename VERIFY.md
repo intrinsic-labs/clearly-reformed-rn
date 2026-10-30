@@ -2,7 +2,7 @@
 
 This guide takes a cold agent from a clean checkout to the app running on the **iOS Simulator** and the **Android Emulator**, driven by Maestro with screenshots, without asking anyone. [FEATURE_MAP.md](FEATURE_MAP.md) says where every feature lives once you're in. [CLAUDE.md](CLAUDE.md) is the project orientation; this guide doesn't repeat it.
 
-**Last proven:** 2026-10-29 at `844ab51` plus this guide's testIDs, on Asher's Mac (macOS 27, Xcode 27.1, iOS 26.5 Simulator, Android 37.1 `google_apis_playstore_ps16k` arm64 image). Both platforms were walked end to end: Library → Reader → highlight → Save → Notebook, Podcast → Play → Now Playing → Clip moment, Search (online, and offline on Android), Settings, the note editor and the Reader text sheet. Limits are in [What this guide can't prove](#what-this-guide-cant-prove).
+**Last proven:** 2026-10-29 at `844ab51` plus this guide's testIDs, then re-proven cold by a separate agent from a fresh clone using only this guide (both platforms, every flow below; its gaps are fixed here), on Asher's Mac (macOS 27, Xcode 27.1, iOS 26.5 Simulator, Android 37.1 `google_apis_playstore_ps16k` arm64 image). Both platforms were walked end to end: Library → Reader → highlight → Save → Notebook, Podcast → Play → Now Playing → Clip moment, Search (online, and offline on Android), Settings, the note editor and the Reader text sheet. Limits are in [What this guide can't prove](#what-this-guide-cant-prove).
 
 > **iOS needs a local-only fix today.** On Xcode 27.1 the committed `expo-modules-jsi@56.0.10` doesn't compile, so iOS can't build from `main` unchanged. Apply the override in [iOS step 1](#1-local-only-expo-modules-jsi-override-xcode-271) and **never commit it**; it goes away once the dependency bump lands in its own PR.
 
@@ -29,18 +29,24 @@ This guide takes a cold agent from a clean checkout to the app running on the **
 | A JDK | Android Studio's bundled JBR |
 | Maestro | Homebrew (`/opt/homebrew/bin/maestro`) |
 
-Start **every** shell with this block. A fresh shell on this Mac has `xcode-select` pointing at the Command Line Tools, no Java, and a non-UTF-8 locale, and each of those breaks a step below:
+A fresh shell on this Mac has `xcode-select` pointing at the Command Line Tools, no Java, and a non-UTF-8 locale, and each of those breaks a step below. Agent tool calls each get a fresh shell, so write this once to `$P/env.sh` (with your real paths) and start **every** command with `source $P/env.sh`:
 
 ```sh
+W=/absolute/path/to/this/checkout                    # e.g. your worktree
+P=~/.local/state/intrinsic/previews/<your-id>        # scratch: logs, pids, screenshots, DerivedData
 export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8          # CocoaPods crashes without it
 export ANDROID_HOME=~/Library/Android/sdk
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"   # gradle and maestro
 export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
-W=$(git rev-parse --show-toplevel)                   # this checkout
-P=~/.local/state/intrinsic/previews/<your-id>        # scratch: logs, pids, screenshots, DerivedData
 mkdir -p $P/logs $P/shots $P/flows
+sc() { perl -e 'alarm 60; exec @ARGV' xcrun simctl "$@"; }   # simctl with a 60 s limit (gotcha 9)
+[ -f $P/sim-udid ] && U=$(cat $P/sim-udid)                    # set by iOS step 3
+[ -f $P/emulator-serial ] && S=$(cat $P/emulator-serial)      # set by Android step 1
+B=com.asherpope.clearly-reformed-swift; PKG=co.intrinsiclabs.clearlyreformed
 ```
+
+Keep every wait bounded (`for i in $(seq 1 60); do …; sleep 5; done`, not a bare `until`), and keep each command under 10 minutes; poll detached jobs' logs instead.
 
 Keep build output, logs and screenshots in `$P`, outside the repo.
 
@@ -57,8 +63,9 @@ This applies the four patched dependencies (see CLAUDE.md → Patched dependenci
 Start it detached inside an ordinary command, **never** as a background task of your agent session, because the turn can't end while it runs:
 
 ```sh
-cd $W && CI=1 nohup npx expo start --port 8083 > $P/logs/metro.log 2>&1 & echo $! > $P/metro.pid
-curl -s http://localhost:8083/status      # → packager-status:running
+cd $W && CI=1 nohup npx expo start --port 8083 > $P/logs/metro.log 2>&1 &
+for i in $(seq 1 30); do curl -s http://localhost:8083/status | grep -q running && break; sleep 2; done
+lsof -t -nP -iTCP:8083 -sTCP:LISTEN > $P/metro.pid    # the listener (a child of the npx wrapper)
 ```
 
 `CI=1` keeps Expo non-interactive and disables file watching, so restart Metro to pick up source edits (or drop `CI=1` if you're iterating). The first bundle per platform takes 5–35 s; watch for `iOS Bundled` / `Android Bundled` in the log. Restarting Metro disconnects running apps, so relaunch them afterwards.
@@ -93,8 +100,8 @@ cd $W/ios && pod install
 Other sessions keep simulators booted; create and use your own:
 
 ```sh
-U=$(xcrun simctl create cr-verify "iPhone 17 Pro" com.apple.CoreSimulator.SimRuntime.iOS-26-5)
-echo $U > $P/sim-udid && xcrun simctl boot $U
+U=$(sc create cr-verify "iPhone 17 Pro" com.apple.CoreSimulator.SimRuntime.iOS-26-5)
+echo $U > $P/sim-udid && sc boot $U
 ```
 
 ### 4. Build (Debug) with xcodebuild
@@ -105,7 +112,7 @@ echo $U > $P/sim-udid && xcrun simctl boot $U
 cd $W/ios && nohup xcodebuild -workspace ClearlyReformed.xcworkspace -scheme ClearlyReformed \
   -configuration Debug -destination "id=$U" -derivedDataPath $P/DerivedData \
   IPHONEOS_DEPLOYMENT_TARGET=16.4 build > $P/logs/ios-build.log 2>&1 & echo $! > $P/ios-build.pid
-grep -E " error:|\*\* BUILD (SUCCEEDED|FAILED)" $P/logs/ios-build.log
+grep -E "\*\* BUILD (SUCCEEDED|FAILED)" $P/logs/ios-build.log    # then, on failure: grep -E "error: [A-Z]" …
 ```
 
 `IPHONEOS_DEPLOYMENT_TARGET=16.4` is the app's own target (`ios/Podfile`). Xcode 27.1 treats pods declaring a target below 15 (RNSVG, Reanimated, WebView and others) as errors, so this setting raises them all to 16.4.
@@ -113,10 +120,9 @@ grep -E " error:|\*\* BUILD (SUCCEEDED|FAILED)" $P/logs/ios-build.log
 ### 5. Install, point at Metro, launch
 
 ```sh
-B=com.asherpope.clearly-reformed-swift
-xcrun simctl install $U $P/DerivedData/Build/Products/Debug-iphonesimulator/ClearlyReformed.app
-xcrun simctl spawn $U defaults write $B RCT_jsLocation "localhost:8083"   # once per install
-xcrun simctl launch $U $B
+sc install $U $P/DerivedData/Build/Products/Debug-iphonesimulator/ClearlyReformed.app
+sc spawn $U defaults write $B RCT_jsLocation "localhost:8083"   # once per install
+sc launch $U $B
 ```
 
 The simulator shares the Mac's loopback, so without `RCT_jsLocation` the app asks `localhost:8081` (llama-server) for its bundle.
@@ -139,9 +145,10 @@ echo $! > $P/emulator.pid
 The serial (`emulator-5554`, `-5556`, …) depends on what else is running, so resolve yours by AVD name and wait for boot:
 
 ```sh
-S=""; until [ -n "$S" ] && [ "$(adb -s $S shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do
-  sleep 5; S=$(adb devices | awk '/^emulator-/{print $1}' | while read s; do
-    [ "$(adb -s $s emu avd name 2>/dev/null | head -1 | tr -d '\r')" = cr-verify ] && echo $s; done); done
+for i in $(seq 1 60); do
+  S=$(adb devices | awk '/^emulator-/{print $1}' | while read s; do
+    [ "$(adb -s $s emu avd name 2>/dev/null | head -1 | tr -d '\r')" = cr-verify ] && echo $s; done)
+  [ -n "$S" ] && [ "$(adb -s $S shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ] && break; sleep 5; done
 echo $S > $P/emulator-serial
 ```
 
@@ -151,14 +158,14 @@ echo $S > $P/emulator-serial
 
 ```sh
 cd $W && CI=1 npx expo prebuild --platform android     # if android/ doesn't exist yet
-cd $W/android && ./gradlew :app:assembleDebug -PreactNativeArchitectures=arm64-v8a > $P/logs/android-build.log 2>&1
+cd $W/android && nohup ./gradlew :app:assembleDebug -PreactNativeArchitectures=arm64-v8a > $P/logs/android-build.log 2>&1 &
+grep -E "BUILD (SUCCESSFUL|FAILED)" $P/logs/android-build.log     # poll
 ```
 
 ### 3. Install, point at Metro, launch
 
 ```sh
-PKG=co.intrinsiclabs.clearlyreformed
-until adb -s $S shell pm path $PKG >/dev/null 2>&1 || adb -s $S install -r $W/android/app/build/outputs/apk/debug/app-debug.apk; do sleep 3; done
+for i in $(seq 1 20); do adb -s $S install -r $W/android/app/build/outputs/apk/debug/app-debug.apk && break; sleep 3; done
 adb -s $S reverse tcp:8083 tcp:8083
 adb -s $S shell "run-as $PKG sh -c 'mkdir -p shared_prefs && echo \"<?xml version=\\\"1.0\\\" encoding=\\\"utf-8\\\" standalone=\\\"yes\\\" ?><map><string name=\\\"debug_http_host\\\">localhost:8083</string></map>\" > shared_prefs/${PKG}_preferences.xml'"
 adb -s $S shell am start -W -n $PKG/.MainActivity
@@ -180,11 +187,27 @@ Platform differences worth knowing up front: tabs are `id: shell-tabs-library` o
 **Deep links** (scheme `clearlyreformed://`, three slashes): `/`, `/library`, `/notebook`, `/search`, `/settings`, `/player`, `/note-editor`, `/resource/<type>/<slug>` (with `?hl=<highlightId>` or `?t=<seconds>`). Known-good targets: `clearlyreformed:///resource/article/reflections-on-the-esv-after-25-years` (Reader) and `clearlyreformed:///resource/podcast/scroll-less-live-more-with-samuel-james` (a playable *Life and Books and Everything* episode; cross-posted guest podcasts have no Play pill).
 
 ```sh
-xcrun simctl openurl $U "clearlyreformed:///settings"
+sc openurl $U "clearlyreformed:///settings"
 adb -s $S shell am start -W -a android.intent.action.VIEW -d "clearlyreformed:///settings"
 ```
 
 On iOS, Maestro's `openLink` (and the first `simctl openurl`) raises Safari's **"Open in 'Clearly Reformed'?"** prompt; follow each `openLink` with `- tapOn: {text: "Open", optional: true}`.
+
+**Library → Articles** (the menu path, when you want it rather than a deep link):
+
+```yaml
+# Android
+- tapOn: "Library"
+- tapOn: { id: "library-filters-type" }
+- tapOn: { id: "library-filters-type-option-article" }
+- tapOn: { id: "resource-card", index: 0 }
+# iOS (options aren't in the tree; points measured on iPhone 17 Pro with the list scrolled to the top)
+- tapOn: { id: "shell-tabs-library" }
+- tapOn: { id: "library-filters-type" }
+- waitForAnimationToEnd
+- tapOn: { point: "63%,74%" }        # "Articles"; "Podcast" is 63%,83%. The menu moves with scroll, so check a screenshot
+- tapOn: { id: "resource-card", index: 0 }
+```
 
 **A study-data walkthrough** that creates disposable data and proves the Reader → Notebook path. Save it as `$P/flows/study.yaml` and run `maestro --device $S test $P/flows/study.yaml` (iOS: swap the appId to `com.asherpope.clearly-reformed-swift` and add the "Open" tap after `openLink`):
 
@@ -193,15 +216,16 @@ appId: co.intrinsiclabs.clearlyreformed
 ---
 - openLink: "clearlyreformed:///resource/article/reflections-on-the-esv-after-25-years"
 - extendedWaitUntil: { visible: { id: "reader-webview" }, timeout: 60000 }
-- longPressOn: { point: "50%,66%" }          # a word in the first paragraph; adjust from a screenshot
-- tapOn: { id: "reader-selection-highlight" }
-- tapOn: { id: "reader-save" }
+- longPressOn: { point: "50%,66%" }          # Android: a word in the first paragraph. iOS: use "46%,69%"; check a screenshot
+- tapOn: { id: "reader-selection-highlight" }  # saves the highlight
+- tapOn: { id: "reader-save" }                 # bookmarks the article (a separate SAVED card)
 - openLink: "clearlyreformed:///notebook"
 - extendedWaitUntil: { visible: { id: "notebook-highlight-card" }, timeout: 20000 }
 - openLink: "clearlyreformed:///resource/podcast/scroll-less-live-more-with-samuel-james"
 - tapOn: { id: "resource-detail-play" }
 - extendedWaitUntil: { visible: { id: "audio-now-playing-toggle" }, timeout: 60000 }
-- tapOn: { id: "audio-clip-moment" }
+- extendedWaitUntil: { visible: "0:0[3-9]", timeout: 30000 }   # let playback start; iOS can sit at 0:00 a few seconds
+- tapOn: { id: "audio-clip-moment" }           # iOS shows "Saved m:ss" briefly; Android may not show it in a capture, so check the DB
 - tapOn: { id: "audio-now-playing-toggle" }   # pause
 ```
 
@@ -211,12 +235,12 @@ Read the database to confirm a write landed:
 
 ```sh
 # iOS (read-only, straight from the app container)
-C=$(xcrun simctl get_app_container $U com.asherpope.clearly-reformed-swift data)
+C=$(sc get_app_container $U com.asherpope.clearly-reformed-swift data)
 sqlite3 "file:$C/Documents/SQLite/clearly-reformed.db?mode=ro" \
   "select 'highlights',count(*) from highlights union all select 'clips',count(*) from clips union all select 'saved',count(*) from saved_items union all select 'progress',count(*) from progress;"
 # Android (copy out, then read; include the -wal or recent writes are missing)
 for f in clearly-reformed.db clearly-reformed.db-wal; do adb -s $S exec-out run-as co.intrinsiclabs.clearlyreformed cat files/SQLite/$f > $P/$f; done
-sqlite3 $P/clearly-reformed.db "select kind, position, length from progress;"
+sqlite3 $P/clearly-reformed.db "select 'highlights',count(*) from highlights union all select 'clips',count(*) from clips union all select 'saved',count(*) from saved_items union all select 'progress',count(*) from progress; select kind, position, length from progress;"
 ```
 
 Tables: `highlights`, `clips`, `notes`, `saved_items`, `progress`, `content_cache`, `downloads`, plus the FTS5 tables `notebook_fts` and `content_fts` (`src/data/db/database.ts`). Reader and notification prefs are in `expo-sqlite/kv-store` (`ExpoSQLiteStorage` beside the DB). Downloaded audio is under the app's `Documents/audio/`. **Reset** = wipe the app's data: `adb -s $S shell pm clear co.intrinsiclabs.clearlyreformed` (then rewrite `debug_http_host`), or `xcrun simctl uninstall $U com.asherpope.clearly-reformed-swift` and reinstall (then rewrite `RCT_jsLocation`). There is no in-app reset.
@@ -230,7 +254,7 @@ Tables: `highlights`, `clips`, `notes`, `saved_items`, `progress`, `content_cach
 ## Screenshots
 
 ```sh
-xcrun simctl io $U screenshot $P/shots/ios-01-home.png
+sc io $U screenshot $P/shots/ios-01-home.png
 adb -s $S exec-out screencap -p > $P/shots/android-01-home.png
 ```
 
@@ -251,12 +275,12 @@ There's no CI in this repo; these are the gate. None of them reach native code o
 Stop only what you started, by the PID you recorded, after checking it is what holds the port:
 
 ```sh
-lsof -nP -iTCP:8083 -sTCP:LISTEN          # confirm the PID matches
-kill $(cat $P/metro.pid); pkill -f "expo start --port 8083"
+[ "$(lsof -t -nP -iTCP:8083 -sTCP:LISTEN)" = "$(cat $P/metro.pid)" ] && kill $(cat $P/metro.pid)   # also ends its npx wrapper
 adb -s $S emu kill && rm -rf ~/.android/avd/cr-verify.avd ~/.android/avd/cr-verify.ini
-xcrun simctl shutdown $U && xcrun simctl delete $U
+sc shutdown $U; sc delete $U
+rm -rf ~/.maestro/tests/<your run folders>   # takeScreenshot output and logs
 rm -rf $P/DerivedData                     # several GB
-cd $W && git checkout pnpm-workspace.yaml pnpm-lock.yaml && pnpm install   # drop the iOS override
+cd $W && git checkout pnpm-workspace.yaml pnpm-lock.yaml && pnpm install   # drop the iOS override (skip pnpm install if you're deleting node_modules)
 git status --short                        # only your intended changes
 ```
 
@@ -272,7 +296,7 @@ git status --short                        # only your intended changes
 6. **`Unable to locate a Java Runtime`** from gradle or **maestro**: set `JAVA_HOME` to Android Studio's JBR.
 7. **The debug app loads from 8081 = llama-server:** set `RCT_jsLocation` (iOS) or `debug_http_host` + `adb reverse` (Android).
 8. **`expo run:android` crashes on another session's emulator; `expo run:ios` rejects `--port` with `--no-bundler`:** build with gradle or xcodebuild directly.
-9. **The shared CoreSimulator service can wedge** (every `simctl` call hangs for minutes, for every session). Don't kill it, because other owners' simulators depend on it. Wrap calls in a limit (`perl -e 'alarm 30; exec @ARGV' xcrun simctl …`), do Android work meanwhile, and retry; it recovered by itself after about 10 minutes.
+9. **The shared CoreSimulator service can wedge** (every `simctl` call hangs for minutes, for every session). Don't kill it, because other owners' simulators depend on it. Use the `sc` wrapper from the setup block, do Android work meanwhile, and retry; it recovered by itself after about 10 minutes.
 10. **The emulator serial isn't stable;** resolve it by AVD name every session.
 11. **The machine is shared and often heavily loaded** (load average 300–800 on 10 cores while writing this). Cold builds took 10–15 minutes and the first bundle on the emulator up to a minute. Use long `extendedWaitUntil` timeouts.
 12. **Home keeps its scroll position** between visits; a `scrollUntilVisible` toward an element already passed needs `direction: UP`.
