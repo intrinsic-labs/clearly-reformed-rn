@@ -224,7 +224,7 @@ Tables: `highlights`, `clips`, `notes`, `saved_items`, `progress`, `content_cach
 ## Online vs offline
 
 - **Online** is the default: every feed, detail page, search and stream comes from the live public sources above.
-- **Offline (Android):** `adb -s $S shell cmd connectivity airplane-mode enable` (`disable` to undo). Search then shows "Offline — showing results from your saved content." (`search-offline-note`) with FTS5 results over cached bodies, and saved, cached articles open in the Reader. A body is cached only when it's fetched *while saved*, so save it, open it again online, then go offline (map: `saved.offline-reading`). The Library, Home rails and online search have no offline fallback.
+- **Offline (Android):** `adb -s $S shell cmd connectivity airplane-mode enable` (`disable` to undo). Search then shows "Offline — showing results from your saved content." (`search-offline-note`) with FTS5 results over cached bodies, and saved, cached articles open in the Reader. A body is cached only when it's fetched from the network *while saved*. Reopening in the same session doesn't do it: the detail query stays fresh for an hour (`staleTime`), so React Query serves it from memory. Save the article, **relaunch the app** (`am force-stop` + `am start`, or `simctl terminate` + `launch`), open it again online, then go offline (map: `saved.offline-reading`). The Library, Home rails and online search have no offline fallback.
 - **Offline (iOS Simulator): not verifiable per device.** The simulator shares the Mac's network, and the only switch (Network Link Conditioner) affects the whole machine and every other session. Don't use it.
 
 ## Screenshots

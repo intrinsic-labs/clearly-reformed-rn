@@ -218,7 +218,7 @@ Every user-visible feature of the Clearly Reformed app (Expo + Expo Router, one 
 - **ID:** `search.offline`
 - **Purpose:** When the network search fails, searches the bodies of saved content cached on the device.
 - **Where:** Search tab, same list, with the note "Offline — showing results from your saved content."
-- **Reach:** Save and open a few articles (which caches them, see `saved.offline-reading`), turn on airplane mode, then search on the Search tab.
+- **Reach:** Save a few articles, relaunch the app and open them online (which caches them, see `saved.offline-reading`), turn on airplane mode (Android: `cmd connectivity airplane-mode enable`), then search on the Search tab.
 - **Requires:** Remote search failing, plus cached content.
 - **Selector:** working — testID `search-offline-note`, `search-results`
 - **Code:** `src/presentation/hooks/queries/use-search.ts#useOfflineSearchResults`, `src/data/db/sqlite-content-cache.ts#search`, `src/data/db/fts.ts`
@@ -510,13 +510,13 @@ Every user-visible feature of the Clearly Reformed app (Expo + Expo Router, one 
 - **ID:** `saved.offline-reading`
 - **Purpose:** Saved articles and resources stay readable, and searchable, with no connection.
 - **Where:** Invisible; it's the fallback behind the resource detail and the Reader.
-- **Reach:** Save a resource, open it again online (that's when the body is cached), go offline, open it.
+- **Reach:** Save a resource, relaunch the app, open it again online (that network fetch is when the body is cached), go offline, open it.
 - **Requires:** The item saved and opened at least once after saving.
 - **Selector:** none — no element of its own; check `reader-screen` or `resource-detail` loads offline
 - **Code:** `src/application/use-cases/content.ts#getDetail`, `src/data/db/sqlite-content-cache.ts`, `src/application/ports/content-cache.ts`
 - **Backend:** SQLite `content_cache` (`detail_json`) + `content_fts`; written after a successful fetch when the item is saved, read when the fetch fails
 - **Status:** live
-- **Notes:** Saving doesn't cache by itself: the body is cached on the next fetch while saved (or a React Query refetch of the open screen). Save and go offline immediately, and there's no offline copy. Unsaving doesn't evict the cache.
+- **Notes:** Saving doesn't cache by itself: the body is cached on the next *network* fetch while saved. `useResourceContent` has a 1-hour `staleTime`, so reopening in the same session is served from React Query's memory and caches nothing; it takes a relaunch (or an hour). Save and go offline in the same session, and there's no offline copy. Unsaving doesn't evict the cache.
 
 ## Settings
 
