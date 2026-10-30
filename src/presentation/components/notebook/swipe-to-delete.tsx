@@ -73,7 +73,8 @@ export function SwipeToDelete({
             confirmDelete();
           }}
           accessibilityLabel={label}
-          accessibilityRole="button">
+          accessibilityRole="button"
+          testID="notebook-swipe-delete">
           <Feather name="trash-2" size={19} color={Colors.white} />
           <Text style={styles.label}>{label}</Text>
         </Pressable>

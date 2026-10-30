@@ -187,6 +187,7 @@ export default function NotebookScreen() {
         )}
         <Pressable
           style={styles.searchButton}
+          testID="notebook-search-toggle"
           onPress={() => {
             setSearchOpen((open) => {
               if (open) setSearchTerm('');
@@ -200,6 +201,7 @@ export default function NotebookScreen() {
 
       {searchOpen ? (
         <TextInput
+          testID="notebook-search-input"
           style={styles.searchInput}
           value={searchTerm}
           onChangeText={setSearchTerm}
@@ -218,6 +220,7 @@ export default function NotebookScreen() {
                 key={key}
                 style={[styles.chip, on ? styles.chipOn : null]}
                 onPress={() => setFilter(key)}
+                testID={`notebook-filters-${key}`}
                 accessibilityState={{ selected: on }}>
                 <Text style={[styles.chipLabel, on ? styles.chipLabelOn : null]}>{label}</Text>
               </Pressable>
@@ -229,9 +232,10 @@ export default function NotebookScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={['top']} testID="notebook-screen">
       <AppHeader title="Notebook" />
       <FlatList
+        testID="notebook-feed"
         data={entries}
         keyExtractor={(item) => (item.kind === 'saved' ? `saved-${item.saved.resource.key}` : item.id)}
         renderItem={renderEntry}
@@ -264,15 +268,15 @@ export default function NotebookScreen() {
 
       {/* FAB + add menu */}
       {fabOpen ? (
-        <Pressable style={styles.fabScrim} onPress={() => setFabOpen(false)}>
+        <Pressable style={styles.fabScrim} onPress={() => setFabOpen(false)} testID="notebook-fab-scrim">
           <View style={[styles.fabMenu, { bottom: fabBottom + 70 }]}>
-            <Pressable style={styles.fabMenuItem} onPress={onExport}>
+            <Pressable style={styles.fabMenuItem} onPress={onExport} testID="notebook-export">
               <Text style={styles.fabMenuLabel}>Export notebook</Text>
               <View style={styles.fabMenuIcon}>
                 <ShareIcon size={18} color={Colors.inkSoft} />
               </View>
             </Pressable>
-            <Pressable style={styles.fabMenuItem} onPress={() => openEditor()}>
+            <Pressable style={styles.fabMenuItem} onPress={() => openEditor()} testID="notebook-new-note">
               <Text style={styles.fabMenuLabel}>Blank note</Text>
               <View style={styles.fabMenuIcon}>
                 <PencilIcon size={19} color={Colors.inkSoft} />
@@ -281,7 +285,7 @@ export default function NotebookScreen() {
           </View>
         </Pressable>
       ) : null}
-      <Pressable style={[styles.fab, { bottom: fabBottom }]} onPress={() => setFabOpen((open) => !open)} accessibilityLabel="Add to your notebook">
+      <Pressable style={[styles.fab, { bottom: fabBottom }]} onPress={() => setFabOpen((open) => !open)} accessibilityLabel="Add to your notebook" testID="notebook-fab">
         <View style={{ transform: [{ rotate: fabOpen ? '45deg' : '0deg' }] }}>
           <PlusIcon size={24} color="#241F16" />
         </View>

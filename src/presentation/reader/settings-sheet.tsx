@@ -79,6 +79,7 @@ export function ReaderSettingsSheet({ visible, onClose }: { visible: boolean; on
 
       <Animated.View
         onLayout={(e) => setSheetHeight(e.nativeEvent.layout.height)}
+        testID="reader-settings-sheet"
         style={[
           styles.sheet,
           { backgroundColor: sheet.bg, paddingBottom: insets.bottom + 22, transform: [{ translateY }] },
@@ -86,7 +87,7 @@ export function ReaderSettingsSheet({ visible, onClose }: { visible: boolean; on
         <View style={[styles.grabber, { backgroundColor: night ? '#39403A' : '#E1D8C5' }]} />
         <View style={styles.titleRow}>
           <Text style={[styles.sheetTitle, { color: sheet.fg }]}>Text</Text>
-          <Pressable style={[styles.closeButton, { backgroundColor: sheet.track }]} onPress={onClose} hitSlop={6}>
+          <Pressable style={[styles.closeButton, { backgroundColor: sheet.track }]} onPress={onClose} hitSlop={6} testID="reader-settings-close">
             <CloseIcon size={13} color={sheet.sub} />
           </Pressable>
         </View>
@@ -98,7 +99,7 @@ export function ReaderSettingsSheet({ visible, onClose }: { visible: boolean; on
             const on = key === prefs.theme;
             const swatchPalette = READER_PALETTES[key];
             return (
-              <Pressable key={key} style={styles.swatchItem} onPress={() => setReaderPrefs({ theme: key })}>
+              <Pressable key={key} style={styles.swatchItem} onPress={() => setReaderPrefs({ theme: key })} testID={`reader-settings-theme-${key}`}>
                 <View
                   style={[
                     styles.swatch,
@@ -128,7 +129,8 @@ export function ReaderSettingsSheet({ visible, onClose }: { visible: boolean; on
             <Pressable
               key={key}
               style={[styles.segmentItem, segment(prefs.font === key)]}
-              onPress={() => setReaderPrefs({ font: key })}>
+              onPress={() => setReaderPrefs({ font: key })}
+              testID={`reader-settings-font-${key}`}>
               <Text style={[styles.fontLabel, { fontFamily: family }, segmentText(prefs.font === key)]}>{label}</Text>
             </Pressable>
           ))}
@@ -141,7 +143,8 @@ export function ReaderSettingsSheet({ visible, onClose }: { visible: boolean; on
             style={styles.sizeButton}
             onPress={() => setReaderPrefs({ sizeIndex: Math.max(0, prefs.sizeIndex - 1) })}
             hitSlop={6}
-            accessibilityLabel="Smaller text">
+            accessibilityLabel="Smaller text"
+            testID="reader-settings-size-down">
             <Text style={[styles.sizeGlyphSmall, { color: sheet.fg }]}>A</Text>
           </Pressable>
           <View style={styles.dotsRow}>
@@ -159,7 +162,8 @@ export function ReaderSettingsSheet({ visible, onClose }: { visible: boolean; on
             style={styles.sizeButton}
             onPress={() => setReaderPrefs({ sizeIndex: Math.min(FONT_SIZES_PX.length - 1, prefs.sizeIndex + 1) })}
             hitSlop={6}
-            accessibilityLabel="Larger text">
+            accessibilityLabel="Larger text"
+            testID="reader-settings-size-up">
             <Text style={[styles.sizeGlyphLarge, { color: sheet.fg }]}>A</Text>
           </Pressable>
         </View>
@@ -175,7 +179,8 @@ export function ReaderSettingsSheet({ visible, onClose }: { visible: boolean; on
                 key={index}
                 style={[styles.segmentItem, segment(on)]}
                 onPress={() => setReaderPrefs({ lineIndex: index })}
-                accessibilityLabel={`Line spacing ${index + 1}`}>
+                accessibilityLabel={`Line spacing ${index + 1}`}
+                testID={`reader-settings-line-${index + 1}`}>
                 <LineSpacingGlyph gap={gap} color={on ? sheet.fg : sheet.idle} />
               </Pressable>
             );
@@ -189,7 +194,8 @@ export function ReaderSettingsSheet({ visible, onClose }: { visible: boolean; on
             <Pressable
               key={key}
               style={[styles.segmentItem, segment(prefs.mode === key)]}
-              onPress={() => setReaderPrefs({ mode: key })}>
+              onPress={() => setReaderPrefs({ mode: key })}
+              testID={`reader-modes-${key}`}>
               <Text style={[styles.modeLabel, segmentText(prefs.mode === key)]}>{label}</Text>
             </Pressable>
           ))}

@@ -63,7 +63,7 @@ export function FormatToolbar({
   onDismissKeyboard: () => void;
 }) {
   return (
-    <View style={styles.bar}>
+    <View style={styles.bar} testID="notebook-note-editor-toolbar">
       {GROUPS.map((group, groupIndex) => (
         <View key={groupIndex} style={styles.group}>
           {groupIndex > 0 ? <View style={styles.divider} /> : null}

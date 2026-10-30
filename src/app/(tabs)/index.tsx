@@ -65,15 +65,15 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={['top']} testID="home-screen">
       <AppHeader title="Clearly Reformed" />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { paddingBottom: bottomInset }]}>
+      <ScrollView testID="home-scroll" showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { paddingBottom: bottomInset }]}>
         {/* Featured — today's pick */}
         <View style={styles.featured}>
           <Text style={styles.eyebrow}>Featured</Text>
           {daily.data ? (
-            <FeaturedCard resource={daily.data} pill="Today’s Pick" onPress={() => daily.data && openResource(daily.data)} />
+            <FeaturedCard testID="home-daily-pick" resource={daily.data} pill="Today’s Pick" onPress={() => daily.data && openResource(daily.data)} />
           ) : daily.isLoading ? (
             <View style={styles.loading}>
               <ActivityIndicator color={Colors.gold} />
@@ -85,7 +85,7 @@ export default function HomeScreen() {
         {(continueList.data?.length ?? 0) > 0 ? (
           <View style={styles.section}>
             <SectionHeader title="Continue" />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+            <ScrollView testID="home-continue" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
               {(continueList.data ?? []).map((item) => (
                 <ContinueCard key={item.progress.resource.key} item={item} onPress={() => onContinue(item)} />
               ))}
@@ -98,11 +98,11 @@ export default function HomeScreen() {
           <View style={styles.section}>
             <View style={styles.titleWithLink}>
               <SectionHeader title="New for you" />
-              <Pressable onPress={() => router.navigate('/library')} hitSlop={6} accessibilityRole="link">
+              <Pressable onPress={() => router.navigate('/library')} hitSlop={6} accessibilityRole="link" testID="home-new-for-you-see-all">
                 <Text style={styles.seeAll}>See all</Text>
               </Pressable>
             </View>
-            <View style={styles.list}>
+            <View style={styles.list} testID="home-new-for-you">
               {(newForYou.data ?? []).map((item) => (
                 <ResourceCard key={`${item.type}-${item.id}`} resource={item} onPress={() => openResource(item)} />
               ))}
@@ -112,6 +112,7 @@ export default function HomeScreen() {
 
         {/* Explainer Series — dark band */}
         <SeriesRail
+          testID="home-series-explainers"
           title="Explainer Series"
           blurb="Theological truths, five minutes at a time."
           items={explainers}
@@ -123,6 +124,7 @@ export default function HomeScreen() {
 
         {/* Coram Deo */}
         <SeriesRail
+          testID="home-series-coram-deo"
           title="Coram Deo"
           blurb="Listen in on sermons, discussions, and more."
           items={coramDeo}
@@ -135,7 +137,7 @@ export default function HomeScreen() {
         {(recommendations.data?.length ?? 0) > 0 ? (
           <View style={styles.section}>
             <SectionHeader title="Picked for you" blurb="Because of what you’ve saved and studied." />
-            <View style={styles.list}>
+            <View style={styles.list} testID="home-picked-for-you">
               {(recommendations.data ?? []).map((item) => (
                 <ResourceCard key={`${item.type}-${item.id}`} resource={item} onPress={() => openResource(item)} />
               ))}
@@ -147,7 +149,7 @@ export default function HomeScreen() {
         {savedItems.length > 0 ? (
           <View style={styles.section}>
             <SectionHeader title="Recently saved" onPress={() => router.navigate('/notebook')} />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+            <ScrollView testID="home-recently-saved" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
               {savedItems.map((item) => (
                 <SavedMiniCard key={item.resource.key} resource={item.resource} onPress={() => openResource(item.resource)} />
               ))}

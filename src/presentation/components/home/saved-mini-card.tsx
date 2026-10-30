@@ -8,7 +8,7 @@ import { Colors, Radius, Type } from '@/presentation/theme';
 /** Compact card in Home's "Recently saved" rail. */
 export function SavedMiniCard({ resource, onPress }: { resource: ResourceRef; onPress: () => void }) {
   return (
-    <Pressable style={styles.card} onPress={onPress} accessibilityRole="button">
+    <Pressable style={styles.card} onPress={onPress} accessibilityRole="button" testID="saved-mini-card">
       <Image
         source={resource.thumbnailUrl ? { uri: resource.thumbnailUrl } : undefined}
         style={styles.image}

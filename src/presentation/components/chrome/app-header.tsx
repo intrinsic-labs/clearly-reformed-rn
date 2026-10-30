@@ -15,7 +15,7 @@ export function AppHeader({ title }: { title: string }) {
   const router = useRouter();
 
   return (
-    <View style={styles.appBar}>
+    <View style={styles.appBar} testID="shell-header">
       <View style={styles.brand}>
         <LogoMark size={30} />
         <Text style={styles.wordmark}>{title}</Text>
@@ -23,6 +23,7 @@ export function AppHeader({ title }: { title: string }) {
       <Pressable
         style={styles.actionButton}
         onPress={() => router.push('/settings')}
+        testID="shell-header-settings"
         hitSlop={6}
         accessibilityRole="button"
         accessibilityLabel="Account and settings">

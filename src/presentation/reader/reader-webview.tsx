@@ -172,6 +172,7 @@ export const ReaderWebView = forwardRef<ReaderWebViewHandle, Props>(function Rea
   return (
     <WebView
       ref={webViewRef}
+      testID="reader-webview"
       source={{ html, baseUrl: props.documentBaseUrl }}
       style={[styles.webview, { backgroundColor: props.initialPrefs.bg }]}
       onMessage={onMessage}

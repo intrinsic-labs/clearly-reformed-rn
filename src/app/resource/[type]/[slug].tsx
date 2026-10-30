@@ -111,7 +111,7 @@ export default function ResourceDetailScreen() {
   const externalLabel = fallbackVideoUrl ? 'Watch on the web' : 'Read at the source';
 
   return (
-    <View style={styles.screen}>
+    <View style={styles.screen} testID="resource-detail">
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[
@@ -128,7 +128,7 @@ export default function ResourceDetailScreen() {
         ) : isError || !data ? (
           <View style={styles.center}>
             <Text style={styles.errorText}>Couldn’t load this resource.</Text>
-            <Pressable style={styles.retry} onPress={() => refetch()}>
+            <Pressable style={styles.retry} onPress={() => refetch()} testID="resource-detail-retry">
               <Text style={styles.retryLabel}>Try again</Text>
             </Pressable>
           </View>
@@ -140,7 +140,7 @@ export default function ResourceDetailScreen() {
             {data.scriptureRef ? <Text style={styles.scripture}>{data.scriptureRef}</Text> : null}
 
             {track ? (
-              <Pressable style={styles.playPill} onPress={onPlay} accessibilityRole="button">
+              <Pressable style={styles.playPill} onPress={onPlay} accessibilityRole="button" testID="resource-detail-play">
                 <PlayIcon size={13} color={Colors.onGreen} />
                 <Text style={styles.playPillLabel}>
                   {PLAY_LABEL[data.type] ?? 'Play audio'}
@@ -154,7 +154,7 @@ export default function ResourceDetailScreen() {
             ) : null}
 
             {externalUrl ? (
-              <Pressable style={styles.sourceLink} onPress={() => Linking.openURL(externalUrl)}>
+              <Pressable style={styles.sourceLink} onPress={() => Linking.openURL(externalUrl)} testID="resource-detail-external">
                 <Text style={styles.sourceLabel}>{externalLabel} ↗</Text>
               </Pressable>
             ) : null}
@@ -180,7 +180,7 @@ export default function ResourceDetailScreen() {
             ]}
           />
         </View>
-        <Pressable style={styles.backButton} onPress={() => router.back()} hitSlop={8}>
+        <Pressable style={styles.backButton} onPress={() => router.back()} hitSlop={8} testID="resource-detail-back">
           <ChevronLeftIcon size={22} color={Reader.fg} />
         </Pressable>
         <Text style={styles.barLabel}>{sectionLabel}</Text>
@@ -188,6 +188,7 @@ export default function ResourceDetailScreen() {
           style={styles.backButton}
           hitSlop={8}
           disabled={!resource}
+          testID="resource-detail-save"
           onPress={() => resource && toggleSaved.mutate(resource)}
           accessibilityLabel={isSaved ? 'Remove from saved' : 'Save'}>
           <BookmarkIcon size={19} color={isSaved ? Colors.gold : Reader.fg} filled={isSaved} />

@@ -19,6 +19,7 @@ export function HighlightCard({
 }) {
   return (
     <NotebookCardShell
+      testID="notebook-highlight-card"
       icon={<HighlightIcon size={13} color={Colors.textMuted} />}
       label="Highlight"
       when={relativeDate(entry.createdAt)}

@@ -193,10 +193,10 @@ export default function NoteEditorScreen() {
   const heading = forHighlight ? 'Note on highlight' : 'Note';
 
   return (
-    <View style={styles.screen}>
+    <View style={styles.screen} testID="notebook-note-editor">
       <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
         <View style={styles.headerSlot}>
-          <Pressable onPress={onBack} hitSlop={8} style={styles.headerIconButton} accessibilityLabel="Back to notebook">
+          <Pressable onPress={onBack} hitSlop={8} style={styles.headerIconButton} accessibilityLabel="Back to notebook" testID="notebook-note-editor-back">
             <ChevronLeftIcon size={24} color={Colors.inkSoft} />
           </Pressable>
         </View>
@@ -207,7 +207,8 @@ export default function NoteEditorScreen() {
               onPress={() => setTagsOpen(true)}
               hitSlop={8}
               style={styles.headerIconButton}
-              accessibilityLabel="Edit tags">
+              accessibilityLabel="Edit tags"
+              testID="notebook-note-editor-tags">
               <TagIcon size={18} color={tags.length > 0 ? Colors.goldDeep : Colors.textMuted} filled={tags.length > 0} />
             </Pressable>
           ) : null}
@@ -216,7 +217,8 @@ export default function NoteEditorScreen() {
             disabled={editing && !canSave}
             hitSlop={8}
             style={[styles.headerIconButton, editing && !canSave && styles.saveDisabled]}
-            accessibilityLabel={editing ? 'Done editing note' : 'Edit note'}>
+            accessibilityLabel={editing ? 'Done editing note' : 'Edit note'}
+            testID="notebook-note-editor-save">
             {editing ? (
               <CheckIcon size={21} color={editing && !canSave ? Colors.textMuted : Colors.goldDeep} />
             ) : (
@@ -230,6 +232,7 @@ export default function NoteEditorScreen() {
         <View style={styles.editor}>
           {!forHighlight ? (
             <TextInput
+              testID="notebook-note-editor-title"
               style={styles.titleInput}
               value={title}
               onChangeText={setTitle}
@@ -249,6 +252,7 @@ export default function NoteEditorScreen() {
           ) : null}
           <EnrichedMarkdownTextInput
             ref={bodyRef}
+            testID="notebook-note-editor-input"
             style={styles.bodyInput}
             markdownStyle={editorMarkdownStyle}
             defaultValue={body}
@@ -341,6 +345,7 @@ function TagsSheet({
       </Animated.View>
       <Animated.View
         onLayout={(e) => setSheetHeight(e.nativeEvent.layout.height)}
+        testID="notebook-note-editor-tags-sheet"
         style={[
           styles.sheet,
           {

@@ -17,6 +17,7 @@ export function SeriesRail({
   dark = false,
   onPressTitle,
   onPressItem,
+  testID,
 }: {
   title: string;
   blurb?: string;
@@ -25,10 +26,11 @@ export function SeriesRail({
   dark?: boolean;
   onPressTitle: () => void;
   onPressItem: (item: Resource) => void;
+  testID?: string;
 }) {
   if (items.length === 0) return null;
   return (
-    <View style={[styles.section, dark ? styles.sectionDark : null]}>
+    <View style={[styles.section, dark ? styles.sectionDark : null]} testID={testID}>
       <SectionHeader title={title} blurb={blurb} onPress={onPressTitle} dark={dark} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
         {items.map((item) => (

@@ -15,16 +15,18 @@ export function FeaturedCard({
   resource,
   pill,
   onPress,
+  testID,
 }: {
   resource: Resource;
   /** Short badge text drawn over the image, e.g. "Today's Pick". */
   pill?: string;
   onPress?: () => void;
+  testID?: string;
 }) {
   const subtitle = resource.people[0];
 
   return (
-    <Pressable style={styles.card} onPress={onPress} accessibilityRole="button">
+    <Pressable style={styles.card} onPress={onPress} accessibilityRole="button" testID={testID}>
       <View style={styles.imageWrap}>
         <Image
           source={resource.imageUrl ? { uri: resource.imageUrl } : undefined}

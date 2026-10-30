@@ -63,14 +63,15 @@ export default function LibraryScreen() {
       {featured ? (
         <View style={styles.featuredSection}>
           <Text style={styles.eyebrow}>Featured</Text>
-          <FeaturedCard resource={featured} onPress={() => openResource(featured)} />
+          <FeaturedCard testID="library-featured" resource={featured} onPress={() => openResource(featured)} />
         </View>
       ) : null}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Library</Text>
         <View style={styles.menus}>
-          <DropdownMenu label="Sort" value={order} options={sortOptions(filter)} onChange={setOrder} />
+          <DropdownMenu testID="library-filters-sort" label="Sort" value={order} options={sortOptions(filter)} onChange={setOrder} />
           <DropdownMenu
+            testID="library-filters-type"
             label={labelFor(TYPE_OPTIONS, filter)}
             value={filter}
             options={TYPE_OPTIONS}
@@ -82,7 +83,7 @@ export default function LibraryScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={['top']} testID="library-screen">
       <AppHeader title="Library" />
 
       {isLoading ? (
@@ -92,12 +93,13 @@ export default function LibraryScreen() {
       ) : isError ? (
         <View style={styles.center}>
           <Text style={styles.errorText}>Couldn’t load the library.</Text>
-          <Pressable style={styles.retry} onPress={() => refetch()}>
+          <Pressable style={styles.retry} onPress={() => refetch()} testID="library-feed-retry">
             <Text style={styles.retryLabel}>Try again</Text>
           </Pressable>
         </View>
       ) : (
         <FlatList
+          testID="library-feed"
           data={listItems}
           keyExtractor={keyExtractor}
           renderItem={renderItem}

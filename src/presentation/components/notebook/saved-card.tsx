@@ -19,6 +19,7 @@ export function SavedCard({
 }) {
   return (
     <NotebookCardShell
+      testID="notebook-saved-card"
       icon={<BookmarkIcon size={13} color={Colors.goldDeep} filled />}
       label="Saved"
       when={relativeDate(item.savedAt)}
