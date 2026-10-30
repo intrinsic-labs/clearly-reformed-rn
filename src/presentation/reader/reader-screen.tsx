@@ -205,7 +205,7 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
   }
 
   return (
-    <View style={[styles.screen, { backgroundColor: palette.bg }]}>
+    <View style={[styles.screen, { backgroundColor: palette.bg }]} testID="reader-screen">
       <StatusBar style={prefs.theme === 'night' ? 'light' : 'dark'} />
 
       <ReaderWebView
@@ -246,18 +246,19 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
             transform: [{ translateY: topTranslate }],
           },
         ]}>
-        <Pressable style={styles.barButton} onPress={() => router.back()} hitSlop={8} accessibilityLabel="Back">
+        <Pressable style={styles.barButton} onPress={() => router.back()} hitSlop={8} accessibilityLabel="Back" testID="reader-back">
           <ChevronLeftIcon size={22} color={palette.fg} />
         </Pressable>
         <Text style={[styles.barLabel, { color: palette.sub }]}>{CONTENT_TYPE_LABEL[detail.type]}s</Text>
         <View style={styles.barGroup}>
-          <Pressable style={styles.barButton} onPress={() => setSettingsOpen(true)} hitSlop={6} accessibilityLabel="Text settings">
+          <Pressable style={styles.barButton} onPress={() => setSettingsOpen(true)} hitSlop={6} accessibilityLabel="Text settings" testID="reader-settings-button">
             <Text style={[styles.aaGlyph, { color: palette.fg }]}>Aa</Text>
           </Pressable>
           <Pressable
             style={styles.barButton}
             onPress={() => toggleSaved.mutate(resource)}
             hitSlop={6}
+            testID="reader-save"
             accessibilityLabel={isSaved ? 'Remove from saved' : 'Save'}>
             <BookmarkIcon size={19} color={isSaved ? Colors.gold : palette.fg} filled={isSaved} />
           </Pressable>
@@ -269,6 +270,7 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
 
       {/* Bottom bar */}
       <Animated.View
+        testID="reader-bottom-bar"
         style={[
           styles.bottomBar,
           {
@@ -280,13 +282,13 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
         ]}>
         {paged ? (
           <View style={styles.pagedRow}>
-            <Pressable style={styles.pageButton} onPress={() => webViewRef.current?.goPage(-1)} hitSlop={6} accessibilityLabel="Previous page">
+            <Pressable style={styles.pageButton} onPress={() => webViewRef.current?.goPage(-1)} hitSlop={6} accessibilityLabel="Previous page" testID="reader-page-prev">
               <ChevronLeftIcon size={20} color={palette.fg} />
             </Pressable>
             <Text style={[styles.bottomLabel, { color: palette.sub }]}>
               Page {view.page} of {view.pageCount}
             </Text>
-            <Pressable style={styles.pageButton} onPress={() => webViewRef.current?.goPage(1)} hitSlop={6} accessibilityLabel="Next page">
+            <Pressable style={styles.pageButton} onPress={() => webViewRef.current?.goPage(1)} hitSlop={6} accessibilityLabel="Next page" testID="reader-page-next">
               <ChevronRightIcon size={20} color={palette.fg} />
             </Pressable>
           </View>
@@ -301,7 +303,7 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
       {/* Selection / highlight actions */}
       {selection ? (
         <View style={[styles.actionPill, { bottom: insets.bottom + 92 }]}>
-          <Pressable style={styles.actionButton} onPress={onHighlightPress}>
+          <Pressable style={styles.actionButton} onPress={onHighlightPress} testID="reader-selection-highlight">
             <Text style={styles.actionButtonLabel}>Highlight</Text>
           </Pressable>
           <View style={styles.actionDivider} />
@@ -309,6 +311,7 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
               paragraph continuation past a page break, so the pill carries one. */}
           <Pressable
             style={styles.actionButton}
+            testID="reader-selection-copy"
             onPress={() => {
               Clipboard.setStringAsync(selection.text).catch(() => {});
               webViewRef.current?.clearSelection();
@@ -319,6 +322,7 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
           <View style={styles.actionDivider} />
           <Pressable
             style={styles.actionButton}
+            testID="reader-selection-cancel"
             onPress={() => {
               webViewRef.current?.clearSelection();
               setSelection(null);
@@ -331,6 +335,7 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
         <View style={[styles.actionPill, { bottom: insets.bottom + 92 }]}>
           <Pressable
             style={styles.actionButton}
+            testID="reader-highlight-note"
             onPress={() => {
               const entry = highlights.data?.find((h) => h.id === tappedHighlight);
               router.push({
@@ -344,11 +349,11 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
             </Text>
           </Pressable>
           <View style={styles.actionDivider} />
-          <Pressable style={styles.actionButton} onPress={onRemoveHighlight}>
+          <Pressable style={styles.actionButton} onPress={onRemoveHighlight} testID="reader-highlight-remove">
             <Text style={styles.actionButtonLabel}>Remove</Text>
           </Pressable>
           <View style={styles.actionDivider} />
-          <Pressable style={styles.actionButton} onPress={() => setTappedHighlight(null)}>
+          <Pressable style={styles.actionButton} onPress={() => setTappedHighlight(null)} testID="reader-highlight-cancel">
             <Text style={styles.actionButtonLabelMuted}>Cancel</Text>
           </Pressable>
         </View>

@@ -30,6 +30,7 @@ export function ClipCard({
 
   return (
     <NotebookCardShell
+      testID="notebook-clip-card"
       icon={<ClipIcon size={13} color={Colors.textMuted} />}
       label={label}
       when={relativeDate(entry.createdAt)}

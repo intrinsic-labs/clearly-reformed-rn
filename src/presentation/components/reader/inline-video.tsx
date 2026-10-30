@@ -108,7 +108,7 @@ export function InlineVideo({
   const ready = !resource || !stored.isLoading;
 
   return (
-    <View style={styles.frame} onLayout={onLayout}>
+    <View style={styles.frame} onLayout={onLayout} testID="resource-inline-video">
       {width > 0 && ready ? (
         <YoutubePlayer
           ref={playerRef}

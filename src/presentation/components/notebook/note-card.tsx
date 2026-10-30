@@ -23,6 +23,7 @@ export function NoteCard({
 }) {
   return (
     <NotebookCardShell
+      testID="notebook-note-card"
       icon={<NotebookIcon size={13} color="#8A6A12" />}
       label="Note"
       when={relativeDate(entry.createdAt)}

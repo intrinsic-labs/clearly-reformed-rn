@@ -44,13 +44,14 @@ export default function SearchScreen() {
   const usingOffline = remote.isError && (offline.data?.length ?? 0) > 0;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={['top']} testID="search-screen">
       <AppHeader title="Search" />
       <View style={styles.header}>
         <View style={styles.field}>
           <SearchIcon size={17} color={Colors.textMuted} />
           <TextInput
             ref={inputRef}
+            testID="search-input"
             style={styles.input}
             value={input}
             onChangeText={setInput}
@@ -61,10 +62,11 @@ export default function SearchScreen() {
             clearButtonMode="while-editing"
           />
         </View>
-        {usingOffline ? <Text style={styles.offlineNote}>Offline — showing results from your saved content.</Text> : null}
+        {usingOffline ? <Text style={styles.offlineNote} testID="search-offline-note">Offline — showing results from your saved content.</Text> : null}
       </View>
 
       <FlatList
+        testID="search-results"
         data={active ? results : []}
         keyExtractor={(item) => `${item.type}-${item.id}`}
         renderItem={({ item }) => <ResourceCard resource={item} onPress={() => openResource(item)} />}

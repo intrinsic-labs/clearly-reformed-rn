@@ -37,22 +37,22 @@ export default function TabsLayout() {
           </NativeTabs.BottomAccessory>
         ) : null}
 
-        <Trigger name="index">
+        <Trigger name="index" unstable_nativeProps={{ tabBarItemTestID: 'shell-tabs-home' }}>
           <Icon sf={{ default: 'house', selected: 'house.fill' }} md={{ default: 'home', selected: 'home' }} />
           <Label>Home</Label>
         </Trigger>
-        <Trigger name="library">
+        <Trigger name="library" unstable_nativeProps={{ tabBarItemTestID: 'shell-tabs-library' }}>
           <Icon
             sf={{ default: 'books.vertical', selected: 'books.vertical.fill' }}
             md={{ default: 'library_books', selected: 'library_books' }}
           />
           <Label>Library</Label>
         </Trigger>
-        <Trigger name="notebook">
+        <Trigger name="notebook" unstable_nativeProps={{ tabBarItemTestID: 'shell-tabs-notebook' }}>
           <Icon sf={{ default: 'book.closed', selected: 'book.closed.fill' }} md={{ default: 'book', selected: 'book' }} />
           <Label>Notebook</Label>
         </Trigger>
-        <Trigger name="search" role="search">
+        <Trigger name="search" role="search" unstable_nativeProps={{ tabBarItemTestID: 'shell-tabs-search' }}>
           <Icon sf="magnifyingglass" md="search" />
           <Label>Search</Label>
         </Trigger>

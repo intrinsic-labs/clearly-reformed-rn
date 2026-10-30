@@ -140,7 +140,7 @@ export default function PlayerScreen() {
       : 'Download';
 
   return (
-    <View style={styles.screen}>
+    <View style={styles.screen} testID="audio-now-playing">
       <LinearGradient colors={['#2A352E', '#202821', '#1A211C']} locations={[0, 0.46, 1]} style={StyleSheet.absoluteFill} />
 
       {/* iOS modal sheets already sit below the status bar, so a small fixed top pad
@@ -148,7 +148,7 @@ export default function PlayerScreen() {
       <View style={[styles.content, { paddingTop: (Platform.OS === 'android' ? insets.top : 0) + 14, paddingBottom: insets.bottom + 18 }]}>
         {/* Header */}
         <View style={styles.header}>
-          <Pressable style={styles.headerButton} onPress={() => router.back()} hitSlop={8} accessibilityLabel="Close player">
+          <Pressable style={styles.headerButton} onPress={() => router.back()} hitSlop={8} accessibilityLabel="Close player" testID="audio-now-playing-close">
             <ChevronDownIcon size={20} color={P.icon} />
           </Pressable>
           <View style={styles.headerCenter}>
@@ -157,7 +157,7 @@ export default function PlayerScreen() {
               {playable.album}
             </Text>
           </View>
-          <Pressable style={styles.headerButton} onPress={onShare} hitSlop={8} accessibilityLabel="Share">
+          <Pressable style={styles.headerButton} onPress={onShare} hitSlop={8} accessibilityLabel="Share" testID="audio-now-playing-share">
             <ShareIcon size={18} color={P.icon} />
           </Pressable>
         </View>
@@ -183,6 +183,7 @@ export default function PlayerScreen() {
             style={styles.likeButton}
             onPress={() => toggleSaved.mutate(playable.resource)}
             hitSlop={6}
+            testID="audio-now-playing-save"
             accessibilityLabel={isSaved ? 'Remove from saved' : 'Save'}>
             <HeartIcon size={20} color={isSaved ? Colors.goldBright : P.icon} filled={isSaved} />
           </Pressable>
@@ -193,19 +194,19 @@ export default function PlayerScreen() {
 
         {/* Transport */}
         <View style={styles.transport}>
-          <Pressable style={styles.transportSide} onPress={() => cyclePlaybackRate().then(setRate)} hitSlop={8}>
+          <Pressable style={styles.transportSide} onPress={() => cyclePlaybackRate().then(setRate)} hitSlop={8} testID="audio-speed">
             <Text style={styles.speedLabel}>{formatRate(rate)}</Text>
           </Pressable>
-          <Pressable onPress={() => TrackPlayer.seekBy(-15)} hitSlop={8} accessibilityLabel="Back 15 seconds">
+          <Pressable onPress={() => TrackPlayer.seekBy(-15)} hitSlop={8} accessibilityLabel="Back 15 seconds" testID="audio-now-playing-skip-back">
             <SkipBackIcon size={32} color="#EDE7D8" weight={1.6} />
           </Pressable>
-          <Pressable style={styles.playButton} onPress={toggle} accessibilityLabel={playing ? 'Pause' : 'Play'}>
+          <Pressable style={styles.playButton} onPress={toggle} accessibilityLabel={playing ? 'Pause' : 'Play'} testID="audio-now-playing-toggle">
             {playing ? <PauseIcon size={24} color="#241F16" /> : <PlayIcon size={24} color="#241F16" />}
           </Pressable>
-          <Pressable onPress={() => TrackPlayer.seekBy(30)} hitSlop={8} accessibilityLabel="Forward 30 seconds">
+          <Pressable onPress={() => TrackPlayer.seekBy(30)} hitSlop={8} accessibilityLabel="Forward 30 seconds" testID="audio-now-playing-skip-forward">
             <SkipForwardIcon size={32} color="#EDE7D8" weight={1.6} />
           </Pressable>
-          <Pressable style={styles.transportSide} onPress={cycleSleepTimer} hitSlop={8} accessibilityLabel="Sleep timer">
+          <Pressable style={styles.transportSide} onPress={cycleSleepTimer} hitSlop={8} accessibilityLabel="Sleep timer" testID="audio-sleep-timer">
             <MoonIcon size={22} color={sleepMinutesLeft != null ? Colors.goldBright : P.sub} />
             {sleepMinutesLeft != null ? <Text style={styles.sleepLabel}>{sleepMinutesLeft}m</Text> : null}
           </Pressable>
@@ -219,23 +220,25 @@ export default function PlayerScreen() {
             <Pressable
               style={[styles.action, clippedAt != null && styles.actionActive]}
               onPress={onClipMoment}
-              accessibilityLabel="Clip this moment">
+              accessibilityLabel="Clip this moment"
+              testID="audio-clip-moment">
               <NotebookIcon size={21} color={clippedAt != null ? '#E0A93A' : P.muted} />
               <Text style={[styles.actionLabel, clippedAt != null && styles.actionLabelActive]}>
                 {clippedAt != null ? `Saved ${formatTime(clippedAt)}` : 'Clip moment'}
               </Text>
             </Pressable>
-            <View style={[styles.action, styles.actionDisabled]}>
+            <View style={[styles.action, styles.actionDisabled]} testID="audio-transcript">
               <TranscriptIcon size={21} color={P.muted} />
               <Text style={styles.actionLabel}>Transcript</Text>
             </View>
-            <Pressable style={styles.action} onPress={onShare}>
+            <Pressable style={styles.action} onPress={onShare} testID="audio-now-playing-share-action">
               <ShareIcon size={21} color={P.muted} />
               <Text style={styles.actionLabel}>Share</Text>
             </Pressable>
             <Pressable
               style={[styles.action, downloaded && styles.actionActive]}
               onPress={onDownload}
+              testID="audio-downloads"
               accessibilityLabel={downloaded ? 'Remove download' : 'Download for offline listening'}>
               <DownloadIcon size={21} color={downloaded ? '#E0A93A' : P.muted} />
               <Text style={[styles.actionLabel, downloaded && styles.actionLabelActive]}>{downloadLabel}</Text>
@@ -285,6 +288,7 @@ function SeekBar({
   return (
     <View style={styles.seekWrap}>
       <View
+        testID="audio-now-playing-seek"
         style={styles.seekTouch}
         onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
         onStartShouldSetResponder={() => true}

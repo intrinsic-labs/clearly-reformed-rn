@@ -15,6 +15,7 @@ export function NotebookCardShell({
   tinted = false,
   onPress,
   onLongPress,
+  testID,
   children,
 }: {
   icon: ReactNode;
@@ -23,6 +24,7 @@ export function NotebookCardShell({
   tinted?: boolean;
   onPress?: () => void;
   onLongPress?: () => void;
+  testID?: string;
   children: ReactNode;
 }) {
   return (
@@ -30,7 +32,8 @@ export function NotebookCardShell({
       style={[styles.card, tinted ? styles.cardTinted : null]}
       onPress={onPress}
       onLongPress={onLongPress}
-      delayLongPress={400}>
+      delayLongPress={400}
+      testID={testID}>
       <View style={styles.kickerRow}>
         {icon}
         <Text style={[styles.kicker, tinted ? styles.kickerTinted : null]}>{label}</Text>

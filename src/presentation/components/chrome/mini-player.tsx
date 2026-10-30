@@ -39,6 +39,7 @@ export function MiniPlayer({ variant }: { variant: MiniPlayerVariant }) {
     <Pressable
       style={[styles.container, floating ? styles.floating : styles.accessory, inline ? styles.inline : null]}
       onPress={() => router.push('/player')}
+      testID="shell-mini-player"
       accessibilityRole="button"
       accessibilityLabel="Open the player">
       {floating ? (
@@ -69,11 +70,11 @@ export function MiniPlayer({ variant }: { variant: MiniPlayerVariant }) {
 
         <View style={styles.controls}>
           {!inline ? (
-            <Pressable hitSlop={8} style={styles.skip} onPress={() => TrackPlayer.seekBy(-15)}>
+            <Pressable hitSlop={8} style={styles.skip} onPress={() => TrackPlayer.seekBy(-15)} testID="shell-mini-player-skip-back">
               <SkipBackIcon size={20} color={ink} />
             </Pressable>
           ) : null}
-          <Pressable hitSlop={8} style={[styles.playButton, floating ? styles.playButtonOnGreen : null]} onPress={toggle}>
+          <Pressable hitSlop={8} style={[styles.playButton, floating ? styles.playButtonOnGreen : null]} onPress={toggle} testID="shell-mini-player-toggle">
             {playing ? <PauseIcon size={14} color={floating ? Colors.green : Colors.white} /> : <PlayIcon size={14} color={floating ? Colors.green : Colors.white} />}
           </Pressable>
         </View>

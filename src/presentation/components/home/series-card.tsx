@@ -27,7 +27,7 @@ export function SeriesCard({
   const isConference = kind === 'conference';
 
   return (
-    <Pressable style={[styles.card, isConference ? styles.cardConference : styles.cardVideo]} onPress={onPress} accessibilityRole="button">
+    <Pressable style={[styles.card, isConference ? styles.cardConference : styles.cardVideo]} onPress={onPress} accessibilityRole="button" testID="series-card">
       <Image
         source={resource.imageUrl ? { uri: resource.imageUrl } : undefined}
         style={styles.image}

@@ -28,7 +28,7 @@ export function ContinueCard({ item, onPress }: { item: ContinueItem; onPress: (
   const { resource, fraction } = item.progress;
 
   return (
-    <Pressable style={styles.card} onPress={onPress} accessibilityRole="button">
+    <Pressable style={styles.card} onPress={onPress} accessibilityRole="button" testID="continue-card">
       <Image
         source={resource.thumbnailUrl ? { uri: resource.thumbnailUrl } : undefined}
         style={styles.image}

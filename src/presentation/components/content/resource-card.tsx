@@ -15,7 +15,7 @@ export function ResourceCard({ resource, onPress }: { resource: Resource; onPres
   const meta = showsDate(resource.type) ? shortDate(resource.displayDate) : null;
 
   return (
-    <Pressable style={styles.row} onPress={onPress} accessibilityRole="button">
+    <Pressable style={styles.row} onPress={onPress} accessibilityRole="button" testID="resource-card">
       <Image
         source={resource.thumbnailUrl ? { uri: resource.thumbnailUrl } : undefined}
         style={styles.thumb}

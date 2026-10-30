@@ -25,12 +25,15 @@ export function DropdownMenu<T extends string>({
   value,
   options,
   onChange,
+  testID,
 }: {
   /** Text shown in the trigger; usually the selected option's label. */
   label: string;
   value: T;
   options: readonly MenuOption<T>[];
   onChange: (value: T) => void;
+  /** Lands on the trigger; each option gets `<testID>-option-<value>`. */
+  testID?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
@@ -55,6 +58,7 @@ export function DropdownMenu<T extends string>({
         ref={triggerRef}
         style={({ pressed }) => [styles.trigger, pressed ? styles.triggerPressed : null]}
         onPress={openMenu}
+        testID={testID}
         accessibilityRole="button"
         accessibilityLabel={`${label}. Opens a menu.`}>
         <Text style={styles.triggerLabel} numberOfLines={1}>
@@ -77,6 +81,7 @@ export function DropdownMenu<T extends string>({
                     if (!selected) onChange(option.value);
                   }}
                   style={({ pressed }) => [styles.item, pressed ? styles.itemPressed : null]}
+                  testID={testID ? `${testID}-option-${option.value}` : undefined}
                   accessibilityRole="menuitem"
                   accessibilityState={{ selected, disabled: option.disabled }}>
                   <Text

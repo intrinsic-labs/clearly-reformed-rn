@@ -12,6 +12,7 @@ A cross-platform mobile app (React Native + Expo) — the best way to consume th
 
 - **`project-info.md`** — product vision, audience, features (3 tiers), MVP vs v2 scope.
 - **`SPEC.md`** — the locked technical stack, library-per-concern.
+- **`FEATURE_MAP.md`** — every user-visible feature → reach, selector, code, data, status. **`VERIFY.md`** — cold start to the app on iOS Simulator + Android Emulator, driving, data reset, gotchas. Maintenance rules for both are in `AGENTS.md`.
 - **`API_DOCUMENTATION.md`** — the content API (WordPress REST + podcast RSS), incl. the discovered-endpoints addendum.
 - **`design/`** — fonts (Flecha, IBM Plex Sans), icons, color token, website screenshots, plus **`clearly-reformed-app-mockup-2026/`** — five Claude Design screen mockups (Home, Library, Notebook, Now Playing, Reader). Use the raw `.dc.html` files as the translation source; screenshots are the visual reference. Its `uploads/` folder is the frozen input bundle that was handed to Claude Design — the `SPEC.md`/`project-info.md` copies in there are point-in-time snapshots, not live docs.
 
@@ -60,7 +61,7 @@ MVP vs v2 split is in `project-info.md` §11.
   build over a relayed link feels sluggish for reasons unrelated to the app.
   `--metro` builds the debug dev client and tunnels Metro via a relay port (plain
   `adb reverse` can hit whatever else is on loopback:8081).
-- Verify with: `pnpm typecheck`, `pnpm lint`, `pnpm test` (jest-expo; pure-logic units).
+- Verify with: `pnpm typecheck`, `pnpm lint`, `pnpm test` (jest-expo; pure-logic units), plus the feature-map check and an on-simulator walk per `VERIFY.md`.
 - Use SDK/library types; don't redefine API shapes.
 - Audio player is the Apache-2.0 fork `@javascriptcommon/react-native-track-player`
   (upstream v4 is frozen/broken on RN 0.85; official v5 `@rntp/player` is commercial —

@@ -55,9 +55,9 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
+    <SafeAreaView style={styles.screen} edges={['top']} testID="settings-screen">
       <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => router.back()} hitSlop={8} accessibilityLabel="Back">
+        <Pressable style={styles.backButton} onPress={() => router.back()} hitSlop={8} accessibilityLabel="Back" testID="settings-back">
           <ChevronLeftIcon size={22} color={Colors.ink} />
         </Pressable>
         <Text style={styles.title}>Settings</Text>
@@ -68,6 +68,7 @@ export default function SettingsScreen() {
         <Text style={styles.sectionLabel}>Notifications</Text>
         <View style={styles.group}>
           <Row
+            testID="settings-daily-reminder"
             label="Daily pick reminder"
             caption="A quiet nudge at 8:00 each morning."
             value={prefs.dailyReminder}
@@ -78,6 +79,7 @@ export default function SettingsScreen() {
           {CATEGORY_TOGGLES.map(({ key, label }, index) => (
             <Row
               key={key}
+              testID={`settings-content-alerts-${key}`}
               label={label}
               value={prefs[key] as boolean}
               onChange={(value) => onToggle(key, value)}
@@ -102,7 +104,7 @@ export default function SettingsScreen() {
               </Text>
             </View>
             {downloadedCount > 0 ? (
-              <Pressable onPress={onClearDownloads} hitSlop={6}>
+              <Pressable onPress={onClearDownloads} hitSlop={6} testID="settings-downloads-remove-all">
                 <Text style={styles.destructive}>Remove all</Text>
               </Pressable>
             ) : null}
@@ -112,7 +114,7 @@ export default function SettingsScreen() {
         {/* About */}
         <Text style={[styles.sectionLabel, { marginTop: 28 }]}>About</Text>
         <View style={styles.group}>
-          <Pressable style={styles.row} onPress={() => Linking.openURL('https://clearlyreformed.org')}>
+          <Pressable style={styles.row} onPress={() => Linking.openURL('https://clearlyreformed.org')} testID="settings-about-site">
             <View style={styles.rowText}>
               <Text style={styles.rowLabel}>clearlyreformed.org</Text>
               <Text style={styles.rowCaption}>The ministry of Kevin DeYoung — theology for the everyday.</Text>
@@ -137,12 +139,14 @@ function Row({
   value,
   onChange,
   divider = false,
+  testID,
 }: {
   label: string;
   caption?: string;
   value: boolean;
   onChange: (value: boolean) => void;
   divider?: boolean;
+  testID?: string;
 }) {
   return (
     <>
@@ -153,6 +157,7 @@ function Row({
           {caption ? <Text style={styles.rowCaption}>{caption}</Text> : null}
         </View>
         <Switch
+          testID={testID}
           value={value}
           onValueChange={onChange}
           trackColor={{ true: Colors.gold, false: Colors.borderChrome }}
