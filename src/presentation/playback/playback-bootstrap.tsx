@@ -1,4 +1,4 @@
-import {
+import TrackPlayer, {
   Event,
   State,
   useProgress,
@@ -6,6 +6,7 @@ import {
 } from '@javascriptcommon/react-native-track-player';
 import { useEffect, useRef } from 'react';
 
+import { boundarySavePosition } from '@/presentation/playback/boundary-save';
 import { ensurePlayerReady, playableFromTrack, restoreTrack } from '@/presentation/playback/player';
 import { useNowPlaying } from '@/presentation/playback/use-now-playing';
 import { useInvalidateProgress } from '@/presentation/hooks/queries/use-progress';
@@ -48,26 +49,47 @@ export function PlaybackBootstrap() {
   // 2. Periodic persistence while playing (5s cadence from useProgress above).
   const lastSaved = useRef(-1);
   useEffect(() => {
-    if (!playing || !playable || duration <= 0) return;
+    // useProgress resets to 0 on every track load and polls every 5s, so a
+    // 0 here is "not polled yet", never a real resume point worth persisting.
+    if (!playing || !playable || duration <= 0 || position <= 0) return;
     if (Math.abs(position - lastSaved.current) < 2) return;
     lastSaved.current = position;
     progress.save({ resource: playable.resource, kind: 'listen', position, length: duration, playable });
   }, [playing, playable, position, duration, progress]);
 
-  // Boundary saves: pause, end, and track changes refresh the Continue views.
+  // Boundary saves: pause and end persist the player's live position; track
+  // changes refresh the Continue views. A freshly loaded track (including the
+  // cold-launch restore above) must play before a pause may overwrite its row —
+  // see boundary-save.ts.
+  const playedSinceLoad = useRef(false);
   useTrackPlayerEvents([Event.PlaybackState, Event.PlaybackActiveTrackChanged], async (event) => {
-    if (event.type === Event.PlaybackState && event.state !== State.Paused && event.state !== State.Ended) {
+    if (event.type === Event.PlaybackActiveTrackChanged) {
+      playedSinceLoad.current = false;
+      invalidateProgress();
       return;
     }
-    if (playable && duration > 0) {
-      const finalPosition = event.type === Event.PlaybackState && event.state === State.Ended ? duration : position;
-      await progress.save({
-        resource: playable.resource,
-        kind: 'listen',
-        position: finalPosition,
-        length: duration,
-        playable,
+    if (event.state === State.Playing) {
+      playedSinceLoad.current = true;
+      return;
+    }
+    if (event.state !== State.Paused && event.state !== State.Ended) return;
+    if (playable) {
+      const live = await TrackPlayer.getProgress().catch(() => null);
+      const finalPosition = boundarySavePosition({
+        kind: event.state === State.Ended ? 'ended' : 'paused',
+        playedSinceLoad: playedSinceLoad.current,
+        livePosition: live?.position ?? position,
+        duration,
       });
+      if (finalPosition !== null) {
+        await progress.save({
+          resource: playable.resource,
+          kind: 'listen',
+          position: finalPosition,
+          length: duration,
+          playable,
+        });
+      }
     }
     invalidateProgress();
   });

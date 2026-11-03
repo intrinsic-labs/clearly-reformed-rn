@@ -35,6 +35,9 @@ export interface ReaderWebViewHandle {
   goPage(delta: 1 | -1): void;
 }
 
+/** Android: an empty custom menu = no system selection toolbar (see the WebView props). */
+const NO_SYSTEM_MENU_ITEMS: [] = [];
+
 interface Props {
   readonly bodyHtml: string;
   readonly header: ReaderHeaderInfo;
@@ -181,7 +184,7 @@ export const ReaderWebView = forwardRef<ReaderWebViewHandle, Props>(function Rea
       bounces={false}
       setSupportMultipleWindows={false}
       allowsLinkPreview={false}
-      // The system edit menu (Copy/Look Up/…) is suppressed natively — see
+      // On iOS the system edit menu (Copy/Look Up/…) is suppressed natively — see
       // patches/react-native-webview.patch — so the app's selection pill is the
       // one selection UI everywhere. (It could never appear for selections in
       // the continuation of a page-break-split paragraph anyway; WebKit places
@@ -189,6 +192,10 @@ export const ReaderWebView = forwardRef<ReaderWebViewHandle, Props>(function Rea
       // via the `menuItems` prop: setting it installs a long-press recognizer
       // with cancelsTouchesInView that corrupts WebKit's own selection gesture,
       // and its canPerformAction path isn't consulted by iOS 16+ menus anyway.
+      // On Android the prop is the suppression: an empty list makes the WebView's
+      // selection ActionMode build no items, so no floating toolbar (Copy/Share/
+      // Select all/Web search) covers the pill. Android only — see above for iOS.
+      menuItems={Platform.OS === 'android' ? NO_SYSTEM_MENU_ITEMS : undefined}
       // iOS-only prop. On Android the new-architecture prop parser asserts on the
       // string form (RNCWebViewDataDetectorTypesMask expects an array) and aborts.
       dataDetectorTypes={Platform.OS === 'ios' ? 'none' : undefined}

@@ -181,7 +181,7 @@ export default function PlayerScreen() {
           </View>
           <Pressable
             style={styles.likeButton}
-            onPress={() => toggleSaved.mutate(playable.resource)}
+            onPress={() => toggleSaved.mutate({ resource: playable.resource })}
             hitSlop={6}
             testID="audio-now-playing-save"
             accessibilityLabel={isSaved ? 'Remove from saved' : 'Save'}>

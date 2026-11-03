@@ -124,7 +124,7 @@ export default function NotebookScreen() {
           <SwipeToDelete
             label="Remove"
             confirmationMessage="This will remove this saved item from your notebook."
-            onDelete={() => toggleSaved.mutate(item.saved.resource)}>
+            onDelete={() => toggleSaved.mutate({ resource: item.saved.resource })}>
             <SavedCard item={item.saved} onOpen={() => openResource(item.saved.resource)} />
           </SwipeToDelete>
         );

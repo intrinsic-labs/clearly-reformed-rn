@@ -22,6 +22,7 @@ import { CONTENT_TYPE_LABEL } from '@/presentation/lib/content-type';
 import { BookmarkIcon, ChevronLeftIcon, PlayIcon } from '@/presentation/components/icons';
 import { useResourceContent } from '@/presentation/hooks/queries/use-resource-content';
 import { useResolvedTrack } from '@/presentation/hooks/queries/use-resolved-track';
+import { SaveOfflineNotice } from '@/presentation/components/content/save-offline-notice';
 import { useIsSaved, useToggleSaved } from '@/presentation/hooks/queries/use-saved';
 import { formatTime, shortDate } from '@/presentation/lib/format';
 import { htmlToBlocks, readingTimeMinutes } from '@/presentation/lib/html';
@@ -189,12 +190,12 @@ export default function ResourceDetailScreen() {
           hitSlop={8}
           disabled={!resource}
           testID="resource-detail-save"
-          onPress={() => resource && toggleSaved.mutate(resource)}
+          onPress={() => resource && toggleSaved.mutate({ resource, detail: data })}
           accessibilityLabel={isSaved ? 'Remove from saved' : 'Save'}>
           <BookmarkIcon size={19} color={isSaved ? Colors.gold : Reader.fg} filled={isSaved} />
         </Pressable>
       </View>
-
+      <SaveOfflineNotice result={toggleSaved.data} top={insets.top + 60} />
     </View>
   );
 }

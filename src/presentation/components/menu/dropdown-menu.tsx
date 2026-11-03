@@ -68,8 +68,18 @@ export function DropdownMenu<T extends string>({
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.scrim} onPress={() => setOpen(false)} accessibilityLabel="Close menu">
-          <View style={[styles.menu, { left, top, width: menuWidth }]}>
+        {/* The scrim is a *sibling* behind the menu, not its parent: an accessible
+            Pressable is a single element to VoiceOver/XCUITest on iOS and would hide
+            every option inside it. VoiceOver's escape gesture also dismisses. */}
+        <View style={styles.overlay} onAccessibilityEscape={() => setOpen(false)}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setOpen(false)}
+            testID={testID ? `${testID}-dismiss` : undefined}
+            accessibilityRole="button"
+            accessibilityLabel="Close menu"
+          />
+          <View style={[styles.menu, { left, top, width: menuWidth }]} accessibilityRole="menu">
             {options.map((option) => {
               const selected = option.value === value;
               return (
@@ -83,6 +93,7 @@ export function DropdownMenu<T extends string>({
                   style={({ pressed }) => [styles.item, pressed ? styles.itemPressed : null]}
                   testID={testID ? `${testID}-option-${option.value}` : undefined}
                   accessibilityRole="menuitem"
+                  accessibilityLabel={option.disabled && option.hint ? `${option.label}. ${option.hint}` : option.label}
                   accessibilityState={{ selected, disabled: option.disabled }}>
                   <Text
                     style={[
@@ -97,7 +108,7 @@ export function DropdownMenu<T extends string>({
               );
             })}
           </View>
-        </Pressable>
+        </View>
       </Modal>
     </>
   );
@@ -122,7 +133,7 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     color: Colors.ink,
   },
-  scrim: {
+  overlay: {
     flex: 1,
   },
   menu: {

@@ -39,7 +39,7 @@ export function createContainer(): { useCases: UseCases } {
     content: makeContentUseCases(resourceRepository, resourceContentRepository, contentCache, savedRepository),
     notebook: makeNotebookUseCases(notebookRepository),
     progress: makeProgressUseCases(progressRepository),
-    saved: makeSavedUseCases(savedRepository),
+    saved: makeSavedUseCases(savedRepository, contentCache, resourceContentRepository),
     podcast: makePodcastUseCases(podcastRepository),
     search: makeSearchUseCases(searchRepository, contentCache),
     daily: makeDailyUseCases(resourceRepository),
