@@ -1,7 +1,7 @@
 ---
 feature-map: 1
 root: .
-revision: 6a4e003b69add9f373c4253dd7bf8308556c0e47
+revision: e14dc667db47ed6cfae7db08f3cfaac431ee90cd
 reconciled: 2026-10-29
 ---
 # Clearly Reformed feature map
@@ -53,7 +53,7 @@ Every user-visible feature of the Clearly Reformed app (Expo + Expo Router, one 
 - **Code:** `src/presentation/components/chrome/mini-player.tsx`, `src/presentation/components/chrome/bottom-chrome.tsx`, `src/presentation/playback/use-now-playing.ts`, `src/presentation/playback/use-player.ts`
 - **Backend:** track-player (`TrackPlayer.seekBy`, play/pause through `usePlayer().toggle`)
 - **Status:** live
-- **Notes:** The accessory is mounted only while something is loaded, because iOS draws the glass capsule for any mounted accessory. The inline variant hides the artwork and skip button.
+- **Notes:** The accessory is mounted only while something is loaded, because iOS draws the glass capsule for any mounted accessory. The inline variant hides the artwork and skip button. The capsule is translucent Liquid Glass, so Home content scrolled beneath it shows through; when that content is the Continue card for the same episode, its title can read as a second, overlapped title. That's system rendering, not a doubled mini-player (checked 2026-11-03 across repeated Now Playing open/close).
 
 ### Deep links and the route stack
 - **ID:** `shell.deep-links`
@@ -87,11 +87,11 @@ Every user-visible feature of the Clearly Reformed app (Expo + Expo Router, one 
 - **Where:** Home, below Today's pick ("Continue"). Hidden when nothing is at least 1% in (`listContinue` filters `fraction >= 0.01`), so a just-opened article or a listen saved at 0:00 doesn't appear.
 - **Reach:** Open an article and scroll, play audio, or play an inline video, then return to Home. A listen item starts playback and opens `/player`; read and watch items open the resource.
 - **Requires:** Saved progress on this device.
-- **Selector:** working — testID `home-continue` (rail), `continue-card` (each card). Confirmed on Android; on iOS the rail didn't render during the 2026-10-29 walkthrough because the only listen row was stored at position 0 (see Notes).
+- **Selector:** working — testID `home-continue` (rail), `continue-card` (each card), on iOS and Android.
 - **Code:** `src/app/(tabs)/index.tsx#onContinue`, `src/presentation/components/home/continue-card.tsx`, `src/presentation/hooks/queries/use-progress.ts`, `src/application/use-cases/progress.ts`, `src/data/db/sqlite-progress-repository.ts`
 - **Backend:** SQLite `progress` (`listContinue`: not deleted, not completed, newest first, up to 8). Listen rows carry `playable_json`, so they resume without a network lookup.
 - **Status:** live
-- **Notes:** On the iOS Simulator (Debug, 2026-10-29) about 30s of playback, then pause and close, left the listen row at `position = 0.0` while the mini-player showed 0:32; on Android the same steps saved 148s. Not diagnosed; reported separately. Inspect the row with the read-only `sqlite3` command in VERIFY.md.
+- **Notes:** A listen item survives relaunch (see `audio.session-restore`). Inspect the row with the read-only `sqlite3` command in VERIFY.md.
 
 ### New for you
 - **ID:** `home.new-for-you`
@@ -170,11 +170,11 @@ Every user-visible feature of the Clearly Reformed app (Expo + Expo Router, one 
 - **Where:** Right of the "Library" heading: a "Sort" pill and a type pill ("All Resources"), each opening a small dropdown.
 - **Reach:** Library tab, then tap either pill. Types: All Resources, Articles, Videos, Podcast, Sermons, Lectures, Coram Deo, Books. "Oldest" is disabled ("Choose a type first") while "All Resources" is selected.
 - **Requires:** Network.
-- **Selector:** working — testID `library-filters-sort`, `library-filters-type` (triggers); options `library-filters-type-option-<value>` (`all`, `article`, `video`, `podcast`, `sermon`, `lecture`, `conference`, `book`) and `library-filters-sort-option-newest|oldest`, which are nested in the menu's scrim pressable and appear only in Android's tree. On iOS the whole open menu reads as one "Close menu" element, so options have no selector and no text match: tap by point (the menu is anchored under the pill and moves with scroll, so take a screenshot first) or open the resource by deep link instead.
+- **Selector:** working — testID `library-filters-sort`, `library-filters-type` (triggers); options `library-filters-type-option-<value>` (`all`, `article`, `video`, `podcast`, `sermon`, `lecture`, `conference`, `book`) and `library-filters-sort-option-newest|oldest`, on iOS and Android; `library-filters-type-dismiss` / `library-filters-sort-dismiss` is the full-screen "Close menu" layer behind the options (an outside tap dismisses).
 - **Code:** `src/presentation/components/menu/dropdown-menu.tsx`, `src/presentation/components/content/library-filters.ts`, `src/app/(tabs)/library.tsx`, `src/data/api/endpoints.ts`
 - **Backend:** switches the feed between `kdy/v1/all-resources` and `TYPE_PATH[type]`; `order=asc` only on type endpoints (the unified feed ignores `order`)
 - **Status:** live
-- **Notes:** Choosing "All Resources" resets the sort to Newest. Sermon clips and events aren't in the menu; they appear only in the unfiltered feed. The menu is a transparent RN `Modal`.
+- **Notes:** Choosing "All Resources" resets the sort to Newest. Sermon clips and events aren't in the menu; they appear only in the unfiltered feed. The menu is a transparent RN `Modal`. The dismiss layer is a sibling *behind* the options, not their parent: an accessible parent Pressable hides its children from VoiceOver and XCUITest on iOS. VoiceOver's escape gesture also closes it. If a deep link navigates while a menu is open, the menu stays over the new screen until tapped away.
 
 ### Resource detail (media layout)
 - **ID:** `resource.detail`
@@ -218,13 +218,13 @@ Every user-visible feature of the Clearly Reformed app (Expo + Expo Router, one 
 - **ID:** `search.offline`
 - **Purpose:** When the network search fails, searches the bodies of saved content cached on the device.
 - **Where:** Search tab, same list, with the note "Offline — showing results from your saved content."
-- **Reach:** Save a few articles, relaunch the app and open them online (which caches them, see `saved.offline-reading`), turn on airplane mode (Android: `cmd connectivity airplane-mode enable`), then search on the Search tab.
+- **Reach:** Save a few articles (saving caches them, see `saved.offline-reading`), turn on airplane mode (Android: `cmd connectivity airplane-mode enable`), then search on the Search tab.
 - **Requires:** Remote search failing, plus cached content.
 - **Selector:** working — testID `search-offline-note`, `search-results`
 - **Code:** `src/presentation/hooks/queries/use-search.ts#useOfflineSearchResults`, `src/data/db/sqlite-content-cache.ts#search`, `src/data/db/fts.ts`
 - **Backend:** SQLite FTS5 `content_fts MATCH ?` (up to 30) joined to `content_cache`
 - **Status:** live
-- **Notes:** Unsaving never removes the cached body or its FTS row (`ContentCache.remove` has no caller), so unsaved items keep turning up offline. FTS query building is tested in `src/data/db/fts.test.ts`.
+- **Notes:** Unsaving removes the cached body and its FTS row, so unsaved items drop out of offline results. FTS query building is tested in `src/data/db/fts.test.ts`.
 
 ## Reader
 
@@ -274,7 +274,7 @@ Every user-visible feature of the Clearly Reformed app (Expo + Expo Router, one 
 - **Code:** `src/presentation/reader/reader-screen.tsx#onHighlightPress`, `src/presentation/reader/web/runtime/highlights.ts`, `src/presentation/reader/web/runtime/paged-selection.ts`, `src/presentation/reader/web/runtime/scroll-selection.ts`, `src/presentation/reader/web/runtime/selection-handles.ts`, `src/presentation/reader/web/runtime/selection-paint.ts`, `src/presentation/reader/web/runtime/long-press.ts`, `src/presentation/hooks/queries/use-notebook.ts`, `src/data/db/sqlite-notebook-repository.ts`
 - **Backend:** SQLite `highlights` (quote, prefix, suffix, `char_offset`) + `notebook_fts`; remove is a soft delete (`deleted = 1`); Copy uses `expo-clipboard`
 - **Status:** live
-- **Notes:** In paged mode WebKit selection is disabled and the app owns the whole selection lifecycle; on iOS the patched `react-native-webview` strips the system edit menu and tints the selection gold (see CLAUDE.md, Patched dependencies). Neither patch is reachable from Metro; changing them needs a native rebuild. On Android in Scroll mode the system selection toolbar (Copy · Share · Select all · Web search) appears above the selection alongside the app's pill; the menu-stripping patch is iOS-only. A long-press on a word (Maestro `longPressOn: point:`) selects it on both platforms, and `reader-selection-highlight` then saves it.
+- **Notes:** In paged mode WebKit selection is disabled and the app owns the whole selection lifecycle; on iOS the patched `react-native-webview` strips the system edit menu and tints the selection gold (see CLAUDE.md, Patched dependencies). Neither patch is reachable from Metro; changing them needs a native rebuild. On Android in Scroll mode the system selection toolbar (Copy · Share · Select all · Web search) is suppressed by passing an empty `menuItems` (Android only; on iOS that prop corrupts WebKit's selection gesture), so the app's pill is the only selection UI there too. A long-press on a word (Maestro `longPressOn: point:`) selects it on both platforms, and `reader-selection-highlight` then saves it.
 
 ### Note on a highlight
 - **ID:** `reader.highlight-note`
@@ -406,6 +406,7 @@ Every user-visible feature of the Clearly Reformed app (Expo + Expo Router, one 
 - **Code:** `src/presentation/playback/playback-bootstrap.tsx`, `src/presentation/playback/player.ts#restoreTrack`, `src/data/db/sqlite-progress-repository.ts#latestListen`
 - **Backend:** SQLite `progress` (`kind = 'listen'`), written about every 5s while playing and on pause, end or track change; track-player `add` + `seekTo`
 - **Status:** live
+- **Notes:** A pause saves the player's live position (`TrackPlayer.getProgress`), and only once the loaded track has actually played: the cold-launch restore loads paused and must never overwrite the stored row (that bug reset positions to 0 before 2026-11-03). Rule and tests: `src/presentation/playback/boundary-save.ts`.
 
 ## Notebook
 
@@ -501,22 +502,22 @@ Every user-visible feature of the Clearly Reformed app (Expo + Expo Router, one 
 - **Reach:** Open any resource, tap the bookmark.
 - **Requires:** None.
 - **Selector:** working — testID `resource-detail-save`, `reader-save`, `audio-now-playing-save`
-- **Code:** `src/application/use-cases/saved.ts`, `src/presentation/hooks/queries/use-saved.ts`, `src/data/db/sqlite-saved-repository.ts`
+- **Code:** `src/application/use-cases/saved.ts`, `src/application/use-cases/saved.test.ts`, `src/presentation/hooks/queries/use-saved.ts`, `src/data/db/sqlite-saved-repository.ts`, `src/presentation/components/content/save-offline-notice.tsx`
 - **Backend:** SQLite `saved_items` (upsert; unsave is a soft delete, `deleted = 1`)
 - **Status:** live
-- **Notes:** Accessibility labels are "Save" and "Remove from saved". Saving feeds Home's "Picked for you" and removes the item from "New for you".
+- **Notes:** Accessibility labels are "Save" and "Remove from saved". Saving also caches the body for offline (`saved.offline-reading`); if that fails, the Reader and detail screen show "Saved, but not available offline yet." (`save-offline-notice`). Saving feeds Home's "Picked for you" and removes the item from "New for you".
 
 ### Offline copies of saved content
 - **ID:** `saved.offline-reading`
 - **Purpose:** Saved articles and resources stay readable, and searchable, with no connection.
 - **Where:** Invisible; it's the fallback behind the resource detail and the Reader.
-- **Reach:** Save a resource, relaunch the app, open it again online (that network fetch is when the body is cached), go offline, open it.
-- **Requires:** The item saved and opened at least once after saving.
+- **Reach:** Save a resource while online, go offline, open it (a relaunch works too).
+- **Requires:** The item saved while its body was open or fetchable.
 - **Selector:** none — no element of its own; check `reader-screen` or `resource-detail` loads offline
-- **Code:** `src/application/use-cases/content.ts#getDetail`, `src/data/db/sqlite-content-cache.ts`, `src/application/ports/content-cache.ts`
-- **Backend:** SQLite `content_cache` (`detail_json`) + `content_fts`; written after a successful fetch when the item is saved, read when the fetch fails
+- **Code:** `src/application/use-cases/saved.ts#toggle`, `src/application/use-cases/content.ts#getDetail`, `src/data/db/sqlite-content-cache.ts`, `src/application/ports/content-cache.ts`
+- **Backend:** SQLite `content_cache` (`detail_json`) + `content_fts`; written on save (from the open body, else fetched), refreshed after any later fetch while saved, read when the fetch fails, deleted on unsave
 - **Status:** live
-- **Notes:** Saving doesn't cache by itself: the body is cached on the next *network* fetch while saved. `useResourceContent` has a 1-hour `staleTime`, so reopening in the same session is served from React Query's memory and caches nothing; it takes a relaunch (or an hour). Save and go offline in the same session, and there's no offline copy. Unsaving doesn't evict the cache.
+- **Notes:** Saving from the Reader or detail screen caches the body already on screen, with no extra fetch; saving from Now Playing fetches it. A failed cache write keeps the bookmark but reports no offline copy (notice above), and the next online open of the saved item retries. Unsaving evicts the body and its `content_fts` row; highlights, notes and progress are separate tables and stay.
 
 ## Settings
 
