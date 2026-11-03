@@ -33,6 +33,17 @@ export function useToggleSaved() {
 
   return useMutation({
     mutationFn: ({ resource, detail }: ToggleSavedInput) => saved.toggle(resource, detail),
+    // Flip the icon at once: saving may wait on a body fetch for offline, and a
+    // stale icon invites a second tap that would undo the save.
+    onMutate: ({ resource }) => {
+      const key = ['saved', 'is', resource.key];
+      const previous = queryClient.getQueryData<boolean>(key);
+      queryClient.setQueryData(key, !previous);
+      return { previous };
+    },
+    onError: (_error, { resource }, context) => {
+      queryClient.setQueryData(['saved', 'is', resource.key], context?.previous);
+    },
     onSuccess: (result, { resource }) => {
       queryClient.setQueryData(['saved', 'is', resource.key], result.saved);
       queryClient.invalidateQueries({ queryKey: ['saved', 'list'] });
