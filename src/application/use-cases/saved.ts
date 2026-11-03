@@ -52,7 +52,13 @@ export function makeSavedUseCases(
         return { saved: false, offline: false };
       }
       await repository.save(resource);
-      return { saved: true, offline: await keepOffline(resource, detail) };
+      const offline = await keepOffline(resource, detail);
+      // An unsave may have landed while the body was being fetched; it wins.
+      if (!(await repository.isSaved(resource.key))) {
+        await cache.remove(resource.key).catch(() => {});
+        return { saved: false, offline: false };
+      }
+      return { saved: true, offline };
     },
     list: () => repository.list(),
     isSaved: (resourceKey) => repository.isSaved(resourceKey),

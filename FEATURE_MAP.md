@@ -505,7 +505,7 @@ Every user-visible feature of the Clearly Reformed app (Expo + Expo Router, one 
 - **Code:** `src/application/use-cases/saved.ts`, `src/application/use-cases/saved.test.ts`, `src/presentation/hooks/queries/use-saved.ts`, `src/data/db/sqlite-saved-repository.ts`, `src/presentation/components/content/save-offline-notice.tsx`
 - **Backend:** SQLite `saved_items` (upsert; unsave is a soft delete, `deleted = 1`)
 - **Status:** live
-- **Notes:** Accessibility labels are "Save" and "Remove from saved". Saving also caches the body for offline (`saved.offline-reading`); if that fails, the Reader and detail screen show "Saved, but not available offline yet." (`save-offline-notice`). Saving feeds Home's "Picked for you" and removes the item from "New for you".
+- **Notes:** Accessibility labels are "Save" and "Remove from saved". Saving also caches the body for offline (`saved.offline-reading`); if that fails, the Reader, detail screen and Now Playing show "Saved, but not available offline yet." (`save-offline-notice`). Saving feeds Home's "Picked for you" and removes the item from "New for you".
 
 ### Offline copies of saved content
 - **ID:** `saved.offline-reading`

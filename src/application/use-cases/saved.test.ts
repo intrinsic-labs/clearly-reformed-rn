@@ -79,6 +79,23 @@ describe('saved toggle', () => {
     await expect(fetch.useCases.toggle(resource)).resolves.toEqual({ saved: true, offline: false });
   });
 
+  it('lets an unsave that lands mid-fetch win', async () => {
+    const h = harness();
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const slow = makeSavedUseCases(
+      { save: async (r) => void h.saved.add(r.key), unsave: async (k) => void h.saved.delete(k), list: async () => [], isSaved: async (k) => h.saved.has(k) },
+      { put: async (d) => void h.cached.set(`${d.type}:${d.id}`, d), get: async () => null, remove: async (k) => void h.cached.delete(k), search: async () => [] },
+      { getContent: async () => { await gate; return detail; } },
+    );
+    const saving = slow.toggle(resource);
+    await new Promise((r) => setTimeout(r, 0));
+    await expect(slow.toggle(resource)).resolves.toEqual({ saved: false, offline: false });
+    release();
+    await expect(saving).resolves.toEqual({ saved: false, offline: false });
+    expect(h.cached.has(resource.key)).toBe(false);
+  });
+
   it('evicts the cached body on unsave', async () => {
     const h = harness();
     await h.useCases.toggle(resource, detail);
