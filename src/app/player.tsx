@@ -22,6 +22,7 @@ import {
 import { CONTENT_TYPE_LABEL } from '@/presentation/lib/content-type';
 import { useDownload, useDownloadMutations } from '@/presentation/hooks/queries/use-downloads';
 import { useNotebook, useNotebookMutations } from '@/presentation/hooks/queries/use-notebook';
+import { SaveOfflineNotice } from '@/presentation/components/content/save-offline-notice';
 import { useIsSaved, useToggleSaved } from '@/presentation/hooks/queries/use-saved';
 import { formatRate, formatTime } from '@/presentation/lib/format';
 import { cyclePlaybackRate, PLAYBACK_RATES } from '@/presentation/playback/player';
@@ -181,7 +182,7 @@ export default function PlayerScreen() {
           </View>
           <Pressable
             style={styles.likeButton}
-            onPress={() => toggleSaved.mutate(playable.resource)}
+            onPress={() => toggleSaved.mutate({ resource: playable.resource })}
             hitSlop={6}
             testID="audio-now-playing-save"
             accessibilityLabel={isSaved ? 'Remove from saved' : 'Save'}>
@@ -246,6 +247,7 @@ export default function PlayerScreen() {
           </View>
         </View>
       </View>
+      <SaveOfflineNotice result={toggleSaved.data} top={(Platform.OS === 'android' ? insets.top : 0) + 72} />
     </View>
   );
 }

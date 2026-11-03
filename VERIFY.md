@@ -2,7 +2,7 @@
 
 This guide takes a cold agent from a clean checkout to the app running on the **iOS Simulator** and the **Android Emulator**, driven by Maestro with screenshots, without asking anyone. [FEATURE_MAP.md](FEATURE_MAP.md) says where every feature lives once you're in. [CLAUDE.md](CLAUDE.md) is the project orientation; this guide doesn't repeat it.
 
-**Last proven:** 2026-10-30 (iOS build path: fresh `prebuild --clean` and `npx expo run:ios` on Xcode 27.1 / iOS 26.5 Simulator, no overrides; Reader selection, Notebook, note editor and audio walked; Android debug build and launch re-checked). The full flows below were last walked end to end on 2026-10-29 by a separate agent from a fresh clone, on Asher's Mac (macOS 27, Xcode 27.1, iOS 26.5 Simulator, Android 37.1 `google_apis_playstore_ps16k` arm64 image). Limits are in [What this guide can't prove](#what-this-guide-cant-prove).
+**Last proven:** 2026-11-03 (Library menus by id on iOS and Android, Android Reader selection, listening progress across relaunch, offline saving on Android; Debug + Metro). Before that 2026-10-30 (iOS build path: fresh `prebuild --clean` and `npx expo run:ios` on Xcode 27.1 / iOS 26.5 Simulator, no overrides; Reader selection, Notebook, note editor and audio walked; Android debug build and launch re-checked). The full flows below were last walked end to end on 2026-10-29 by a separate agent from a fresh clone, on Asher's Mac (macOS 27, Xcode 27.1, iOS 26.5 Simulator, Android 37.1 `google_apis_playstore_ps16k` arm64 image). Limits are in [What this guide can't prove](#what-this-guide-cant-prove).
 
 
 ## Facts you need first
@@ -166,7 +166,7 @@ maestro --device <$U or $S> hierarchy > $P/logs/hier.json
 grep -o '"resource-id" : "[a-z][a-z0-9-]*"' $P/logs/hier.json | sort -u
 ```
 
-Platform differences worth knowing up front: tabs are `id: shell-tabs-library` on iOS but only `tapOn: "Library"` (label) on Android, and the label works on both. Library dropdown options are `id: library-filters-type-option-article` on Android but invisible to iOS's tree, so tap by point there or use a deep link. Reader text lives in a WebView: long-press a word by point to select it.
+Platform differences worth knowing up front: tabs are `id: shell-tabs-library` on iOS but only `tapOn: "Library"` (label) on Android, and the label works on both. Library dropdown options are `id: library-filters-type-option-article` on both platforms (on iOS the trigger then reads "Articles. Opens a menu.", so assert by id, not by the bare label). Reader text lives in a WebView: long-press a word by point to select it.
 
 **Deep links** (scheme `clearlyreformed://`, three slashes): `/`, `/library`, `/notebook`, `/search`, `/settings`, `/player`, `/note-editor`, `/resource/<type>/<slug>` (with `?hl=<highlightId>` or `?t=<seconds>`). Known-good targets: `clearlyreformed:///resource/article/reflections-on-the-esv-after-25-years` (Reader) and `clearlyreformed:///resource/podcast/scroll-less-live-more-with-samuel-james` (a playable *Life and Books and Everything* episode; cross-posted guest podcasts have no Play pill).
 
@@ -180,16 +180,9 @@ On iOS, Maestro's `openLink` (and the first `simctl openurl`) raises Safari's **
 **Library → Articles** (the menu path, when you want it rather than a deep link):
 
 ```yaml
-# Android
-- tapOn: "Library"
+- tapOn: "Library"                   # iOS also has id: shell-tabs-library
 - tapOn: { id: "library-filters-type" }
 - tapOn: { id: "library-filters-type-option-article" }
-- tapOn: { id: "resource-card", index: 0 }
-# iOS (options aren't in the tree; points measured on iPhone 17 Pro with the list scrolled to the top)
-- tapOn: { id: "shell-tabs-library" }
-- tapOn: { id: "library-filters-type" }
-- waitForAnimationToEnd
-- tapOn: { point: "63%,74%" }        # "Articles"; "Podcast" is 63%,83%. The menu moves with scroll, so check a screenshot
 - tapOn: { id: "resource-card", index: 0 }
 ```
 
@@ -232,7 +225,7 @@ Tables: `highlights`, `clips`, `notes`, `saved_items`, `progress`, `content_cach
 ## Online vs offline
 
 - **Online** is the default: every feed, detail page, search and stream comes from the live public sources above.
-- **Offline (Android):** `adb -s $S shell cmd connectivity airplane-mode enable` (`disable` to undo). Search then shows "Offline — showing results from your saved content." (`search-offline-note`) with FTS5 results over cached bodies, and saved, cached articles open in the Reader. A body is cached only when it's fetched from the network *while saved*. Reopening in the same session doesn't do it: the detail query stays fresh for an hour (`staleTime`), so React Query serves it from memory. Save the article, **relaunch the app** (`am force-stop` + `am start`, or `simctl terminate` + `launch`), open it again online, then go offline (map: `saved.offline-reading`). The Library, Home rails and online search have no offline fallback.
+- **Offline (Android):** `adb -s $S shell cmd connectivity airplane-mode enable` (`disable` to undo). Search then shows "Offline — showing results from your saved content." (`search-offline-note`) with FTS5 results over cached bodies, and saved, cached articles open in the Reader. Saving caches the body at once: open the article online, tap `reader-save`, then go offline; it reads offline in the same session and after a relaunch (`am force-stop` + `am start`), and offline search finds it. Unsaving evicts it. Confirm with the `sqlite3` read above: `select count(*) from content_cache;` and, with Homebrew's `sqlite3` (macOS's lacks FTS5), `select count(*) from content_fts;` (map: `saved.offline-reading`). The Library, Home rails and online search have no offline fallback.
 - **Offline (iOS Simulator): not verifiable per device.** The simulator shares the Mac's network, and the only switch (Network Link Conditioner) affects the whole machine and every other session. Don't use it.
 
 ## Screenshots

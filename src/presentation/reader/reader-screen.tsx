@@ -11,6 +11,7 @@ import { CONTENT_TYPE_LABEL } from '@/presentation/lib/content-type';
 import { BookmarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@/presentation/components/icons';
 import { useHighlightsFor, useNotebookMutations } from '@/presentation/hooks/queries/use-notebook';
 import { useInvalidateProgress, useResourceProgress } from '@/presentation/hooks/queries/use-progress';
+import { SaveOfflineNotice } from '@/presentation/components/content/save-offline-notice';
 import { useIsSaved, useToggleSaved } from '@/presentation/hooks/queries/use-saved';
 import { htmlToPlainText, sanitizeArticleHtml } from '@/presentation/lib/sanitize-html';
 import { shortDate } from '@/presentation/lib/format';
@@ -256,7 +257,7 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
           </Pressable>
           <Pressable
             style={styles.barButton}
-            onPress={() => toggleSaved.mutate(resource)}
+            onPress={() => toggleSaved.mutate({ resource, detail })}
             hitSlop={6}
             testID="reader-save"
             accessibilityLabel={isSaved ? 'Remove from saved' : 'Save'}>
@@ -267,6 +268,7 @@ export function ReaderScreen({ detail, highlightId }: { detail: ResourceDetail; 
           <View style={[styles.progressFill, { width: `${view.fraction * 100}%` }]} />
         </View>
       </Animated.View>
+      <SaveOfflineNotice result={toggleSaved.data} top={insets.top + 64} />
 
       {/* Bottom bar */}
       <Animated.View
