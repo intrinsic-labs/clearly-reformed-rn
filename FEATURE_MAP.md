@@ -1,7 +1,7 @@
 ---
 feature-map: 1
 root: .
-revision: e14dc667db47ed6cfae7db08f3cfaac431ee90cd
+revision: 62735aa7cf3d9b85b7311d6c6a67b9cf207aeac3
 reconciled: 2026-10-29
 ---
 # Clearly Reformed feature map
@@ -320,10 +320,10 @@ Every user-visible feature of the Clearly Reformed app (Expo + Expo Router, one 
 - **Reach:** Tap the mini-player (`shell-mini-player`) or press Play on a resource. Deep link `clearlyreformed:///player` works only with a session loaded.
 - **Requires:** An audio session.
 - **Selector:** working — testID `audio-now-playing` (root), `audio-now-playing-toggle`, `audio-now-playing-skip-back`, `audio-now-playing-skip-forward`, `audio-now-playing-seek` (tap or drag by x-offset), `audio-now-playing-close`, `audio-now-playing-save`, `audio-now-playing-share`, `audio-now-playing-share-action`
-- **Code:** `src/app/player.tsx`, `src/presentation/playback/use-now-playing.ts`, `src/presentation/playback/use-player.ts`, `src/presentation/playback/player.ts`
+- **Code:** `src/app/player.tsx`, `src/presentation/playback/use-now-playing.ts`, `src/presentation/playback/use-player.ts`, `src/presentation/playback/player.ts`, `src/presentation/components/content/save-offline-notice.tsx`
 - **Backend:** track-player (`seekBy`, `seekTo`, play/pause); save → SQLite `saved_items`; share → the system share sheet with the title and `link`
 - **Status:** live
-- **Notes:** The heart is the same saved toggle as the bookmark (`saved.toggle`). Clip markers come from SQLite `clips` for this resource.
+- **Notes:** The heart is the same saved toggle as the bookmark (`saved.toggle`); when saving can't cache the body for offline, the screen shows "Saved, but not available offline yet." (`save-offline-notice`) below the top bar. Clip markers come from SQLite `clips` for this resource.
 
 ### Playback speed
 - **ID:** `audio.speed`
